@@ -1,0 +1,151 @@
+package io.github.hozdogus.pocketouya;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Edits an APK's compiled (binary XML) AndroidManifest.xml in place so that
+ * Android 14+ will install it: raises the target SDK of old Ouya-era apps to 23.
+ * Only fixed-size integer values are changed, so the file layout stays intact.
+ */
+public final class ManifestPatcher {
+    /** Android 14 refuses to install apps that target anything below this. */
+    public static final int MIN_TARGET = 23;
+
+    private static final int RES_STRING_POOL = 0x0001;
+    private static final int RES_XML_RESOURCE_MAP = 0x0180;
+    private static final int RES_XML_START_ELEMENT = 0x0102;
+    private static final int ATTR_MIN_SDK = 0x0101020c;
+    private static final int ATTR_TARGET_SDK = 0x01010270;
+    private static final int TYPE_INT_DEC = 0x10;
+
+    public static final class Result {
+        public byte[] manifest;
+        public String packageName = "";
+        public int minSdk = -1;
+        public int oldTarget = -1;   // -1 = not declared
+        public int newTarget = -1;
+        public boolean changed;
+        public boolean ouyaGame;     // declares tv.ouya.intent.category.GAME
+    }
+
+    private ManifestPatcher() {}
+
+    public static Result patch(byte[] axml) {
+        byte[] data = axml.clone();
+        ByteBuffer b = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+        List<String> strings = new ArrayList<>();
+        int[] resIds = new int[0];
+        Result r = new Result();
+        int minSdkValueOffset = -1;
+        int targetValueOffset = -1;
+
+        int pos = 8;
+        while (pos + 8 <= data.length) {
+            int type = b.getShort(pos) & 0xffff;
+            int size = b.getInt(pos + 4);
+            if (size <= 0) break;
+            if (type == RES_STRING_POOL) {
+                readStrings(b, pos, strings);
+            } else if (type == RES_XML_RESOURCE_MAP) {
+                int n = (size - 8) / 4;
+                resIds = new int[n];
+                for (int i = 0; i < n; i++) resIds[i] = b.getInt(pos + 8 + i * 4);
+            } else if (type == RES_XML_START_ELEMENT) {
+                int name = b.getInt(pos + 20);
+                int attrStart = b.getShort(pos + 24) & 0xffff;
+                int attrSize = b.getShort(pos + 26) & 0xffff;
+                int attrCount = b.getShort(pos + 28) & 0xffff;
+                String tag = str(strings, name);
+                for (int i = 0; i < attrCount; i++) {
+                    int a = pos + 16 + attrStart + i * attrSize;
+                    int attrName = b.getInt(a + 4);
+                    int raw = b.getInt(a + 8);
+                    int dataType = data[a + 15] & 0xff;
+                    int value = b.getInt(a + 16);
+                    int resId = attrName >= 0 && attrName < resIds.length ? resIds[attrName] : 0;
+                    String an = str(strings, attrName);
+                    if ("manifest".equals(tag) && "package".equals(an) && raw != -1)
+                        r.packageName = str(strings, raw);
+                    if ("uses-sdk".equals(tag) && dataType == TYPE_INT_DEC) {
+                        if (resId == ATTR_MIN_SDK || "minSdkVersion".equals(an)) {
+                            r.minSdk = value;
+                            minSdkValueOffset = a + 16;
+                        } else if (resId == ATTR_TARGET_SDK || "targetSdkVersion".equals(an)) {
+                            r.oldTarget = value;
+                            targetValueOffset = a + 16;
+                        }
+                    }
+                    if ("category".equals(tag) && raw != -1
+                            && "tv.ouya.intent.category.GAME".equals(str(strings, raw)))
+                        r.ouyaGame = true;
+                }
+            }
+            pos += size;
+        }
+
+        if (targetValueOffset >= 0) {
+            r.newTarget = r.oldTarget;
+            if (r.oldTarget < MIN_TARGET) {
+                b.putInt(targetValueOffset, MIN_TARGET);
+                r.newTarget = MIN_TARGET;
+                r.changed = true;
+            }
+        } else if (minSdkValueOffset >= 0) {
+            // No targetSdkVersion: Android treats minSdkVersion as the target.
+            r.newTarget = r.minSdk;
+            if (r.minSdk < MIN_TARGET) {
+                b.putInt(minSdkValueOffset, MIN_TARGET);
+                r.newTarget = MIN_TARGET;
+                r.changed = true;
+            }
+        } else {
+            throw new IllegalArgumentException("This APK has no <uses-sdk> entry PocketOuya can update.");
+        }
+        r.manifest = data;
+        return r;
+    }
+
+    private static String str(List<String> s, int i) {
+        return (i >= 0 && i < s.size()) ? s.get(i) : "";
+    }
+
+    private static void readStrings(ByteBuffer b, int pos, List<String> out) {
+        int count = b.getInt(pos + 8);
+        int flags = b.getInt(pos + 16);
+        int stringsStart = b.getInt(pos + 20);
+        boolean utf8 = (flags & 0x100) != 0;
+        int base = pos + stringsStart;
+        byte[] data = b.array();
+        for (int i = 0; i < count; i++) {
+            int p = base + b.getInt(pos + 28 + i * 4);
+            try {
+                if (utf8) {
+                    int l = data[p] & 0xff;
+                    p += (l & 0x80) != 0 ? 2 : 1;
+                    int len = data[p] & 0xff;
+                    if ((len & 0x80) != 0) {
+                        len = ((len & 0x7f) << 8) | (data[p + 1] & 0xff);
+                        p += 2;
+                    } else {
+                        p += 1;
+                    }
+                    out.add(new String(data, p, len, StandardCharsets.UTF_8));
+                } else {
+                    int len = b.getShort(p) & 0xffff;
+                    p += 2;
+                    if ((len & 0x8000) != 0) {
+                        len = ((len & 0x7fff) << 16) | (b.getShort(p) & 0xffff);
+                        p += 2;
+                    }
+                    out.add(new String(data, p, len * 2, StandardCharsets.UTF_16LE));
+                }
+            } catch (RuntimeException e) {
+                out.add("");
+            }
+        }
+    }
+}
