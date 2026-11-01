@@ -20,7 +20,7 @@ public final class CrashCaptureActivity extends Activity {
     private TextView output,status;
     private final Handler ui=new Handler(Looper.getMainLooper());
     private IBinder remote;
-    private boolean bound,pendingLaunch;
+    private boolean bound,pendingLaunch,journalLaunch;
     private Shizuku.UserServiceArgs args;
     private final Shizuku.OnRequestPermissionResultListener permission=(request,result)->{if(request==ACCESS){if(result==PackageManager.PERMISSION_GRANTED)bind();else message("Shizuku access was denied. Bug-report import remains available.");}};
     private final Shizuku.OnBinderReceivedListener received=()->{if(!isFinishing())bind();};
@@ -77,7 +77,9 @@ public final class CrashCaptureActivity extends Activity {
                 if(isFinishing()||isDestroyed())return;
                 Intent game=getPackageManager().getLaunchIntentForPackage(pkg);
                 if(game==null){game=new Intent(Intent.ACTION_MAIN).addCategory("tv.ouya.intent.category.GAME").setPackage(pkg);if(game.resolveActivity(getPackageManager())==null){message("Capture started, but no game launcher was found.");return;}}
-                try{startActivity(game);message("Capture running. Return after the crash, then tap Stop / show log.");}catch(RuntimeException error){message("Could not launch game: "+error.getMessage());}
+                String title=pkg;try{title=getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkg,0)).toString();}catch(PackageManager.NameNotFoundException ignored){}
+                LaunchLogging.begin(this,title,pkg,pkg,"Installed game / manual crash capture");journalLaunch=true;
+                try{startActivity(game);message("Capture running. Return after the crash, then tap Stop / show log.");}catch(RuntimeException error){LaunchLogging.append(this,title,"Launch failed",error.toString());LaunchLogging.finish(this);journalLaunch=false;message("Could not launch game: "+error.getMessage());}
             });}catch(Exception error){message("Capture could not start: "+error.getMessage());}
         },"start-crash-capture").start();
     }
@@ -106,7 +108,7 @@ public final class CrashCaptureActivity extends Activity {
             showReport("Imported crash details for "+pkg+"\nSource: selected Android bug report (bounded scan)\n\n"+extracted);message("Import complete. Only extracted details are displayed; nothing is uploaded.");
         }catch(Exception error){message("Import failed: "+error.getMessage());}finally{if(temp!=null)temp.delete();}},"import-crash-report").start();}
     }
-    @Override protected void onResume(){super.onResume();if(args!=null)bind();}
+    @Override protected void onResume(){super.onResume();if(journalLaunch){journalLaunch=false;LaunchLogging.finish(this);}if(args!=null)bind();}
     @Override protected void onSaveInstanceState(Bundle state){state.putString("report",report);super.onSaveInstanceState(state);}
     @Override protected void onDestroy(){
         Shizuku.removeRequestPermissionResultListener(permission);Shizuku.removeBinderReceivedListener(received);Shizuku.removeBinderDeadListener(dead);

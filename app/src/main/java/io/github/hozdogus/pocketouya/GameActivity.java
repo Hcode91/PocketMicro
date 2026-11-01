@@ -36,6 +36,7 @@ public class GameActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private volatile boolean stopped,engineReady;
     private boolean resumed;
+    private String gameName="GameMaker game";
     private EngineTouchControls controls;
     private final EngineInput input=new EngineInput((action,key)->{if(engineReady&&!stopped)Engine.key(action,key);});
     private final Object stickLeftOwner=new Object(),stickRightOwner=new Object(),stickUpOwner=new Object(),stickDownOwner=new Object();
@@ -43,6 +44,9 @@ public class GameActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        gameName=getIntent().getStringExtra(EXTRA_NAME);
+        if(gameName==null)gameName="GameMaker game";
+        LaunchLogging.append(this,gameName,"Engine activity","Game screen created; starting translated engine.");
         String apk = getIntent().getStringExtra(EXTRA_APK);
         String pkg = getIntent().getStringExtra(EXTRA_PKG);
         File save = new File(getFilesDir(), "saves/" + pkg);
@@ -60,7 +64,7 @@ public class GameActivity extends Activity {
                 if (started) return;
                 started = true;
                 if (!Engine.start(apk, save.getAbsolutePath(), pkg)) engineStopped();
-                else {engineReady=true;ui.post(()->updateControls());}
+                else {engineReady=true;LaunchLogging.append(GameActivity.this,gameName,"Engine started","Engine initialization returned successfully; beginning frames.");ui.post(()->updateControls());}
             }
 
             @Override public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -94,6 +98,7 @@ public class GameActivity extends Activity {
         stopped = true;
         view.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         String log = Engine.log();
+        LaunchLogging.append(this,gameName,"Engine stopped",log);
         ui.post(() -> {releaseInput();updateControls();showLog(log);});
     }
 
@@ -177,6 +182,7 @@ public class GameActivity extends Activity {
 
     private void finishGame() {
         releaseInput();
+        LaunchLogging.append(this,gameName,"Engine quit",Engine.log());
         finish();
         // The engine keeps global state; end this process so the next launch starts fresh.
         ui.postDelayed(() -> android.os.Process.killProcess(android.os.Process.myPid()), 300);

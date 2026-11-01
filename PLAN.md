@@ -501,3 +501,39 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   **Next:** install branch artifact, long-press Maldita, Play with GameMaker engine
   + touch (beta). No reconversion required. Check movement and Z/X/Space bindings;
   use Controls to adjust buttons per game, report actual phone response.
+
+
+- **2026-11-01 — one global launch/runtime/crash journal + full export:** owner
+  clarified ONE shared saved log for every launched game, including successful
+  runs, with game name followed by output; then requested full-file export.
+  Added app-private files/logs/global-launch.log, timestamped name/source headings,
+  persistent append, stable cross-process file lock, explicit clear and streaming
+  full export through ACTION_CREATE_DOCUMENT. Library GLOBAL LOG / EXPORT opens
+  new private viewer (latest 256 KiB preview); export includes ALL saved bytes,
+  not only the preview. No per-game journal files or automatic rotation/truncation.
+  Play, GameMaker gameplay, Engine test and manual Capture-and-launch paths are
+  integrated; requests/failures/return events are always recorded. Dispatch is
+  not mislabeled as confirmed gameplay success.
+  Private foreground dataSync service records emitted main/system output for the
+  game UID and identified crash blocks via separate non-daemon owner-UID-restricted
+  Shizuku GameLogReader (fixed commands, no READ_LOGS permission). Reader polls at
+  250 ms, marks 128-Ki-character queue overflow and rolling crash-window/filter
+  limits; nothing uploaded. Existing manual 60-second capture is separate.
+  Without Shizuku external-game output is explicitly unavailable; own GameMaker
+  engine logs can use a local same-UID logcat reader. Engine start/stop/quit and
+  boot-test reports also append directly. On return, API30+ own :game crash/ANR
+  exit info/traces are recovered when available (512-KiB bound; binary traces
+  labelled/base64). Foreground-service interruption/time limits are recorded;
+  returning to library/notification Stop ends collection, saved data stays.
+  Added FGS/dataSync/notification permissions and private viewer/service manifest
+  declarations; no global device-wide normal logs, root or auto-boot collector.
+  Tests: shared multi-game success/crash headings, reopen/persistence, concurrent
+  append, Unicode, clear/reuse, byte-identical full export past preview limit;
+  prior inspection/ELF/crash-isolation suites; full Android Java compilation;
+  source manifest private components/type/no-READ_LOGS checks and diff checks pass.
+  See docs/global-game-log.md for scope, privacy and source/OS completeness limits.
+  No phone validation of Shizuku streaming, FGS lifetime or destination provider
+  yet. Full saved export does not recover unavailable/dropped source output.
+  **Next:** install branch artifact; GLOBAL LOG / EXPORT → Shizuku access if
+  needed; launch games normally, return, Refresh, Export full log. No game APK
+  reconversion. Check successful game output and a known crash plus full export.

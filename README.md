@@ -188,3 +188,21 @@ capture a fresh crash if it fails. Vector 1.0.7 launch and touch input were conf
 other game/build combinations remain unverified.
 See [catalog behavior](docs/native-runtime-repair.md) and
 [the original runtime investigation](docs/muffin-knight-runtime-repair.md).
+
+
+## One global game log and full export
+
+Every game launched through PocketOuya appends to a single persistent journal,
+with the **game name followed by log output**, whether or not it crashes. Open
+**GLOBAL LOG / EXPORT** in the library, then **Export full log** to save the entire
+journal as one text file using Android's file picker. The on-screen preview shows
+only the latest 256 KiB; export includes older saved entries as well. No reconversion
+is needed for this launcher feature.
+
+For installed games' normal and crash output, keep Shizuku running with PocketOuya
+access granted. Without it, launch events and available built-in-engine output
+are still saved, and missing access is stated in the journal. Capture runs while
+the game is in front and stops on return to the library or when capture is stopped.
+Android/log-reader limits can leave gaps; no crash text does not prove success.
+The saved journal persists until cleared or app data is removed. It is not uploaded.
+See [capture, storage and export details](docs/global-game-log.md).

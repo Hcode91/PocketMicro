@@ -81,6 +81,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         loadGames();
+        LaunchLogging.finish(this);
     }
 
     // ---------------------------------------------------------------- UI
@@ -116,6 +117,7 @@ public class MainActivity extends Activity {
         add.setOnClickListener(v -> pickApk());
         header.addView(add);
         root.addView(header);
+        Button logs=new Button(this);logs.setText("GLOBAL LOG / EXPORT");logs.setOnClickListener(v->startActivity(new Intent(this,GlobalLogActivity.class)));root.addView(logs);
 
         TextView section = new TextView(this);
         section.setText("PLAY");
@@ -224,6 +226,7 @@ public class MainActivity extends Activity {
     }
 
     private void launch(Game g) {
+        LaunchLogging.begin(this,g.label.toString(),g.pkg,g.pkg,"Installed Android game");
         Intent i = getPackageManager().getLaunchIntentForPackage(g.pkg);
         if (i == null) {
             Intent ouya = new Intent(Intent.ACTION_MAIN).addCategory(OUYA_GAME).setPackage(g.pkg);
@@ -232,10 +235,12 @@ public class MainActivity extends Activity {
                 i = ouya.setClassName(g.pkg, r.get(0).activityInfo.name);
         }
         if (i == null) {
+            LaunchLogging.append(this,g.label.toString(),"Launch failed","No launch activity found.");LaunchLogging.finish(this);
             Toast.makeText(this, "Can't find how to start this game.", Toast.LENGTH_LONG).show();
             return;
         }
-        startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        try{startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));LaunchLogging.append(this,g.label.toString(),"Launch dispatched","Android accepted the launch request; gameplay success is not established.");}
+        catch(RuntimeException error){LaunchLogging.append(this,g.label.toString(),"Launch failed",error.toString());LaunchLogging.finish(this);Toast.makeText(this,"Could not launch game: "+error.getMessage(),Toast.LENGTH_LONG).show();}
     }
 
     private void gameOptions(Game g) {
@@ -260,13 +265,15 @@ public class MainActivity extends Activity {
 
     /** Runs the game's 32-bit engine through PocketOuya's translator (game screen). */
     private void playWithEngine(Game g) {
+        LaunchLogging.begin(this,g.label.toString(),g.pkg,getPackageName(),"Translated GameMaker engine");
         try {
             String apk = getPackageManager().getApplicationInfo(g.pkg, 0).sourceDir;
             startActivity(new Intent(this, GameActivity.class)
                     .putExtra(GameActivity.EXTRA_APK, apk)
                     .putExtra(GameActivity.EXTRA_PKG, g.pkg)
                     .putExtra(GameActivity.EXTRA_NAME, g.label.toString()));
-        } catch (PackageManager.NameNotFoundException ignored) {
+        } catch (RuntimeException|PackageManager.NameNotFoundException error) {
+            LaunchLogging.append(this,g.label.toString(),"Engine launch failed",error.toString());LaunchLogging.finish(this);
         }
     }
 
@@ -280,6 +287,7 @@ public class MainActivity extends Activity {
         }
         File save = new File(getFilesDir(), "saves/" + g.pkg);
         save.mkdirs();
+        LaunchLogging.begin(this,g.label.toString(),g.pkg,getPackageName(),"Engine inspection / boot test");
         showProgress("Running the engine test…\n(this can take up to a minute)");
         new Thread(() -> {
             String report;
@@ -292,6 +300,8 @@ public class MainActivity extends Activity {
                 report = "Engine failed to start: " + t;
             }
             final String text = "Took " + (System.currentTimeMillis() - t0) / 1000.0 + " s\n\n" + report;
+            LaunchLogging.append(this,g.label.toString(),"Engine test result",text);
+            ui.post(()->LaunchLogging.finish(this));
             hideProgress();
             ui.post(() -> {
                 TextView tv = new TextView(this);
