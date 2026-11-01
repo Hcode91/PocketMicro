@@ -8,7 +8,6 @@ import android.provider.Settings;
 import android.widget.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 
 /** Scan, review, prepare, export/install. No APK code executes during inspection. */
@@ -36,7 +35,7 @@ public final class ApkDoctorActivity extends Activity {
     private boolean ready(){return scanned()&&file("ready").isFile()&&file("signed.apk").isFile();}
     private void render(){
         pick.setEnabled(!busy);prepare.setEnabled(!busy&&scanned());export.setEnabled(!busy&&ready());install.setEnabled(!busy&&ready());saveReport.setEnabled(!busy&&scanned());
-        if(!busy){try{text.setText(scanned()?Files.readString(file("report.txt").toPath()):"Select an original APK to inspect it for this phone. Nothing is installed automatically. Supported fixes produce a separately signed APK; unresolved issues stay visible. Scan results do not prove the APK is safe or that it will run. Export results before leaving this screen; working copies use temporary app storage.");}catch(Exception e){text.setText("Saved report unavailable. Select the APK again.");}}
+        if(!busy){try{text.setText(scanned()?readText(file("report.txt")):"Select an original APK to inspect it for this phone. Nothing is installed automatically. Supported fixes produce a separately signed APK; unresolved issues stay visible. Scan results do not prove the APK is safe or that it will run. Export results before leaving this screen; working copies use temporary app storage.");}catch(Exception e){text.setText("Saved report unavailable. Select the APK again.");}}
     }
     private interface Work{void run()throws Exception;}
     private void job(String message,Work action){
@@ -49,21 +48,21 @@ public final class ApkDoctorActivity extends Activity {
         clean(dir);dir=new File(getCacheDir(),"apk-doctor-"+UUID.randomUUID());if(!dir.mkdirs())throw new IOException("Cannot create inspection directory");
         try(InputStream in=getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(file("original.apk"))){copy(in,out,2L*1024*1024*1024);}
         String report=ModernApkDoctor.inspect(file("original.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);
-        Files.writeString(file("report.txt").toPath(),report,StandardCharsets.UTF_8);
+        writeText(file("report.txt"),report);
     });}
     private void prepare(){new AlertDialog.Builder(this).setTitle("Prepare a converted copy?")
         .setMessage("This raises an old target where supported, applies exact native-library repairs, and signs a new APK with PocketOuya's key. It does not resolve every reported issue. The publisher's original signing identity cannot be retained. Existing updates or signature checks may fail. No controls or purchase hooks are added.")
         .setPositiveButton("Prepare",(d,w)->job("Preparing and verifying converted APK…",()->{
             String before=ModernApkDoctor.inspect(file("original.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);
             file("ready").delete();file("signed.apk").delete();
-            Files.writeString(file("report.txt").toPath(),before,StandardCharsets.UTF_8);
+            writeText(file("report.txt"),before);
             try{
                 ManifestPatcher.Result r=ApkRebuilder.rebuild(file("original.apk"),file("patched.apk"),null,false,false,true,ModernApkDoctor.minimumTarget(Build.VERSION.SDK_INT));
                 GameSigner.sign(this,file("patched.apk"),file("signed.apk"));
                 if(!new com.android.apksig.ApkVerifier.Builder(file("signed.apk")).build().verify().isVerified())throw new IOException("Converted APK signature verification failed");
                 String after=ModernApkDoctor.inspect(file("signed.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);
-                Files.writeString(file("report.txt").toPath(),"PREPARED COPY — signature verification passed; launch not tested.\nPackage: "+r.packageName+"\n\nApplied conversion results:\n"+r.compatibilityReport+"\n\nPOST-CONVERSION INSPECTION\n"+after+"\n\nORIGINAL INSPECTION\n"+before,StandardCharsets.UTF_8);
-                Files.writeString(file("package.txt").toPath(),r.packageName);if(!file("ready").createNewFile())throw new IOException("Could not mark prepared APK");
+                writeText(file("report.txt"),"PREPARED COPY — signature verification passed; launch not tested.\nPackage: "+r.packageName+"\n\nApplied conversion results:\n"+r.compatibilityReport+"\n\nPOST-CONVERSION INSPECTION\n"+after+"\n\nORIGINAL INSPECTION\n"+before);
+                writeText(file("package.txt"),r.packageName);if(!file("ready").createNewFile())throw new IOException("Could not mark prepared APK");
             }catch(Exception e){file("ready").delete();file("signed.apk").delete();throw e;}
             finally{file("patched.apk").delete();}
         })).setNegativeButton("Cancel",null).show();}
@@ -82,10 +81,20 @@ public final class ApkDoctorActivity extends Activity {
         if(!ready())return;
         if(!getPackageManager().canRequestPackageInstalls()){new AlertDialog.Builder(this).setTitle("Allow APK installation").setMessage("Enable Allow from this source, return here, then tap Install again.").setPositiveButton("Settings",(d,w)->startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+getPackageName())))).setNegativeButton("Cancel",null).show();return;}
         job("Handing prepared APK to Android…",()->{
-            String pkg=Files.readString(file("package.txt").toPath());
+            String pkg=readText(file("package.txt"));
             GameInstaller.install(this,file("signed.apk"));
             android.content.SharedPreferences p=getSharedPreferences("library",MODE_PRIVATE);Set<String> imported=new HashSet<>(p.getStringSet("imported",Collections.emptySet()));imported.add(pkg);p.edit().putStringSet("imported",imported).apply();
         });
+    }
+    private static String readText(File source)throws IOException{
+        try(InputStream in=new FileInputStream(source);ByteArrayOutputStream out=new ByteArrayOutputStream()){
+            byte[] b=new byte[8192];int total=0;
+            for(int n;(n=in.read(b))!=-1;){total+=n;if(total>4*1024*1024)throw new IOException("Saved report exceeds read limit");out.write(b,0,n);}
+            return new String(out.toByteArray(),StandardCharsets.UTF_8);
+        }
+    }
+    private static void writeText(File destination,String value)throws IOException{
+        try(Writer out=new OutputStreamWriter(new FileOutputStream(destination),StandardCharsets.UTF_8)){out.write(value);}
     }
     private static void copy(InputStream in,OutputStream out,long limit)throws IOException{
         if(in==null||out==null)throw new IOException("Document provider did not open the file");byte[] b=new byte[65536];long total=0;

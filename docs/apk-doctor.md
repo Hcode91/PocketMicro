@@ -80,3 +80,15 @@ repairs with API 24 conversion, v1/v2 signing, APK signature verification and
 post-conversion inspection with the original unchanged. This fixture is not a
 complete game APK. File-picker export, installer permissions/session behavior,
 activity restoration and real converted app launches still need phone testing.
+
+
+### Android core API compilation
+
+The initial CI build exposed six desktop-JDK `Files.readString/writeString`
+references unavailable in the Android compile API. Doctor report/package I/O
+now uses UTF-8 file streams, with a 4 MiB saved-text read bound. Validate local
+Android compilation with the AGP-generated Android core `jdkImage` passed to
+`javac --system`; putting android.jar only on the classpath can accidentally
+resolve java.* methods from the desktop JDK. The original source fails this
+Android-core check on the same six calls; the updated full app passes it. CI's
+normal Android Gradle compile remains the authoritative build check.

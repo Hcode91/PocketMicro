@@ -812,3 +812,18 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   Export APK/report or explicit Install; protect existing saves/signature updates.
   Phone UI/picker/installer/lifecycle restoration and actual app launches remain
   device tests. Use existing global log after a chosen launch for later blockers.
+
+
+- **2026-11-01 — Doctor CI compilation fix:** run41355964249 passed both host
+  suites but failed Android Java compilation with SIX unavailable desktop-JDK
+  Files.readString/writeString calls in ApkDoctorActivity. Replaced all with
+  UTF-8 FileInputStream/OutputStreamWriter helpers; report read bounded4MiB.
+  No SDK bump, dependency or feature behavior change. Root cause of missed local
+  error: android.jar on javac classpath still resolved java.* from desktop JDK.
+  Corrected validation using AGP-generated Android core jdkImage via --system.
+  API36 core stub also omits these methods. Original committed source reproduces
+  exactly those missing-method errors under this check; corrected FULL app
+  compiles successfully with only existing annotation/deprecation warnings.
+  CI uses API35 and its own Android core image and must verify the new build.
+  docs/apk-doctor.md records correct local verification. **Next:** replacement
+  APK build, user monitors full build; phone doctor/export/install still pending.
