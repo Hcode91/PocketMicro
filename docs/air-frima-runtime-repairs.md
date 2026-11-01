@@ -147,3 +147,28 @@ embedded runtime, which may itself have text relocations. Capture the new global
 log to identify the next stage. The original payload files are needed if that
 stage requires further repair, but not to try this independent loader fix. No
 successful Abbigale launch is claimed and no donor runtime is substituted.
+
+### Follow-up device crash: 2026-11-01 19:22
+
+The owner's new trace reports native SIGSEGV/SEGV_ACCERR, a stack-overflow hint,
+and 512 frames. Offsets `0x7c3248`, `0x7d84e8`, `0x7d8784`, `0x7d8868` repeat
+in the anonymous mapping based at `0xdb8e0000`; the top frame is `0x7c322c`.
+This strongly suggests recursive native calls exhausting the main-thread stack.
+The visible failure differs from the previous Android linker TEXTREL rejection.
+It does not prove the entire runtime repair is correct or establish the loop's
+cause. No library name, symbols or complete memory map identify these functions.
+
+Reinspection of all three supplied archives confirms that none includes the
+embedded `assets/libs/armeabi-v7a/libmono.so` or `libunity.so`. The small supplied
+loader ELF load ranges end at virtual offsets `0x1fc84` and `0x14988`; the new
+anonymous-frame offsets cannot be directly resolved against those files. Do not
+attribute the recursion to a named runtime function or patch an arbitrary branch
+from this trace alone. Increasing the stack size would not resolve the cause of
+an unbounded call cycle.
+
+Next evidence: extract **only** those two files from the original APK's
+`assets/libs/armeabi-v7a/` directory (not its top-level `lib/` directory), plus the
+full global log from that launch. Separate ZIPs avoid uploading all game assets.
+A complete tombstone with memory maps, if available, can identify the anonymous
+mapping. No additional Abbigale binary change is made for this unsymbolized
+crash; the loader-only repair remains explicitly partial.

@@ -6,12 +6,10 @@ public final class PurchaseProfileTests {
         io.github.hozdogus.pocketouya.MarmaladeRuntimeRepairTest.main(new String[0]);
         io.github.hozdogus.pocketouya.EngineInputTest.main(new String[0]);
         io.github.hozdogus.pocketouya.ArmLiteralPicRepairTest.main(new String[0]);
-        io.github.hozdogus.pocketouya.StouyapiClientTest.main(new String[0]);
         OfflineCatalogTest.main(new String[0]);
         VirtualPadTest.main(new String[0]);
         OuyaPadSinkTest.main(new String[0]);
         MarmaladePadSinkTest.main(new String[0]);
         OfflineOuyaTest.main(new String[0]);
-        ServiceOuyaTest.main(new String[0]);
     }
 }

@@ -671,3 +671,24 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   reconvert original supported Unity game with Community server (+touch), install,
   approve installed game's access, normal Play; export global log on failure.
   Device must validate provider authorization/revocation and real API coverage.
+
+
+- **2026-11-01 — Remove stouyapi at owner's request; Abbigale new trace:**
+  removed the entire 5fc257b server integration: settings/test UI, global enable,
+  per-game approvals, exported provider, client, injected ServiceOuya, conversion
+  modes, INTERNET permission and server-specific tests/docs. Pre-server offline,
+  touch, native repairs and global logging restored exactly. Historical progress
+  entry above retained as history, not an active feature. No installed-game/APK
+  files can be changed remotely: prior server-converted games need reconversion
+  from their original APK after installing this update.
+  Abbigale 19:22 trace now SIGSEGV/SEGV_ACCERR with 512 frames and repeating
+  anonymous offsets 0x7c3248/0x7d84e8/0x7d8784/0x7d8868, strongly suggesting native
+  recursion/stack exhaustion. Different visible failure from TEXTREL rejection;
+  no full-boot or correctness claim. Reinspected all supplied archives: only
+  92,744-byte Mono and 47,688-byte Unity proxies plus OUYA extension; embedded
+  assets/libs/armeabi-v7a runtimes absent. Proxy ELF load ranges end at 0x1fc84
+  and 0x14988, so new anonymous offsets cannot be directly symbolized against
+  supplied files. Added evidence/limits/next files to air-frima runtime document.
+  No speculative recursion branch patch or stack-limit workaround. **Next:**
+  original APK's assets/libs/armeabi-v7a/libmono.so and libunity.so, individually
+  zipped if needed, full launch global log and tombstone maps when available.

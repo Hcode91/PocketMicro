@@ -72,22 +72,6 @@ public final class GeneralCompatibilityTest {
   Map<String,byte[]> source=input(false,true);GameCompatibilityPatcher.Result both=GameCompatibilityPatcher.patch(source,launch,true,true);
   check(both.touchEnabled&&both.purchasesEnabled&&both.dex.size()==2);check(both.report.contains("1 use the OUYA native"));
   lifecycle(both.dex.get("classes2.dex"));check(bridgeCalls(both.dex.get("classes.dex"),"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==6);
-  Map<String,byte[]> remoteInput=new LinkedHashMap<>(source);
-  List<ClassDef> remoteClasses=new ArrayList<>();
-  for(ClassDef cls:new DexBackedDexFile(null,source.get("classes.dex")).getClasses()){
-   if(cls.getType().equals("Ltv/ouya/sdk/OuyaUnityPlugin;")){
-    List<Field> fields=new ArrayList<>();for(Field f:cls.getFields())fields.add(f);
-    fields.add(new ImmutableField(cls.getType(),"m_developerId","Ljava/lang/String;",10,null,Collections.emptySet(),Collections.emptySet()));
-    remoteClasses.add(new ImmutableClassDef(cls.getType(),cls.getAccessFlags(),cls.getSuperclass(),cls.getInterfaces(),cls.getSourceFile(),cls.getAnnotations(),fields,cls.getMethods()));
-   }else remoteClasses.add(cls);
-  }
-  remoteInput.put("classes.dex",dex(remoteClasses.toArray(new ClassDef[0])));
-  GameCompatibilityPatcher.Result remote=GameCompatibilityPatcher.patch(remoteInput,launch,true,false,true);
-  check(remote.serverEnabled&&remote.touchEnabled&&remote.report.contains("Community server:"));
-  check(bridgeCalls(remote.dex.get("classes.dex"),"Lio/github/hcode91/pocketouya/bridge/ServiceOuya;")==6);
-  check(bridgeCalls(remote.dex.get("classes.dex"),"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==0);
-  check(!GameCompatibilityPatcher.patch(source,launch,false,false,true).serverEnabled);
-  try{GameCompatibilityPatcher.patch(source,launch,false,true,true);throw new AssertionError("mixed adapters");}catch(IOException expected){}
   GameCompatibilityPatcher.Result onlyTouch=GameCompatibilityPatcher.patch(source,launch,true,false);check(onlyTouch.touchEnabled&&!onlyTouch.purchasesEnabled&&!onlyTouch.dex.containsKey("classes.dex"));
   GameCompatibilityPatcher.Result onlyPurchase=GameCompatibilityPatcher.patch(source,launch,false,true);check(!onlyPurchase.touchEnabled&&onlyPurchase.purchasesEnabled&&onlyPurchase.dex.size()==1);
   for(boolean missing:new boolean[]{true,false}){GameCompatibilityPatcher.Result unsupported=GameCompatibilityPatcher.patch(input(missing,missing),launch,true,true);check(unsupported.touchEnabled&&!unsupported.purchasesEnabled);check(unsupported.report.contains("Original purchase checks were left unchanged"));}
@@ -121,14 +105,6 @@ public final class GeneralCompatibilityTest {
    ManifestPatcher.Result result=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,true);check(result.compatibilityReport.contains("enabled"));
    try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")!=null);check(Arrays.equals(helper,ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes3.dex")))));check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));}
    ApkRebuilder.rebuild(original.toFile(),converted.toFile());try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")==null);check(Arrays.equals(source.get("classes.dex"),ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex")))));}
-   // A complete server conversion must append exactly one bridge and retain assets.
-   try(ZipOutputStream out=new ZipOutputStream(Files.newOutputStream(original))){out.putNextEntry(new ZipEntry("AndroidManifest.xml"));out.write(manifest(false));out.closeEntry();for(Map.Entry<String,byte[]> e:remoteInput.entrySet()){out.putNextEntry(new ZipEntry(e.getKey()));out.write(e.getValue());out.closeEntry();}out.putNextEntry(new ZipEntry("assets/test"));out.write(new byte[]{4,5,6});out.closeEntry();}
-   ManifestPatcher.Result service=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,false,false,false,true);check(service.serverEnabled);
-   try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")!=null);check(bridgeCalls(ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex"))),"Lio/github/hcode91/pocketouya/bridge/ServiceOuya;")==6);check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));}
-   byte[] newer=manifest(false);for(int n=8;n+8<=newer.length;){ByteBuffer b=ByteBuffer.wrap(newer).order(ByteOrder.LITTLE_ENDIAN);int type=b.getShort(n)&65535,size=b.getInt(n+4);if(type==0x102){int count=b.getShort(n+28)&65535,start=n+16+(b.getShort(n+24)&65535),stride=b.getShort(n+26)&65535;for(int a=0;a<count;a++){int pos=start+a*stride;if(b.getInt(pos+4)==5)b.putInt(pos+16,30);}}n+=size;}
-   try(ZipOutputStream out=new ZipOutputStream(Files.newOutputStream(original))){out.putNextEntry(new ZipEntry("AndroidManifest.xml"));out.write(newer);out.closeEntry();for(Map.Entry<String,byte[]> e:remoteInput.entrySet()){out.putNextEntry(new ZipEntry(e.getKey()));out.write(e.getValue());out.closeEntry();}}
-   ManifestPatcher.Result modern=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,false,false,false,true);check(!modern.serverEnabled&&modern.compatibilityReport.contains("target API 30+"));
-   try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")==null);check(Arrays.equals(remoteInput.get("classes.dex"),ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex")))));}
   }finally{try(var paths=Files.list(temp)){for(Path p:paths.toArray(Path[]::new))Files.delete(p);}Files.delete(temp);}
   System.out.println("Cross-game/multidex detection, activity/alias parsing, feature isolation, unsupported reporting, inherited lifecycle, reinjection and ZIP preservation tests pass");
  }

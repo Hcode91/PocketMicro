@@ -27,7 +27,7 @@ public final class GameCompatibilityPatcher {
     }
     public static final class Result {
         public final Map<String,byte[]> dex = new LinkedHashMap<>();
-        public boolean touchEnabled,purchasesEnabled,serverEnabled;
+        public boolean touchEnabled,purchasesEnabled;
         public String report;
         public boolean needsBridge(){return touchEnabled||purchasesEnabled;}
     }
@@ -94,10 +94,6 @@ public final class GameCompatibilityPatcher {
         while(type!=null&&seen.add(type)){if(type.equals(loader))return true;ClassDef parent=classes.get(type);if(parent==null)break;type=parent.getSuperclass();}return false;
     }
     public static Result patch(Map<String,byte[]> input,Set<String> launchers,boolean touch,boolean offline)throws IOException {
-        return patch(input,launchers,touch,offline,false);
-    }
-    public static Result patch(Map<String,byte[]> input,Set<String> launchers,boolean touch,boolean offline,boolean server)throws IOException {
-        if(offline&&server)throw new IOException("Choose offline receipts or the server adapter, not both");
         try {
             Map<String,DexBackedDexFile> files=new LinkedHashMap<>();Map<String,ClassDef> classes=new HashMap<>();
             for(Map.Entry<String,byte[]> entry:input.entrySet()){
@@ -119,17 +115,12 @@ public final class GameCompatibilityPatcher {
                         return unsupported;
                     }
             if(touch)for(String launcher:launchers)if(canHook(classes.get(launcher),classes)){targets.add(launcher);if(nativeRoute(classes.get(launcher),classes))nativeTargets++;else if(marmaladeRoute(classes.get(launcher),classes))marmaladeTargets++;}
-            Result result=new Result();result.touchEnabled=!targets.isEmpty();result.purchasesEnabled=(offline||server)&&purchases(classes);
-            if(server){
-                boolean developer=false;ClassDef plugin=classes.get(PLUGIN);
-                if(plugin!=null)for(Field f:plugin.getFields())if(f.getName().equals("m_developerId")&&f.getType().equals("Ljava/lang/String;")&&AccessFlags.STATIC.isSet(f.getAccessFlags()))developer=true;
-                result.purchasesEnabled&=developer;result.serverEnabled=result.purchasesEnabled;
-            }
+            Result result=new Result();result.touchEnabled=!targets.isEmpty();result.purchasesEnabled=offline&&purchases(classes);
             for(Map.Entry<String,DexBackedDexFile> file:files.entrySet()){
                 DexPool pool=new DexPool(file.getValue().getOpcodes());boolean changed=false;
                 for(ClassDef cls:file.getValue().getClasses()) {
                     if(targets.contains(cls.getType())){pool.internClass(hookActivity(cls));changed=true;}
-                    else if(result.purchasesEnabled&&cls.getType().equals(PLUGIN)){pool.internClass(hookPurchases(cls,server));changed=true;}
+                    else if(result.purchasesEnabled&&cls.getType().equals(PLUGIN)){pool.internClass(hookPurchases(cls));changed=true;}
                     else pool.internClass(cls);
                 }
                 if(changed){MemoryDataStore out=new MemoryDataStore();pool.writeTo(out);result.dex.put(file.getKey(),out.getData());}
@@ -143,7 +134,6 @@ public final class GameCompatibilityPatcher {
                 if(targets.size()<launchers.size())report.append("Some launch activities could not be patched; controls may not appear on those screens.\n");
             }
             if(offline)report.append(result.purchasesEnabled?"Offline purchases: matching OUYA Unity SDK detected; local receipt bridge enabled. No payment is made. Game-specific validation may still reject it.\n":"Offline purchases: no matching protocol found. Original purchase checks were left unchanged; no unlock is claimed.\n");
-            if(server)report.append(result.serverEnabled?"Community server: matching OUYA Unity SDK detected. Profile, products, purchase responses and receipts use PocketOuya’s configured stouyapi server. Enable service and approve this installed game in PocketOuya. No official account or payment is used; server receipts may be static, and purchases may not persist.\n":"Community server: unsupported SDK/developer-ID layout. Original service and purchase checks were left unchanged.\n");
             report.append("\nThis does not fix incompatible native engines, unavailable services, custom/native DRM or unrelated billing systems. Reconvert original APKs to update embedded compatibility code.");
             result.report=report.toString();return result;
         }catch(IOException e){throw e;}catch(Exception e){throw new IOException("Cannot inspect this game's DEX layout. Try normal conversion.",e);}
@@ -171,12 +161,12 @@ public final class GameCompatibilityPatcher {
         return copy(cls,methods);
     }
     private static Instruction touchCall(String method){return new ImmutableInstruction3rc(Opcode.INVOKE_STATIC_RANGE,0,1,new ImmutableMethodReference(BRIDGE+"TouchControls;",method,Collections.singletonList("Landroid/app/Activity;"),"V"));}
-    private static ClassDef hookPurchases(ClassDef cls,boolean server){
+    private static ClassDef hookPurchases(ClassDef cls){
         List<Method> methods=new ArrayList<>();
         for(Method m:cls.getMethods()){
             if(!signature(m).equals(PURCHASES.get(m.getName()))){methods.add(m);continue;}
             int count=m.getParameterTypes().size();List<Instruction> code=new ArrayList<>();
-            code.add(new ImmutableInstruction35c(Opcode.INVOKE_STATIC,count,0,0,0,0,0,new ImmutableMethodReference(BRIDGE+(server?"ServiceOuya;":"OfflineOuya;"),m.getName(),m.getParameterTypes(),m.getReturnType())));
+            code.add(new ImmutableInstruction35c(Opcode.INVOKE_STATIC,count,0,0,0,0,0,new ImmutableMethodReference(BRIDGE+"OfflineOuya;",m.getName(),m.getParameterTypes(),m.getReturnType())));
             boolean returned=!m.getReturnType().equals("V");
             if(returned){code.add(new ImmutableInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));code.add(new ImmutableInstruction11x(Opcode.RETURN_OBJECT,0));}else code.add(new ImmutableInstruction10x(Opcode.RETURN_VOID));
             methods.add(new ImmutableMethod(cls.getType(),m.getName(),m.getParameters(),m.getReturnType(),m.getAccessFlags(),m.getAnnotations(),m.getHiddenApiRestrictions(),new ImmutableMethodImplementation(Math.max(count,returned?1:0),code,Collections.emptyList(),Collections.emptyList())));

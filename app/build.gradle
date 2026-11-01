@@ -115,7 +115,6 @@ def purchaseTestClasses = layout.buildDirectory.dir('purchase-tests/classes')
 def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCompile) {
     source files('src/main/java/io/github/hozdogus/pocketouya/OuyaPurchasePatcher.java',
             'src/main/java/io/github/hozdogus/pocketouya/GameCompatibilityPatcher.java',
-            'src/main/java/io/github/hozdogus/pocketouya/StouyapiClient.java',
             'src/main/java/io/github/hozdogus/pocketouya/NativeStartupChecks.java',
             'src/main/java/io/github/hozdogus/pocketouya/ArmRuntimePicRepair.java',
             'src/main/java/io/github/hozdogus/pocketouya/NativeRuntimeRepair.java',
@@ -127,7 +126,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
     source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
     source rootProject.files('tests/OuyaPurchasePatcherTest.java', 'tests/OfflineCatalogTest.java',
-            'tests/OfflineOuyaTest.java', 'tests/StouyapiClientTest.java', 'tests/ServiceOuyaTest.java', 'tests/GeneralCompatibilityTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
+            'tests/OfflineOuyaTest.java', 'tests/GeneralCompatibilityTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
     classpath = configurations.purchaseHostTests
     destinationDirectory = purchaseTestClasses
     sourceCompatibility = '17'
