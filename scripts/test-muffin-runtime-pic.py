@@ -49,7 +49,8 @@ def relocations(data):
             yield struct.unpack_from('<II', data, at)
 
 
-def execute(data, bias, unity, patched, thunk=False, callee_thumb=False, caller_thumb=False):
+def execute(data, bias, unity, patched, thunk=False, callee_thumb=False, caller_thumb=False, profile=None):
+    init, destructor, literal, got, stop_offset = profile or ((0x64720, 0x64730, 0x64744, 0x8bc1bc, 0x635e0) if unity else (0x15a60, 0, 0, 0, 0x150e4))
     vm = Uc(UC_ARCH_ARM, UC_MODE_ARM)
     loads = layout(data)[0]
     size = (max(address+memory for _, address, _, memory, _ in loads)+4095) & ~4095
@@ -64,7 +65,7 @@ def execute(data, bias, unity, patched, thunk=False, callee_thumb=False, caller_
         if kind == 23:
             value = (bias+word(data, file_offset(data, target))) & 0xffffffff
             vm.mem_write(bias+target, struct.pack('<I', value))
-        if unity and target in (0x64744, 0x8bc1bc) and kind in (2, 22):
+        if (unity or profile) and target in (literal, got) and kind in (2, 22):
             vm.mem_write(bias+target, struct.pack('<I', 0x50000000 | int(callee_thumb)))
     # Execute with the ELF's original RX/RW permissions, never an added RWX mapping.
     vm.mem_protect(bias, size, UC_PROT_READ)
@@ -82,7 +83,7 @@ def execute(data, bias, unity, patched, thunk=False, callee_thumb=False, caller_
     vm.reg_write(UC_ARM_REG_R0, 0xabc123)
     vm.reg_write(UC_ARM_REG_R4, 0x12345678)
     trace = []
-    stop = bias+(0x635e0 if unity else 0x150e4)
+    stop = bias+stop_offset
 
     def hook(machine, pc, _, __):
         if (not thunk and pc == stop) or (thunk and pc == 0x50000000):
@@ -93,7 +94,7 @@ def execute(data, bias, unity, patched, thunk=False, callee_thumb=False, caller_
             machine.emu_stop()
 
     vm.hook_add(UC_HOOK_CODE, hook)
-    entry = (0x64731 if thunk else 0x64720) if unity else 0x15a60
+    entry = (destructor | 1) if thunk else init
     vm.emu_start(bias+entry, 0x60000004, count=100)
     assert len(trace) == 1
     if thunk:

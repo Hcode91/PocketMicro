@@ -54,6 +54,21 @@ public final class NativeRuntimeRepairTest {
   check(Arrays.equals(versions.replacements.get(direct),repaired2)&&versions.report.contains("second version")&&versions.report.contains("Unsupported candidates: 0"));
   NativeRuntimeRepair.Profile broken=new NativeRuntimeRepair.Profile("libmono.so",originalHash,"0".repeat(64),proxyHash,"broken catalog fixture",0x100,0x1200,-1,0);
   try{inspect(Map.of(direct,source),Collections.singletonList(broken));throw new AssertionError("accepted unverified output");}catch(IOException expected){}
+  byte[] loaderSource=source.clone();loaderSource[0x7fe]=42;byte[] loaderOutput=ArmRuntimePicRepair.repairLayout(loaderSource,0x100,0x1200,-1,0);
+  String loaderHash=ArmRuntimePicRepair.sha(loaderSource);
+  NativeRuntimeRepair.Profile runtime=new NativeRuntimeRepair.Profile("libmono.so",originalHash,outputHash,loaderHash,"known real payload",0x100,0x1200,-1,0);
+  NativeRuntimeRepair.Profile loader=new NativeRuntimeRepair.Profile("libmono.so",loaderHash,ArmRuntimePicRepair.sha(loaderOutput),null,"loader-only; embedded runtime not validated",0x100,0x1200,-1,0);
+  List<NativeRuntimeRepair.Profile> fallbackCatalog=Arrays.asList(loader,runtime);
+  NativeRuntimeRepair.Plan loaderOnly=inspect(Map.of(direct,loaderSource),fallbackCatalog);
+  check(Arrays.equals(loaderOnly.replacements.get(direct),loaderOutput)&&loaderOnly.report.contains("Loader-only repair selected")&&loaderOnly.report.contains("Unsupported candidates: 1"));
+  NativeRuntimeRepair.Plan unknownPayload=inspect(Map.of(direct,loaderSource,asset,new byte[]{99}),fallbackCatalog);
+  check(Arrays.equals(unknownPayload.replacements.get(direct),loaderOutput)&&unknownPayload.report.contains("Unrecognized embedded payload")&&unknownPayload.report.contains("Embedded assets are unchanged")&&unknownPayload.replacements.size()==1);
+  check(Arrays.equals(inspect(Map.of(direct,loaderSource,asset,source),fallbackCatalog).replacements.get(direct),fixed)); // Prefer a real supported payload even when loader profile is listed first.
+  check(Arrays.equals(inspect(Map.of(direct,loaderSource,asset,fixed),fallbackCatalog).replacements.get(direct),fixed));
+  NativeRuntimeRepair.Profile badRuntime=new NativeRuntimeRepair.Profile("libmono.so",originalHash,"0".repeat(64),loaderHash,"broken recognized payload",0x100,0x1200,-1,0);
+  try{inspect(Map.of(direct,loaderSource,asset,source),Arrays.asList(loader,badRuntime));throw new AssertionError("Known runtime output mismatch fell back to loader");}catch(IOException expected){}
+  check(inspect(Map.of(direct,loaderOutput),fallbackCatalog).replacements.isEmpty());
+  check(inspect(Map.of(direct,loaderOutput),fallbackCatalog).report.contains("embedded runtime not validated"));
   System.out.println("Game-independent direct/proxy runtime matching, ABI aliases, partial/unknown/missing/idempotent cases and version/output-hash tests pass");
  }
  public static void main(String[] args)throws Exception{

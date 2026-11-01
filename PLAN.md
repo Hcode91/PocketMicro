@@ -610,3 +610,36 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   file counts, normal Play, fresh global log. Supply Abbigale's two actual files
   from assets/libs/armeabi-v7a (or complete-APK conversion report with payload
   hashes) to finish that repair. New candidates still need phone validation.
+
+
+- **2026-11-01 — Abbigale known-loader-only repair:** owner supplied another
+  armeabi-v7a.zip and explicitly prioritized fixing Abbigale. It contains the
+  same known Mono/player loader bytes. Corrected prior overly categorical claim
+  that nothing could be repaired without payloads: the loaders themselves have
+  two TEXTREL writes each and can be fixed independently. Added exact source/
+  output profiles using existing validated ARM initializer + Thumb atexit PIC
+  routine. Mono init 0x3af8 / target 0x17000 / thunk 0x3b08 / atexit PLT 0x3a14;
+  Unity init 0x1760 / target 0xc000 / thunk 0x1770 / atexit PLT 0x167c.
+  Outputs 857d1f4e4f107dbcc429dcddb5a3bd6fa2f10fdbb42b953da141d4ac3d8d4e06
+  (Mono) and cdbe592192dc48608ca8d908d4879f120ee33eb0cd2bfa128fd7169baa598ab5
+  (Unity). Original load/forward logic, SONAMEs, mappings and assets preserved.
+  Catalog prefers recognized real embedded payload promotion; only if unavailable,
+  oversized or unrecognized can an independently fingerprinted installed loader
+  receive its own repair. Missing/unknown embedded runtimes remain unsupported
+  and explicit in reports; unchanged payloads declaring TEXTREL also flagged.
+  Unknown loaders remain unchanged; known payload patch/hash failure aborts and
+  never silently falls back. Already-repaired loader labels retain payload caveat.
+  This fixes the known loader's error, not a verified full Abbigale launch.
+  Tests: actual archive two-loader output hashes, unchanged DEX/resources/OUYA
+  extension, repair-only adds no helper, idempotence; Unicorn init/call arguments,
+  original RX/RW protections, stack/callee-saved state and ARM/Thumb caller/target
+  combinations at three biases; synthetic missing/unknown fallback, preferred
+  supported promotion, preserved assets, no fallback on bad payload output; prior
+  host suites and full Android Java compile pass. Existing Mono/Unity and AIR/
+  Frima/Marmalade matching retained. Added scripts/test-unity-loader-pic.py and
+  generalized existing optional instruction checker without changing defaults.
+  **Next:** install new branch APK, reconvert ORIGINAL COMPLETE Abbigale APK using
+  startup repairs + touch, review whether full-payload promotion or loader-only
+  repair was selected, install update and normal Play. If it fails later, export
+  new global log to determine embedded runtime versus other native/API blockers.
+  No new APK/game launch has been verified on the phone; AIR/stouyapi not changed.

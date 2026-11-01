@@ -18,6 +18,8 @@ public final class NativeRuntimeRepair {
         }
     }
     private static final List<Profile> CATALOG=Arrays.asList(
+        new Profile("libmono.so","a280a957e102a2b0e075f339ddff6a648a27af8d8ecfb2a994a43905d38cf15c","857d1f4e4f107dbcc429dcddb5a3bd6fa2f10fdbb42b953da141d4ac3d8d4e06",null,"Unity Mono loader-only — text-relocation fix; embedded runtime not validated",0x3af8,0x17000,0x3b08,0x3a14),
+        new Profile("libunity.so","aee89345929061f1e52fe72a7874796a8d3cdba8a663bf370a14cea896b05961","cdbe592192dc48608ca8d908d4879f120ee33eb0cd2bfa128fd7169baa598ab5",null,"Unity player loader-only — text-relocation fix; embedded runtime not validated",0x1760,0xc000,0x1770,0x167c),
         new Profile("libSpaceShooter.so","92a31b66bf1127993764a29481866c6dfa0b02889f1d850ceca06a74b3f3fe33","f242435f27d97c46cbe4e26d5b6baf2ce41e6ef72bca1985425af3699f77870e",null,"Frima / Space Shooter 1.1.3 — text-relocation initializer fix",0x74210,0x1ed620,-1,0),
         new Profile("libCore.so","6cc57698961c0dab6bf2d32d443a1c07c5f6befcd552dc25738893f77104c22c","b6f2b60be0bd662bf62a1afb4f23deb7d33e715c20fc04b66d322927acd20813",null,"Adobe AIR Core — 17 code relocations / 18 ARM loads repaired; legacy media dependencies remain",bytes->ArmLiteralPicRepair.repair(bytes,17,0,18)),
         new Profile("libysshared.so","b943b7e7631b4ef047f2eeeef6c50ff77dd6756c66f9eb7954a3e846f387b69c","92ee9b5a46bf4bf1092bfc73cc747d8cc102312fdad3631d74bc2812765b96a2",null,"Adobe AIR native extension — relative code literals and symbolic relocation repaired",bytes->ArmLiteralPicRepair.repair(bytes,2,1,3)),
@@ -48,18 +50,29 @@ public final class NativeRuntimeRepair {
             byte[] source=installed;boolean proxy=false;Profile profile=null;
             for(Profile candidate:catalog)if(candidate.name.equals(name)&&installedHash.equals(candidate.proxyHash))proxy=true;
             if(proxy){
-                // These fingerprinted proxies refer specifically to this embedded ARMv7 path.
-                String asset="assets/libs/armeabi-v7a/"+name;ZipEntry payload=zip.getEntry(asset);
-                if(payload==null){lines.add("Known Unity loader proxy, missing embedded runtime "+asset+"; unchanged: "+path+". The lib/ file is only a loader. Use the original complete APK with its assets/libs runtimes included.");unsupported++;continue;}
-                source=read(zip,payload,budget);
-                if(source==null){lines.add("Embedded runtime exceeds inspection limit; unchanged: "+path);unsupported++;continue;}
-                hash=ArmRuntimePicRepair.sha(source);
-            }
-            for(Profile candidate:catalog)if(candidate.name.equals(name)&&(!proxy||installedHash.equals(candidate.proxyHash))&&(hash.equals(candidate.sourceHash)||hash.equals(candidate.outputHash))){profile=candidate;break;}
+                // Prefer a recognized real runtime. If it is unavailable or not
+                // cataloged, independently repair only an exact known loader.
+                String asset="assets/libs/armeabi-v7a/"+name;ZipEntry payload=zip.getEntry(asset);String reason;
+                if(payload==null)reason="Known Unity loader proxy, missing embedded runtime "+asset;
+                else {
+                    source=read(zip,payload,budget);
+                    if(source==null)reason="Embedded runtime exceeds inspection limit: "+asset;
+                    else {hash=ArmRuntimePicRepair.sha(source);reason="Unrecognized embedded payload "+asset+"\n  SHA-256: "+hash;
+                        if(NativeStartupChecks.hasTextRelocations(source))reason+="\nThe embedded runtime itself still declares text relocations and needs its own repair.";
+                        for(Profile candidate:catalog)if(candidate.name.equals(name)&&installedHash.equals(candidate.proxyHash)&&(hash.equals(candidate.sourceHash)||hash.equals(candidate.outputHash))){profile=candidate;break;}
+                    }
+                }
+                if(profile==null){
+                    Profile loader=null;for(Profile candidate:catalog)if(candidate.name.equals(name)&&candidate.proxyHash==null&&installedHash.equals(candidate.sourceHash)){loader=candidate;break;}
+                    if(loader==null){lines.add(reason+"; unchanged: "+path);unsupported++;continue;}
+                    lines.add(reason+"\nLoader-only repair selected for "+path+". Embedded assets are unchanged and not repaired/validated; startup may still fail there.");unsupported++;
+                    profile=loader;source=installed;hash=installedHash;proxy=false;
+                }
+            }else for(Profile candidate:catalog)if(candidate.name.equals(name)&&(hash.equals(candidate.sourceHash)||hash.equals(candidate.outputHash))){profile=candidate;break;}
             if(profile==null){
                 lines.add("Unrecognized "+(proxy?"embedded payload":"runtime")+", unchanged: "+path+"\n  SHA-256: "+hash);unsupported++;continue;
             }
-            if(!proxy&&hash.equals(profile.outputHash)){lines.add("Already repaired, unchanged: "+path);continue;}
+            if(!proxy&&hash.equals(profile.outputHash)){lines.add("Already repaired, unchanged: "+path+" ("+profile.label+")");continue;}
             byte[] fixed=repaired.get(profile.outputHash);
             if(fixed==null){
                 fixed=hash.equals(profile.outputHash)?source:profile.repair.apply(source);

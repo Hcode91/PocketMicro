@@ -28,8 +28,11 @@ extensions) under existing `lib/armeabi-v7a/` or
 
 - A matching installed original runtime is repaired directly. Embedded assets
   and proxy files are not required for this layout.
-- A matching proxy is replaced only if its embedded payload matches the same
-  catalog profile. These particular proxies refer to
+- A matching proxy promotes its embedded payload only when that payload matches
+  a catalog profile. If it does not match or is unavailable, a separate exact
+  loader-only profile can repair the known small loader itself, preserving the
+  original embedded bytes and reporting the unvalidated payload. This is a
+  partial repair, not promotion or validation of an unknown runtime. These particular proxies refer to
   `assets/libs/armeabi-v7a/<library>`. Unknown loaders are not bypassed merely
   because a matching asset happens to exist.
 - Each component/ABI is checked independently, preserving the game's original

@@ -92,7 +92,7 @@ python3 -m pip install unicorn==2.1.4
 python3 scripts/test-arm-literal-pic.py original.so repaired.so
 ```
 
-## Abbigale is blocked on its real embedded runtimes
+## Abbigale loader-only repair and embedded runtime limits
 
 Both supplied Abbigale ZIPs contain identical small loader proxies:
 lib/armeabi-v7a/libmono.so (92,744 bytes) and libunity.so (47,688 bytes), plus the
@@ -102,10 +102,48 @@ proxies refer to real native payloads in:
 - assets/libs/armeabi-v7a/libmono.so
 - assets/libs/armeabi-v7a/libunity.so
 
-Those embedded files are absent from both ZIPs. The actual failing Mono build
-cannot be identified from this loader alone: multiple payload versions can share
-the same proxy. The catalog explicitly reports the missing payloads and does not
-patch a proxy with offsets from a guessed runtime. The owner needs to supply
-these two **assets/libs** files, or use a complete original APK and provide its
-conversion report (including unrecognized payload hashes). The ordinary lib/
-folder is insufficient. No claim of an implemented Abbigale repair is made.
+Those embedded files are absent from all three supplied ZIPs. The latest
+armeabi-v7a.zip has the same known small loaders. Their own text relocations can
+be repaired independently, even though that cannot validate the unseen payloads.
+
+The catalog now prefers promotion of a recognized real embedded runtime. If the
+payload is absent, over the inspection limit, or unrecognized, it can instead
+apply an exact-fingerprint **loader-only** repair to the installed small loader.
+The embedded assets stay unchanged. Missing/unknown payloads remain reported as
+unsupported components; they are not relabelled as fixed. Unknown loader bytes
+are still left unchanged. A recognized payload's failed patch validation aborts
+rather than silently falling back. Already-repaired loaders retain the explicit
+embedded-runtime warning in their label.
+
+Both loaders use the existing validated ARM initializer and Thumb __cxa_atexit
+repair. The initializer computes __dso_handle with PC-relative arithmetic; the
+Thumb destructor-registration thunk tail-calls the original writable-GOT PLT
+entry, preserving the caller frame/ARM-Thumb return mode. Its unwind recipe is
+updated for the tail call. Code relocations and counts are removed only after
+all remaining writes are validated RW. Original segments/permissions, filenames,
+SONAMEs and original runtime loading/forwarding logic are retained.
+
+| Library | Source SHA-256 | Loader-only output SHA-256 |
+| --- | --- | --- |
+| libmono.so | `a280a957e102a2b0e075f339ddff6a648a27af8d8ecfb2a994a43905d38cf15c` | `857d1f4e4f107dbcc429dcddb5a3bd6fa2f10fdbb42b953da141d4ac3d8d4e06` |
+| libunity.so | `aee89345929061f1e52fe72a7874796a8d3cdba8a663bf370a14cea896b05961` | `cdbe592192dc48608ca8d908d4879f120ee33eb0cd2bfa128fd7169baa598ab5` |
+
+Unicorn checks initializer/call arguments, ARM/Thumb callers and targets, stack
+and callee-saved state at three biases. Original RX/RW mappings are retained and
+remaining loader writes target RW. Actual Abbigale archive conversion repairs
+both loaders, preserves DEX/resources/the OUYA extension, adds no helper DEX in
+repair-only mode and recognizes repeated input as already repaired. Synthetic
+catalog tests check preferred real-runtime promotion, missing/unknown payload
+fallback, preserved assets and loader-output idempotence. Full Android Java and
+existing host suites pass. Reproduce the isolated checks with:
+
+```sh
+python3 scripts/test-unity-loader-pic.py original.apk converted.apk
+```
+
+Use the original complete APK on the phone with either startup repair option.
+Loader-only results are partial: another error can follow while loading the
+embedded runtime, which may itself have text relocations. Capture the new global
+log to identify the next stage. The original payload files are needed if that
+stage requires further repair, but not to try this independent loader fix. No
+successful Abbigale launch is claimed and no donor runtime is substituted.

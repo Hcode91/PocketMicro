@@ -223,6 +223,8 @@ Startup repairs now include **Frima / Space Shooter 1.1.3** and the inspected
 **Adobe AIR Core and native-extension** libraries. Choose either engine startup
 repair option when importing the original complete APK; the report names the
 matched files. Zombie Toaster is only covered if its AIR library hashes match.
-Abbigale's supplied lib/ files are Unity loader proxies: its real runtimes under
-assets/libs/armeabi-v7a/ are still needed to identify/repair that build. No other
+Abbigale's supplied lib/ files are Unity loader proxies. Exact loader-only
+repairs now handle their own text relocations when embedded runtimes are unknown
+or absent; those payloads remain unchanged and explicitly unvalidated. A further
+embedded-runtime loading error may still require the assets/libs files. No other
 game's runtimes are substituted. These candidates need phone launch testing.
