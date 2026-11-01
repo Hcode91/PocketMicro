@@ -537,3 +537,31 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   **Next:** install branch artifact; GLOBAL LOG / EXPORT → Shizuku access if
   needed; launch games normally, return, Refresh, Export full log. No game APK
   reconversion. Check successful game output and a known crash plus full export.
+
+
+- **2026-11-01 — multi-game log triage / stencil / capture startup race:** owner
+  supplied global journal showing real Shizuku runtime + Java crash capture for
+  Abbigale, Zombie Toaster and Space Shooter, plus engine reports for Abbaye.
+  Abbigale: libmono TEXTREL (Unity; version/fingerprint not supplied). Zombie
+  Toaster: libCore TEXTREL precedes missing AIR nativeSurfaceCreated; confirms
+  that runtime failure's immediate cause for this title, no AIR patch resumed.
+  Space Shooter: libSpaceShooter TEXTREL, engine not established by filename alone.
+  These native builds require original files/exact matching; no blanket fix claim.
+  Abbaye GameMaker boot test reaches glGetError but gameplay stops at unimplemented
+  glStencilMask. Added all seven GLES2 stencil state wrappers in generator and
+  regenerated C++: ClearStencil, StencilFunc/Mask/Op and separate-face forms.
+  Forward real typed args to host GL on existing render thread; no no-op substitution.
+  Android ARM64 NDK compilation succeeds and object imports all seven GLES symbols.
+  No new full Abbaye gameplay verified; subsequent gaps may remain.
+  Log also shows fast return before capture connects, dropping cold-start output.
+  Preserve pending session through existing 8-second bind deadline, backfill from
+  original launch time, allow 750-ms final reader drain; guard delayed callbacks
+  against replacement sessions and stop using latest delivered service ID.
+  New-launch replacement of unconnected session explicitly logged. Expected IO
+  interruptions after deliberate stop are suppressed; active read errors retained.
+  Existing inspection/ELF/crash-isolation/global journal/full-export suites, Android
+  Java compilation and diff checks pass. New bind-race fix needs device verification.
+  **Next:** new branch APK, retry Abbaye with GameMaker engine gameplay; retry a
+  normal quick crash after cold Shizuku bind and check recovered output. For
+  Abbigale try original APK with Unity/Marmalade startup repairs + touch; report
+  matching/unsupported entries or supply original native files for new builds.

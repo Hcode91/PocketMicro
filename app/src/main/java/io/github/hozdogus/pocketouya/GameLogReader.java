@@ -53,7 +53,7 @@ public final class GameLogReader extends Binder {
                     if(keep<n){String warning=crash?"Crash-buffer capture limit reached; later crash output may be missing.":"Live-log queue overflow; some output was dropped.";if(!status.contains(warning))status+=warning+"\n";}
                 }}
                 int exit=child.waitFor();synchronized(lock){if(id==generation&&running)status+=(crash?"Crash":"Runtime")+" logcat ended ("+exit+"). Log access or stream may be unavailable.\n";}
-            }catch(Exception error){synchronized(lock){if(id==generation)status+=error+"\n";}}
+            }catch(Exception error){synchronized(lock){if(id==generation&&running)status+=error+"\n";}}
             finally{child.destroy();synchronized(lock){children.remove(child);if(id==generation&&children.isEmpty())running=false;}}
         },crash?"global-crash-reader":"global-runtime-reader");
         synchronized(lock){readers.add(readerThread);}readerThread.start();

@@ -25,6 +25,7 @@ void register_gl_generated(Runtime &rt, GlState &st) {
     rt.def("glClear", [&rt, &st, P](Cpu &c) { (void)P; ::glClear(static_cast<GLuint>(c.arg(0))); });
     rt.def("glClearColor", [&rt, &st, P](Cpu &c) { (void)P; ::glClearColor(c.argf(0), c.argf(1), c.argf(2), c.argf(3)); });
     rt.def("glClearDepthf", [&rt, &st, P](Cpu &c) { (void)P; ::glClearDepthf(c.argf(0)); });
+    rt.def("glClearStencil", [&rt, &st, P](Cpu &c) { (void)P; ::glClearStencil(static_cast<GLint>(c.arg(0))); });
     rt.def("glColorMask", [&rt, &st, P](Cpu &c) { (void)P; ::glColorMask(static_cast<GLboolean>(c.arg(0)), static_cast<GLboolean>(c.arg(1)), static_cast<GLboolean>(c.arg(2)), static_cast<GLboolean>(c.arg(3))); });
     rt.def("glCompileShader", [&rt, &st, P](Cpu &c) { (void)P; ::glCompileShader(static_cast<GLuint>(c.arg(0))); });
     rt.def("glCreateProgram", [&rt, &st, P](Cpu &c) { (void)P; c.ret(static_cast<uint32_t>(::glCreateProgram())); });
@@ -68,6 +69,12 @@ void register_gl_generated(Runtime &rt, GlState &st) {
     rt.def("glReadPixels", [&rt, &st, P](Cpu &c) { (void)P; ::glReadPixels(static_cast<GLint>(c.arg(0)), static_cast<GLint>(c.arg(1)), static_cast<GLint>(c.arg(2)), static_cast<GLint>(c.arg(3)), static_cast<GLenum>(c.arg(4)), static_cast<GLenum>(c.arg(5)), P(c.arg(6))); });
     rt.def("glRenderbufferStorage", [&rt, &st, P](Cpu &c) { (void)P; ::glRenderbufferStorage(static_cast<GLenum>(c.arg(0)), static_cast<GLenum>(c.arg(1)), static_cast<GLint>(c.arg(2)), static_cast<GLint>(c.arg(3))); });
     rt.def("glScissor", [&rt, &st, P](Cpu &c) { (void)P; ::glScissor(static_cast<GLint>(c.arg(0)), static_cast<GLint>(c.arg(1)), static_cast<GLint>(c.arg(2)), static_cast<GLint>(c.arg(3))); });
+    rt.def("glStencilFunc", [&rt, &st, P](Cpu &c) { (void)P; ::glStencilFunc(static_cast<GLenum>(c.arg(0)), static_cast<GLint>(c.arg(1)), static_cast<GLuint>(c.arg(2))); });
+    rt.def("glStencilFuncSeparate", [&rt, &st, P](Cpu &c) { (void)P; ::glStencilFuncSeparate(static_cast<GLenum>(c.arg(0)), static_cast<GLenum>(c.arg(1)), static_cast<GLint>(c.arg(2)), static_cast<GLuint>(c.arg(3))); });
+    rt.def("glStencilMask", [&rt, &st, P](Cpu &c) { (void)P; ::glStencilMask(static_cast<GLuint>(c.arg(0))); });
+    rt.def("glStencilMaskSeparate", [&rt, &st, P](Cpu &c) { (void)P; ::glStencilMaskSeparate(static_cast<GLenum>(c.arg(0)), static_cast<GLuint>(c.arg(1))); });
+    rt.def("glStencilOp", [&rt, &st, P](Cpu &c) { (void)P; ::glStencilOp(static_cast<GLenum>(c.arg(0)), static_cast<GLenum>(c.arg(1)), static_cast<GLenum>(c.arg(2))); });
+    rt.def("glStencilOpSeparate", [&rt, &st, P](Cpu &c) { (void)P; ::glStencilOpSeparate(static_cast<GLenum>(c.arg(0)), static_cast<GLenum>(c.arg(1)), static_cast<GLenum>(c.arg(2)), static_cast<GLenum>(c.arg(3))); });
     rt.def("glTexImage2D", [&rt, &st, P](Cpu &c) { (void)P; ::glTexImage2D(static_cast<GLenum>(c.arg(0)), static_cast<GLint>(c.arg(1)), static_cast<GLint>(c.arg(2)), static_cast<GLint>(c.arg(3)), static_cast<GLint>(c.arg(4)), static_cast<GLint>(c.arg(5)), static_cast<GLenum>(c.arg(6)), static_cast<GLenum>(c.arg(7)), P(c.arg(8))); });
     rt.def("glTexParameterf", [&rt, &st, P](Cpu &c) { (void)P; ::glTexParameterf(static_cast<GLenum>(c.arg(0)), static_cast<GLenum>(c.arg(1)), c.argf(2)); });
     rt.def("glTexParameteri", [&rt, &st, P](Cpu &c) { (void)P; ::glTexParameteri(static_cast<GLenum>(c.arg(0)), static_cast<GLenum>(c.arg(1)), static_cast<GLint>(c.arg(2))); });

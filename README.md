@@ -206,3 +206,12 @@ the game is in front and stops on return to the library or when capture is stopp
 Android/log-reader limits can leave gaps; no crash text does not prove success.
 The saved journal persists until cleared or app data is removed. It is not uploaded.
 See [capture, storage and export details](docs/global-game-log.md).
+
+
+The owner's multi-game log identified a missing `glStencilMask` in the GameMaker
+bridge. The engine now forwards the GLES2 stencil state calls (mask, function,
+operation and clear value, including separate-face variants) to the real host GL.
+Abbaye des Morts needs another phone run; its boot-test success only establishes
+that it reaches graphics, not that the full game works. The global logger also
+retains pending startup capture briefly after a fast return so a cold Shizuku
+connection can read the buffered launch/crash output.

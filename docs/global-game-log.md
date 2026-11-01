@@ -76,3 +76,21 @@ and byte-for-byte full export beyond the preview limit. Existing package/native
 crash isolation tests still pass. Android Java compilation and merged-manifest/CI
 packaging checks cover the integration. Actual Shizuku streaming, foreground
 service behavior and export-provider behavior still require a phone run.
+
+
+## Fast-return startup recovery
+
+The owner's first multi-game report confirmed normal output, Java crash output
+and engine-report capture, but several fast-return launches had only headings:
+they returned before the Shizuku reader connected. Shutdown now preserves a
+pending reader for up to its 8-second connection deadline, then reads logcat from
+the original launch timestamp and gives startup output a 750 ms drain interval.
+An already-started reader also gets a short final drain before teardown. A new
+launch replacing an unconnected session is explicitly marked as a capture gap.
+
+Expected read interruptions caused by deliberately closing logcat during shutdown
+are not reported as capture errors; unexpected active-reader exceptions remain
+visible. Service shutdown uses the latest delivered start ID so a delayed reader
+cannot leave an idle service behind after a newer Stop request. These changes
+compile and preserve the file/export tests; fast-return recovery still needs an
+on-device repeat. They cannot recover output already evicted from Android's buffer.

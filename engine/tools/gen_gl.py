@@ -20,6 +20,7 @@ i glCheckFramebufferStatus e
 v glClear u
 v glClearColor f f f f
 v glClearDepthf f
+v glClearStencil i
 v glColorMask b b b b
 v glCompileShader u
 i glCreateProgram
@@ -63,6 +64,12 @@ v glPixelStorei e i
 v glReadPixels i i i i e e p
 v glRenderbufferStorage e e i i
 v glScissor i i i i
+v glStencilFunc e i u
+v glStencilFuncSeparate e e i u
+v glStencilMask u
+v glStencilMaskSeparate e u
+v glStencilOp e e e
+v glStencilOpSeparate e e e e
 v glTexImage2D e i i i i i e e p
 v glTexParameterf e e f
 v glTexParameteri e e i

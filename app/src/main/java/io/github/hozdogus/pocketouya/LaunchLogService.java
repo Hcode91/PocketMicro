@@ -13,11 +13,11 @@ public final class LaunchLogService extends Service {
     private final Handler ui=new Handler(Looper.getMainLooper());
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private volatile IBinder remote;private volatile Session current;private volatile boolean destroyed;
-    private Shizuku.UserServiceArgs args;private boolean bound,local,busy;
-    private static final class Session {String game,target,previousCrash="";long since;int startId;IBinder binder;boolean started,inactiveLogged,localCapture;}
+    private Shizuku.UserServiceArgs args;private boolean bound,local,busy;private int latestStartId;
+    private static final class Session {String game,target,previousCrash="";long since;int startId;IBinder binder;boolean started,inactiveLogged,localCapture,finishRequested;}
     private final ServiceConnection connection=new ServiceConnection(){
         public void onServiceConnected(ComponentName name,IBinder binder){if(destroyed)return;remote=binder;startReader();}
-        public void onServiceDisconnected(ComponentName name){remote=null;Session s=current;if(s!=null){LaunchLogging.append(LaunchLogService.this,s.game,"Capture interrupted","Shizuku log service disconnected; later output may be missing.");end(s.startId);}}
+        public void onServiceDisconnected(ComponentName name){remote=null;Session s=current;if(s!=null){LaunchLogging.append(LaunchLogService.this,s.game,"Capture interrupted","Shizuku log service disconnected; later output may be missing.");finalizeSession(s.startId);}}
     };
     @Override public void onCreate(){
         super.onCreate();NotificationManager manager=getSystemService(NotificationManager.class);manager.createNotificationChannel(new NotificationChannel("game_logs","Game log recording",NotificationManager.IMPORTANCE_LOW));
@@ -26,18 +26,19 @@ public final class LaunchLogService extends Service {
         startForeground(NOTIFICATION,new Notification.Builder(this,"game_logs").setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("PocketOuya global game log").setContentText("Recording game output locally. Tap to view or export.").setContentIntent(open).addAction(new Notification.Action.Builder(null,"Stop recording",stop).build()).setOngoing(true).build());
     }
     @Override public int onStartCommand(Intent intent,int flags,int startId){
+        latestStartId=startId;
         if(intent==null){end(startId);return START_NOT_STICKY;}
         if("stop".equals(intent.getAction())){end(startId);return START_NOT_STICKY;}
         Session next=new Session();next.game=intent.getStringExtra("game");next.target=intent.getStringExtra("target");next.since=intent.getLongExtra("since",System.currentTimeMillis());next.startId=startId;
         if(next.game==null||!CrashLogFilter.validPackage(next.target)){end(startId);return START_NOT_STICKY;}
         ui.removeCallbacks(poll);
-        Session old=current;current=next;if(old!=null&&old.binder!=null)worker.execute(()->{try{drain(old);Parcel r=call(old.binder,GameLogReader.STOP,null);r.recycle();drain(old);}catch(Exception error){note(old,error);}});
+        Session old=current;current=next;if(old!=null&&!old.started)LaunchLogging.append(this,old.game,"Capture unavailable","A new launch replaced this session before its log reader connected; startup output may be missing.");if(old!=null&&old.binder!=null)worker.execute(()->{try{drain(old);Parcel r=call(old.binder,GameLogReader.STOP,null);r.recycle();drain(old);}catch(Exception error){note(old,error);}});
         if(local&&!next.target.equals(getPackageName())){remote=null;local=false;}
         if(remote!=null){startReader();return START_NOT_STICKY;}
         try{
             if(Shizuku.pingBinder()&&Shizuku.getVersion()>=13&&Shizuku.checkSelfPermission()==PackageManager.PERMISSION_GRANTED){
                 if(!bound){int version=(int)getPackageManager().getPackageInfo(getPackageName(),0).getLongVersionCode();args=new Shizuku.UserServiceArgs(new ComponentName(this,GameLogReader.class)).daemon(false).tag("global_game_logs").processNameSuffix("global_log_reader").version(version).debuggable(false);bound=true;Shizuku.bindUserService(args,connection);}
-                ui.postDelayed(()->{if(current==next&&remote==null){LaunchLogging.append(this,next.game,"Capture unavailable","Timed out connecting to Shizuku. Launch entry is saved, but game output may be missing.");end(startId);}},8000);
+                ui.postDelayed(()->{if(current==next&&remote==null){LaunchLogging.append(this,next.game,"Capture unavailable","Timed out connecting to Shizuku. Launch entry is saved, but game output may be missing.");finalizeSession(startId);}},8000);
             }else fallback(next,startId);
         }catch(Exception error){note(next,error);fallback(next,startId);}
         return START_NOT_STICKY;
@@ -52,9 +53,9 @@ public final class LaunchLogService extends Service {
         catch(RuntimeException|RemoteException error){reply.recycle();throw error;}finally{data.recycle();}
     }
     private void startReader(){Session s=current;if(s==null||s.started)return;s.started=true;s.binder=remote;s.localCapture=local;
-        worker.execute(()->{try{Parcel result=call(s.binder,GameLogReader.START,s);result.recycle();LaunchLogging.append(this,s.game,"Capture started",s.localCapture?"Source: this app's Android runtime logs.":"Source: game UID main/system logs and package-filtered crash buffer via Shizuku.");ui.post(()->{if(current==s){ui.removeCallbacks(poll);ui.post(poll);}});}catch(Exception error){note(s,error);ui.post(()->{if(current==s)end(s.startId);});}});
+        worker.execute(()->{try{Parcel result=call(s.binder,GameLogReader.START,s);result.recycle();LaunchLogging.append(this,s.game,"Capture started",s.localCapture?"Source: this app's Android runtime logs.":"Source: game UID main/system logs and package-filtered crash buffer via Shizuku.");ui.post(()->{if(current==s){ui.removeCallbacks(poll);ui.post(poll);if(s.finishRequested){LaunchLogging.append(this,s.game,"Startup log recovery","The game returned before capture connected; reading buffered startup output before stopping.");ui.postDelayed(()->{if(current==s)finalizeSession(s.startId);},750);}}});}catch(Exception error){note(s,error);ui.post(()->{if(current==s)finalizeSession(s.startId);});}});
     }
-    private final Runnable poll=new Runnable(){public void run(){if(current==null||destroyed)return;if(!busy){busy=true;Session s=current;worker.execute(()->{try{if(s==current)drain(s);}catch(Exception error){note(s,error);ui.post(()->{if(current==s)end(s.startId);});}finally{ui.post(()->busy=false);}});}ui.postDelayed(this,250);}};
+    private final Runnable poll=new Runnable(){public void run(){if(current==null||destroyed)return;if(!busy){busy=true;Session s=current;worker.execute(()->{try{if(s==current)drain(s);}catch(Exception error){note(s,error);ui.post(()->{if(current==s)finalizeSession(s.startId);});}finally{ui.post(()->busy=false);}});}ui.postDelayed(this,250);}};
     private void drain(Session s)throws RemoteException{
         Parcel result=call(s.binder,GameLogReader.READ,null);String normal,crash,status;boolean active;
         try{active=result.readInt()!=0;normal=result.readString();crash=result.readString();status=result.readString();}finally{result.recycle();}
@@ -62,13 +63,26 @@ public final class LaunchLogService extends Service {
         if(crash!=null)crash=crash.replaceFirst("[\\r\\n]+$","");
         if(crash!=null&&!crash.isEmpty()&&!crash.equals(s.previousCrash)){String fresh=crash.startsWith(s.previousCrash)?crash.substring(s.previousCrash.length()):crash;LaunchLogging.append(this,s.game,"Crash output",fresh);s.previousCrash=crash;}
         LaunchLogging.append(this,s.game,"Capture status",status);
-        if(!active&&!s.inactiveLogged){s.inactiveLogged=true;LaunchLogging.append(this,s.game,"Capture ended","Reader stopped. No later output is captured in this session.");ui.post(()->{if(current==s)end(s.startId);});}
+        if(!active&&!s.inactiveLogged){s.inactiveLogged=true;LaunchLogging.append(this,s.game,"Capture ended","Reader stopped. No later output is captured in this session.");ui.post(()->{if(current==s)finalizeSession(s.startId);});}
     }
     private void note(Session s,Exception error){if(s!=null)LaunchLogging.append(this,s.game,"Capture error",error.toString());}
     private void end(int startId){
+        Session s=current;
+        // A very fast crash can return before Shizuku binds. Keep the service
+        // alive so START can read logcat from the original launch timestamp.
+        if(s!=null&&!s.started&&remote==null&&bound){
+            if(!s.finishRequested){s.finishRequested=true;ui.postDelayed(()->{if(current==s&&!s.started){LaunchLogging.append(this,s.game,"Capture unavailable","Startup log reader did not connect before the shutdown deadline.");finalizeSession(startId);}},8500);}
+            return;
+        }
+        // START may be queued but not finished when return/Stop arrives.
+        if(s!=null&&s.started&&!s.finishRequested){s.finishRequested=true;ui.postDelayed(()->{if(current==s)finalizeSession(startId);},750);return;}
+        if(s!=null&&s.finishRequested)return;
+        finalizeSession(startId);
+    }
+    private void finalizeSession(int startId){
         Session ended=current;current=null;ui.removeCallbacks(poll);
         worker.execute(()->{if(ended!=null&&ended.binder!=null)try{drain(ended);Parcel reply=call(ended.binder,GameLogReader.STOP,null);reply.recycle();drain(ended);}catch(Exception error){note(ended,error);}
-            ui.post(()->{if(current==null){stopForeground(STOP_FOREGROUND_REMOVE);stopSelfResult(startId);}});
+            ui.post(()->{if(current==null&&stopSelfResult(latestStartId))stopForeground(STOP_FOREGROUND_REMOVE);});
         });
     }
     @Override public void onTimeout(int startId,int fgsType){Session s=current;current=null;ui.removeCallbacks(poll);if(s!=null)worker.execute(()->LaunchLogging.append(this,s.game,"Capture interrupted","Android's foreground-service time limit was reached. Later output is not captured."));stopForeground(STOP_FOREGROUND_REMOVE);stopSelfResult(startId);}
