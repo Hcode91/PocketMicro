@@ -724,3 +724,30 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   repaired/promoted rather than loader-only, install update, normal Play, export
   fresh global log on failure. Gameplay remains UNVERIFIED; further engine/JNI/
   Android/dependency issues possible. Server integration remains removed.
+
+
+- **2026-11-01 — Global offline purchase default; Abbigale launch confirmed:**
+  owner confirmed the 850753c real-runtime repair launches Abbigale. Recorded
+  exact-build phone confirmation; does not prove resolver cause or purchase
+  compatibility. Owner then requested a global option for offline purchase
+  attempts across games. Added OFFLINE PURCHASE OPTIONS, private persistent
+  default (initially off), and a visible per-conversion checkbox for every mode.
+  Explicit offline modes preselect it too; individual overrides do not change
+  global preference. Removed native-repair/offline mutual-exclusion guard so
+  users can retain working startup fixes and touch while attempting local
+  receipts. Reports remain separated; no new SDK adapter/universal unlock,
+  server, network permission or runtime-wide hook. Existing installed games
+  require original-APK reconversion; toggling default does not alter them.
+  Updated UI/docs on local receipts, restarts/data removal, original game network
+  behavior and unsupported SDKs. Native report no longer incorrectly says no
+  purchase changes in combined mode; records Vector and Abbigale confirmations.
+  Tests: combined native-inspection/touch/offline ZIP fixture validates six SDK
+  hooks, helper and assets; prior host/native/receipt/log suites and Android
+  compile pass. Actual supplied Abbigale conversion preserves BOTH repaired
+  native output hashes/assets and touch helper, but SDK match is FALSE/zero
+  purchase hooks. No purchase support/unlock is claimed for Abbigale; separate
+  adapter needed. Docs/global-offline-purchases.md explains scope. No runtime or
+  vendor bytes committed. **Next:** branch build, enable/save default, reconvert
+  original APKs with desired startup/touch mode, review supported/unchanged
+  purchase report, normal Play and try in-game purchase button where supported.
+  Global-dialog behavior and game acceptance remain phone tests.

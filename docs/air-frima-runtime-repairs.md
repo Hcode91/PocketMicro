@@ -237,3 +237,16 @@ the new PocketOuya build, reconvert the original complete Abbigale APK with
 Unity 4.1.1f4 runtimes were repaired/promoted, rather than loader-only repair.
 Install the converted update and use normal Play. Export a fresh global log if
 another failure follows. Server integration remains removed.
+
+
+### Owner validation and optional offline purchases
+
+The owner subsequently confirmed that Abbigale launches with the real-runtime
+repair in commit `850753c`. This establishes launch compatibility for that exact
+build on the owner's phone, not every Unity game or the hypothesized resolver
+cause. Runtime output hashes remain unchanged when the optional offline attempt is
+selected. The current offline SDK matcher does not match the supplied Abbigale
+DEX; its purchase checks are left unchanged (zero receipt hooks), alongside the
+working native repair and touch hooks. The new global default only preselects
+the conversion checkbox and does not expand SDK coverage. A separate purchase
+adapter would be needed for this game.

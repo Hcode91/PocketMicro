@@ -26,7 +26,6 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,offline,false);
     }
     public static ManifestPatcher.Result rebuild(File in, File out, byte[] bridge, boolean touch, boolean offline, boolean runtimeRepair) throws IOException {
-        if(runtimeRepair&&offline)throw new IOException("Test runtime repair separately from purchase options");
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
             if(manifestEntry==null)throw new IOException("Not an Android app (no AndroidManifest.xml).");

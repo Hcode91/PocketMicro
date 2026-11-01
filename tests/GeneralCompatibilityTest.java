@@ -104,6 +104,13 @@ public final class GeneralCompatibilityTest {
    byte[] helper=dex(cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;","Ljava/lang/Object;",Collections.emptyList()));
    ManifestPatcher.Result result=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,true);check(result.compatibilityReport.contains("enabled"));
    try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")!=null);check(Arrays.equals(helper,ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes3.dex")))));check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));}
+   ManifestPatcher.Result combined=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,true,true);
+   check(combined.compatibilityReport.contains("Native runtime repair")&&combined.compatibilityReport.contains("Offline purchases: matching OUYA Unity SDK"));
+   try(ZipFile zip=new ZipFile(converted.toFile())){
+    check(zip.getEntry("classes3.dex")!=null);
+    check(bridgeCalls(ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex"))),"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==6);
+    check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));
+   }
    ApkRebuilder.rebuild(original.toFile(),converted.toFile());try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")==null);check(Arrays.equals(source.get("classes.dex"),ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex")))));}
   }finally{try(var paths=Files.list(temp)){for(Path p:paths.toArray(Path[]::new))Files.delete(p);}Files.delete(temp);}
   System.out.println("Cross-game/multidex detection, activity/alias parsing, feature isolation, unsupported reporting, inherited lifecycle, reinjection and ZIP preservation tests pass");

@@ -117,6 +117,7 @@ public class MainActivity extends Activity {
         add.setOnClickListener(v -> pickApk());
         header.addView(add);
         root.addView(header);
+        Button purchases=new Button(this);purchases.setText("OFFLINE PURCHASE OPTIONS");purchases.setOnClickListener(v->showPurchaseOptions());root.addView(purchases);
         Button logs=new Button(this);logs.setText("GLOBAL LOG / EXPORT");logs.setOnClickListener(v->startActivity(new Intent(this,GlobalLogActivity.class)));root.addView(logs);
 
         TextView section = new TextView(this);
@@ -372,18 +373,45 @@ public class MainActivity extends Activity {
         });
     }
 
+    private static final String OFFLINE_DEFAULT = "offline_purchases_default_v1";
+
+    private void showPurchaseOptions() {
+        LinearLayout content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(20),dp(8),dp(20),dp(8));
+        android.widget.CheckBox enabled=new android.widget.CheckBox(this);
+        enabled.setText("Try offline purchases by default for every game conversion");
+        enabled.setChecked(prefs().getBoolean(OFFLINE_DEFAULT,false));content.addView(enabled);
+        TextView info=new TextView(this);
+        info.setText("This preselects offline purchases whenever you add a game, including conversions with engine startup repairs and touch controls. You can turn it off for an individual conversion.\n\nMatching OUYA Unity games receive local product and purchase responses. Use the game's own purchase/unlock button; successful local purchases are remembered in that game's data. No payment or server is used by this compatibility feature.\n\nOther billing APIs, server-only content and custom checks may not work. The conversion report says whether support was added or the purchase checks stayed unchanged. This does not make every game fully offline; original game code may still access the network.\n\nAlready installed games need reconverting from their original complete APKs. Changing this setting does not alter existing games. Clearing game data or uninstalling deletes local receipts.");content.addView(info);
+        android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
+        new AlertDialog.Builder(this).setTitle("Global offline purchase default").setView(scroll)
+            .setPositiveButton("Save",(dialog,which)->{
+                if(prefs().edit().putBoolean(OFFLINE_DEFAULT,enabled.isChecked()).commit())Toast.makeText(this,"Default saved. Reconvert original APKs to apply it.",Toast.LENGTH_LONG).show();
+                else Toast.makeText(this,"Could not save purchase default",Toast.LENGTH_LONG).show();
+            }).setNegativeButton("Cancel",null).show();
+    }
+
     private void chooseImportMode(Uri uri) {
         new AlertDialog.Builder(this).setTitle("Game conversion")
-                .setItems(new String[]{"Android install compatibility only", "Touch controls — OUYA / Android input", "Offline purchases — OUYA Unity SDK", "Touch + OUYA Unity offline purchases", "Startup repairs — Unity / Marmalade / AIR / Frima", "Startup repairs + touch — Unity / Marmalade / AIR / Frima"}, (d,which)->{
-                    if(which==0)importApk(uri,false,false);
-                    else if(which==4||which==5)new AlertDialog.Builder(this).setTitle("Engine startup repairs")
-                        .setMessage("Unity 4.1.1f4 / Abbigale: repairs the inspected real Mono/player runtimes. When found under assets/libs, promotes them to normal Android loading to bypass the legacy embedded loader implicated by the recursive string-error crash. Requires the original complete APK. Phone validation is pending.\n\nUnity / Mono 4.1.5f1: attempts to fix text-relocation library-loading crashes (matching builds inspected in Muffin Knight).\n\nKnown Unity loader proxies (including Abbigale): fixes text-relocation loading in the small Mono/player loaders. Their embedded runtimes may still need a separate repair; the report identifies loader-only results.\n\nMarmalade / Vector 1.0.7: fixes text-relocation loading and the null JNI surface-buffer release. Launch and touch input are confirmed with the inspected Vector 1.0.7 build.\n\nFrima / Space Shooter 1.1.3: repairs its relocated initializer.\n\nAdobe AIR: repairs code-literal relocations in the inspected Core/native-extension builds. Old private Android media dependencies may still block startup. Zombie Toaster must match these library fingerprints to receive this repair.\n\nOnly exact supported library builds are changed; the report names each matched fix. This is not a universal engine repair. Final Fantasy III startup is not covered. Unity loader proxies require their real runtimes under assets/libs in the original APK. Use the original complete APK.\n\n"+(which==5?"This also embeds the OUYA touch pad into matching game activities; native repair and touch compatibility are reported separately. ":"This mode does not add controls. ")+"A successful launch or input response is not guaranteed. No purchase changes are included.")
-                        .setPositiveButton("Convert",(confirm,w)->importApk(uri,which==5,false,true)).setNegativeButton("Cancel",null).show();
-                    else new AlertDialog.Builder(this).setTitle("Best-effort compatibility")
-                        .setMessage("Touch input: adds an on-screen OUYA layout. Uses OUYA Unity native handlers or Marmalade key callbacks when available, otherwise Android gamepad/keyboard events. Games requiring physical or analog input may ignore the fallback.\n\nOffline purchases: only the matching OUYA Unity SDK can receive local receipts; no payment or real account purchase occurs. Other billing systems and custom/native checks are unsupported.\n\nThese options do not repair native startup crashes. The report identifies the supported input/purchase route. Use the original complete APK.")
-                        .setPositiveButton("Inspect and convert",(confirm,w)->importApk(uri,which==1||which==3,which==2||which==3))
-                        .setNegativeButton("Cancel",null).show();
-                }).setNegativeButton("Cancel",null).show();
+            .setItems(new String[]{"Android install compatibility", "Touch controls — OUYA / Android input", "Offline purchases — OUYA Unity SDK", "Touch + OUYA Unity offline purchases", "Startup repairs — Unity / Marmalade / AIR / Frima", "Startup repairs + touch — Unity / Marmalade / AIR / Frima"},(dialog,which)->
+                confirmImport(uri,which==1||which==3||which==5,which==2||which==3,which==4||which==5))
+            .setNegativeButton("Cancel",null).show();
+    }
+
+    private void confirmImport(Uri uri,boolean touch,boolean offlineRequested,boolean runtimeRepair) {
+        LinearLayout content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(20),dp(8),dp(20),dp(8));
+        android.widget.CheckBox offline=new android.widget.CheckBox(this);
+        offline.setText("Try offline purchases — supported OUYA Unity SDK");
+        offline.setChecked(offlineRequested||prefs().getBoolean(OFFLINE_DEFAULT,false));content.addView(offline);
+        TextView explanation=new TextView(this);
+        String common="Offline purchases are a best-effort compatibility attempt, not a guarantee of an unlock or fully offline gameplay. Compatible APIs use local receipts without a payment or server. Unsupported purchase checks stay unchanged. Use the game's own purchase/unlock button after conversion. Local receipts survive app restarts but are removed by clearing game data or uninstalling.\n\nThe checkbox applies only to this conversion; your global default stays the same. Use the original complete APK.\n\n";
+        String details;
+        if(runtimeRepair)details="Unity 4.1.1f4 / Abbigale: repairs the inspected real Mono/player runtimes. When found under assets/libs, promotes them to normal Android loading to bypass the legacy embedded loader implicated by the recursive string-error crash. Requires the original complete APK. Launch with these exact runtimes is confirmed by the owner; purchases remain a separate compatibility attempt.\n\nUnity / Mono 4.1.5f1: attempts to fix text-relocation library-loading crashes (matching builds inspected in Muffin Knight).\n\nKnown Unity loader proxies (including Abbigale): fixes text-relocation loading in the small Mono/player loaders. Their embedded runtimes may still need a separate repair; the report identifies loader-only results.\n\nMarmalade / Vector 1.0.7: fixes text-relocation loading and the null JNI surface-buffer release. Launch and touch input are confirmed with the inspected Vector 1.0.7 build.\n\nFrima / Space Shooter 1.1.3: repairs its relocated initializer.\n\nAdobe AIR: repairs code-literal relocations in the inspected Core/native-extension builds. Old private Android media dependencies may still block startup. Zombie Toaster must match these library fingerprints to receive this repair.\n\nOnly exact supported library builds are changed; the report names each matched fix. This is not a universal engine repair. Final Fantasy III startup is not covered. Unity loader proxies require their real runtimes under assets/libs in the original APK. Use the original complete APK.\n\n"+(touch?"This also embeds the OUYA touch pad into matching game activities; native repair and touch compatibility are reported separately. ":"This mode does not add controls. ")+"A successful launch or input response is not guaranteed. Offline purchases are controlled by the checkbox above and reported separately.";
+        else details=(touch?"Adds the on-screen OUYA pad using native Unity/Marmalade input when available, otherwise Android gamepad/keyboard events. Games requiring a physical controller may ignore the fallback.\n\n":"No touch controls selected.\n\n")+"No native startup repair selected. The conversion report identifies supported input and purchase routes.";
+        explanation.setText(common+details);content.addView(explanation);
+        android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
+        new AlertDialog.Builder(this).setTitle(runtimeRepair?"Engine startup repairs":"Conversion options").setView(scroll)
+            .setPositiveButton("Inspect and convert",(dialog,which)->importApk(uri,touch,offline.isChecked(),runtimeRepair))
+            .setNegativeButton("Cancel",null).show();
     }
     private void installConverted(File signed,String pkg){
         new Thread(()->{

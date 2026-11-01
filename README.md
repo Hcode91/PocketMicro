@@ -81,6 +81,19 @@ input-injection permission. They operate inside the converted game's process.
 
 ### Offline purchase compatibility
 
+Open **OFFLINE PURCHASE OPTIONS** to enable the global default for future game
+conversions. Every conversion then starts with **Try offline purchases** checked,
+including startup repair and touch modes. Uncheck it to override the default for
+one conversion. Explicit offline conversion modes also preselect it. The setting
+starts off and persists across PocketOuya restarts.
+
+Existing games need reconversion from their original complete APKs. This setting
+does not alter installed game processes, remove all game networking, or add
+support for a previously unsupported billing API. The report distinguishes
+enabled local receipt support from original purchase checks left unchanged.
+Startup repair, touch and offline receipt attempts can now run in one conversion;
+their results are reported separately. See [setup and limitations](docs/global-offline-purchases.md).
+
 The converter recognizes the OUYA Unity SDK's six Java purchase entry points,
 Unity activity/message interface and expected callback markers. A matching
 layout enables local product, gamer, purchase and receipt callbacks. Use the
@@ -156,7 +169,7 @@ This does not add GameMaker engine support to Unity, Marmalade or AIR games.
 
 | Menu option | Purpose and current scope |
 | --- | --- |
-| Android install compatibility only | Updates old manifest targets and signs the APK; no engine repair or touch injection. |
+| Android install compatibility | Updates old manifest targets and signs the APK; no engine repair or touch injection. The offline checkbox is independent. |
 | Touch controls — OUYA / Android input | Embedded pad: OUYA Unity native input, Marmalade key callbacks, or Android gamepad/keyboard fallback. |
 | Offline purchases — OUYA Unity SDK | Local receipts for the detected supported Java Unity SDK; other protocols remain unchanged. |
 | Touch + OUYA Unity offline purchases | Combines the preceding input and receipt options. |
@@ -184,8 +197,8 @@ existing ABI directories.
 The report lists repaired files, already-repaired files and unsupported candidates.
 Unknown versions, missing payloads and unsupported ABIs stay unchanged. A partial
 repair can leave another startup blocker; this is not a universal text-relocation
-fix. Repair-only mode adds no controls or purchase changes. Choose **Startup repairs + touch — Unity / Marmalade / AIR / Frima** to also embed the pad; its DEX compatibility
-is reported separately. Neither repair option changes purchases. Use normal Play and
+fix. Startup repair without touch adds no controls. Choose **Startup repairs + touch — Unity / Marmalade / AIR / Frima** to also embed the pad; its DEX compatibility
+is reported separately. Both modes now offer an independent offline purchase checkbox, preselected by the global default. Leave it off to preserve purchase checks. Use normal Play and
 capture a fresh crash if it fails. Vector 1.0.7 launch and touch input were confirmed on the owner's phone;
 other game/build combinations remain unverified.
 See [catalog behavior](docs/native-runtime-repair.md) and
@@ -226,7 +239,7 @@ matched files. Zombie Toaster is only covered if its AIR library hashes match.
 Abbigale's full Unity 4.1.1f4 payloads are now fingerprinted. For a matching
 original complete APK, startup repairs promote the repaired real Mono/player
 runtimes from assets/libs into the installed lib paths, bypassing its legacy
-embedded loader. This is a candidate for the repeating native string-error
-crash; it still needs phone validation. The report should show two real runtimes
+embedded loader. The owner confirmed that this resolves the repeating native
+string-error launch crash for the inspected build. The report should show two real runtimes
 repaired/promoted. Unknown/missing payloads retain the partial loader-only option
 and its explicit limitations. No other game's runtimes are substituted.
