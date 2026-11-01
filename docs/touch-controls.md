@@ -1,6 +1,6 @@
 # Embedded touch controls
 
-Choose **Touch controls — OUYA / Android input** when converting an original complete APK, or **Unity / Marmalade — startup repairs + touch** when the game also needs a matching native
+Choose **Touch controls — OUYA / Android input** when converting an original complete APK, or **Startup repairs + touch — Unity / Marmalade / AIR / Frima** when the game also needs a matching native
 repair. Install the converted result and use ordinary **Play**. Updating
 PocketOuya does not replace helpers already embedded in installed games: reimport
 the original APK after updating PocketOuya. Do not reconvert an already-injected APK.

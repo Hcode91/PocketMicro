@@ -14,7 +14,7 @@ All game/native files used for investigation remain outside this repository.
 ## Apply on the phone
 
 Install the branch Actions APK, add the **original complete Vector APK**, and
-select **Unity / Marmalade — startup repairs**, or **Native runtime
+select **Startup repairs — Unity / Marmalade / AIR / Frima**, or **Native runtime
 repair + touch controls** to embed the pad as well. The report should list
 four repaired files for this inspected build. Install the update over the
 PocketOuya-signed copy and use normal **Play**, not Engine test. Capture a fresh

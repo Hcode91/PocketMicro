@@ -1,6 +1,6 @@
 # Game-independent native runtime repair (experimental)
 
-**Unity / Marmalade — startup repairs** can be selected when importing
+**Startup repairs — Unity / Marmalade / AIR / Frima** can be selected when importing
 any game's original complete APK. The converter does not gate this option on a
 title/package name. It matches native files against a catalog of inspected
 fingerprints, so the same verified repair can be tried in another game with the
@@ -12,6 +12,13 @@ Vector profile also guards the null native-buffer release identified in the
 owner's subsequent JNI crash.
 See [the Vector investigation](vector-runtime-repair.md) for that repair. The code repair, source/output hashes and instruction validation
 are documented in [that investigation](muffin-knight-runtime-repair.md). Each engine repair requires its own validated binary layout.
+
+The catalog also includes the inspected Frima Space Shooter 1.1.3 initializer,
+Adobe AIR Core (17 relative code literals / 18 loads), and AIR libysshared (two
+relative literals plus a symbolic literal moved to a writable relocation cell).
+See [AIR/Frima repair evidence](air-frima-runtime-repairs.md). Per-file read and
+startup-inspection limits are now 24 MiB to include the inspected 18 MiB Core;
+overall repair/inspection budgets remain 64/32 MiB.
 
 ## Matching and behavior
 
@@ -56,7 +63,7 @@ plugins, permissions, graphics, assets and discontinued OUYA services can still
 fail. No successful game launch is inferred from catalog matching or offline
 instruction tests.
 
-The repair-only import mode changes no DEX. **Unity / Marmalade — startup repairs + touch** also runs the optional DEX touch conversion and appends the bridge
+The repair-only import mode changes no DEX. **Startup repairs + touch — Unity / Marmalade / AIR / Frima** also runs the optional DEX touch conversion and appends the bridge
 when supported; both results are included in the report. Neither mode changes
 purchases. Native repair itself changes no game assets, unrelated native
 libraries, Android security settings, native

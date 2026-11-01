@@ -41,7 +41,7 @@ public final class NativeRuntimeRepairTest {
   check(inspect(Map.of(direct,fixed),catalog).replacements.isEmpty());
   check(inspect(Map.of(direct,proxy,asset,fixed),catalog).replacements.size()==1);
   check(inspect(Map.of(direct,proxy),catalog).replacements.isEmpty());
-  check(inspect(Map.of(direct,proxy),catalog).report.contains("Known proxy, missing"));
+  check(inspect(Map.of(direct,proxy),catalog).report.contains("Known Unity loader proxy, missing embedded runtime "+asset));
   check(inspect(Map.of(direct,proxy,asset,new byte[]{99}),catalog).report.contains("Unrecognized embedded payload"));
   check(inspect(Map.of(direct,new byte[]{99},asset,source),catalog).replacements.isEmpty()); // Unknown proxy cannot be bypassed.
   check(inspect(Map.of("lib/arm64-v8a/libmono.so",source),catalog).report.contains("Unsupported ABI"));

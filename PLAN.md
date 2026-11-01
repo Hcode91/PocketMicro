@@ -565,3 +565,48 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   normal quick crash after cold Shizuku bind and check recovered output. For
   Abbigale try original APK with Unity/Marmalade startup repairs + touch; report
   matching/unsupported entries or supply original native files for new builds.
+
+
+- **2026-11-01 — Space Shooter + inspected AIR PIC candidates; Abbigale payloads
+  still absent:** owner supplied Space Shooter 1.1.3 ZIP, then Abbigale game ZIP
+  and lib ZIP, requesting all fixes. Space Shooter has one ARM initializer
+  R_ARM_RELATIVE at 0x7421c; use existing PIC routine (init 0x74210, target 0x1ed620).
+  Catalog source 92a31b66bf1127993764a29481866c6dfa0b02889f1d850ceca06a74b3f3fe33
+  -> output f242435f27d97c46cbe4e26d5b6baf2ce41e6ef72bca1985425af3699f77870e.
+  Real source/repaired initializer matches registers/flags/branch at three biases.
+  Actual repair-only and repair+touch conversion, unrelated payload preservation
+  and idempotence pass. Phone startup/input remain unverified.
+  Revisited earlier Ball Slapping AIR files: Core has 17 relative code literals
+  read at 18 ARM LDR sites, ysshared has two relative literals and one symbolic
+  absolute literal (three loads). New ArmLiteralPicRepair redirects exact-profile
+  loads through RX PC-relative stubs. Symbolic relocation moves to a new RW cell
+  with original symbol/addend; valid and null weak resolutions preserved. Core
+  unwind table is rebased with decoded original PREL31 recipes retained and stub
+  entries cloned from original sites; PT_ARM_EXIDX/section metadata updated.
+  Existing mappings/GNU_STACK/RELRO flags preserved, no new RWX, only RW remaining
+  loader writes before DT_TEXTREL removal. Originally absent ysshared unwind stays
+  absent. Unknown/ADR/Thumb/address-taken/SP/PC/out-of-range/count layouts reject.
+  Core source 6cc57698961c0dab6bf2d32d443a1c07c5f6befcd552dc25738893f77104c22c
+  -> b6f2b60be0bd662bf62a1afb4f23deb7d33e715c20fc04b66d322927acd20813;
+  ysshared source b943b7e7631b4ef047f2eeeef6c50ff77dd6756c66f9eb7954a3e846f387b69c
+  -> 92ee9b5a46bf4bf1092bfc73cc747d8cc102312fdad3631d74bc2812765b96a2.
+  Per-file runtime read/startup inspection increased to 24 MiB for Core; aggregate
+  budgets unchanged. UI labels list Unity/Marmalade/AIR/Frima with exact-build
+  limitations and AIR old-private-media dependency risk. No AIR full boot verified;
+  Zombie Toaster native bytes not supplied, only covered if fingerprints match.
+  All 18+3 loads checked in Unicorn at three biases with null/resolved symbols,
+  full register/flag/PC equality, unchanged source mappings, original/stub unwind
+  recipe equality and remaining writable relocation checks. Synthetic present/
+  absent unwind, symbolic-cell, PREL31 and rejection fixtures; prior host suites;
+  actual AIR two-file archive preservation/idempotence; Android Java and prior
+  inspection/crash/global-export tests pass. No game/native files committed.
+  Both Abbigale ZIPs have the same known Mono/Unity loader proxies (92,744/47,688
+  bytes), NOT real payloads. assets/libs/armeabi-v7a/libmono.so and libunity.so are
+  missing; source builds cannot be inferred from proxies alone. Improved missing
+  runtime report, verified no patch/donor substitution occurs on those archives.
+  See docs/air-frima-runtime-repairs.md and scripts/test-arm-literal-pic.py.
+  **Next:** install branch APK, reconvert original complete Space Shooter and AIR
+  APKs with startup repairs (with touch if desired); check matched/unsupported
+  file counts, normal Play, fresh global log. Supply Abbigale's two actual files
+  from assets/libs/armeabi-v7a (or complete-APK conversion report with payload
+  hashes) to finish that repair. New candidates still need phone validation.

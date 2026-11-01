@@ -19,7 +19,7 @@ public final class NativeStartupChecks {
             if(!entry.getName().matches("lib/[^/]+/[^/]+\\.so"))continue;
             byte[] replacement=replacements.get(entry.getName());
             long size=replacement==null?entry.getSize():replacement.length;
-            if(size<0||size>16L*1024*1024||size>budget||inspected>=128){partial=true;continue;}
+            if(size<0||size>24L*1024*1024||size>budget||inspected>=128){partial=true;continue;}
             inspected++;budget-=size;
             if(replacement!=null){if(hasTextRelocations(replacement))textRelocations.add(entry.getName());continue;}
             try(InputStream input=apk.getInputStream(entry)){

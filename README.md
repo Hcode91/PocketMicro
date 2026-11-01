@@ -33,7 +33,7 @@ startup incompatibilities; see [its investigation](docs/final-fantasy-iii-compat
    artifact from [GitHub Actions](../../actions/workflows/android.yml).
 2. Choose **Add game** and select the **original complete APK**, with its assets.
 3. Select **Touch controls — OUYA / Android input**, **Offline purchases — OUYA Unity SDK**, or both. For a
-   supported legacy runtime, choose **Unity / Marmalade — startup repairs + touch**.
+   supported legacy runtime, choose **Startup repairs + touch — Unity / Marmalade / AIR / Frima**.
    Normal conversion and repair without controls remain available.
 4. Read the conversion report. It identifies which features could be added;
    unsupported purchase protocols keep their original checks.
@@ -160,17 +160,19 @@ This does not add GameMaker engine support to Unity, Marmalade or AIR games.
 | Touch controls — OUYA / Android input | Embedded pad: OUYA Unity native input, Marmalade key callbacks, or Android gamepad/keyboard fallback. |
 | Offline purchases — OUYA Unity SDK | Local receipts for the detected supported Java Unity SDK; other protocols remain unchanged. |
 | Touch + OUYA Unity offline purchases | Combines the preceding input and receipt options. |
-| Unity / Marmalade — startup repairs | Exact-library fixes: Unity/Mono 4.1.5f1 text relocations; Vector 1.0.7 Marmalade text relocations and null JNI surface-buffer release. |
-| Unity / Marmalade — startup repairs + touch | Same startup fixes plus the embedded pad. |
+| Startup repairs — Unity / Marmalade / AIR / Frima | Exact-library fixes: Unity/Mono 4.1.5f1 loading, Vector 1.0.7 Marmalade loading/JNI surface release, inspected Adobe AIR code literals and Frima Space Shooter 1.1.3 initializer. |
+| Startup repairs + touch — Unity / Marmalade / AIR / Frima | Same startup fixes plus the embedded pad. |
 
 The conversion report names the engine/component and problem for each matched
 native repair, alongside unchanged/unsupported components. Engine names do not
-imply all versions are supported. Adobe AIR and Final Fantasy III startup are
-not covered by these repairs. AIR investigation is currently parked.
+imply all versions are supported. Inspected AIR Core/native-extension and Frima
+Space Shooter 1.1.3 builds now have fingerprinted text-relocation repairs. AIR
+can still fail on obsolete private media APIs; Final Fantasy III startup remains
+unsupported. See [AIR/Frima evidence and Abbigale payload requirements](docs/air-frima-runtime-repairs.md).
 
 ## Native runtime repair across games (experimental)
 
-Choose **Unity / Marmalade — startup repairs** when adding any game's
+Choose **Startup repairs — Unity / Marmalade / AIR / Frima** when adding any game's
 original complete APK. Repair matching uses exact native-library fingerprints,
 not a game/package name. The catalog supports the inspected ARM32 Mono/Unity
 4.1.5f1 builds (direct or verified proxy/embedded layouts), plus the inspected
@@ -182,7 +184,7 @@ existing ABI directories.
 The report lists repaired files, already-repaired files and unsupported candidates.
 Unknown versions, missing payloads and unsupported ABIs stay unchanged. A partial
 repair can leave another startup blocker; this is not a universal text-relocation
-fix. Repair-only mode adds no controls or purchase changes. Choose **Unity / Marmalade — startup repairs + touch** to also embed the pad; its DEX compatibility
+fix. Repair-only mode adds no controls or purchase changes. Choose **Startup repairs + touch — Unity / Marmalade / AIR / Frima** to also embed the pad; its DEX compatibility
 is reported separately. Neither repair option changes purchases. Use normal Play and
 capture a fresh crash if it fails. Vector 1.0.7 launch and touch input were confirmed on the owner's phone;
 other game/build combinations remain unverified.
@@ -215,3 +217,12 @@ Abbaye des Morts needs another phone run; its boot-test success only establishes
 that it reaches graphics, not that the full game works. The global logger also
 retains pending startup capture briefly after a fast return so a cold Shizuku
 connection can read the buffered launch/crash output.
+
+
+Startup repairs now include **Frima / Space Shooter 1.1.3** and the inspected
+**Adobe AIR Core and native-extension** libraries. Choose either engine startup
+repair option when importing the original complete APK; the report names the
+matched files. Zombie Toaster is only covered if its AIR library hashes match.
+Abbigale's supplied lib/ files are Unity loader proxies: its real runtimes under
+assets/libs/armeabi-v7a/ are still needed to identify/repair that build. No other
+game's runtimes are substituted. These candidates need phone launch testing.

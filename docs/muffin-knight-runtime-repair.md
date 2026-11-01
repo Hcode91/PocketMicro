@@ -10,7 +10,7 @@ PocketOuya. **The candidate repair has not yet been tested in a running game.**
 1. Install the investigation branch's PocketOuya Actions APK.
 2. Add the **original complete Muffin Knight APK**, including its assets. The
    partial inspection ZIPs are not playable APKs.
-3. Choose **Unity / Marmalade — startup repairs** and review its report.
+3. Choose **Startup repairs — Unity / Marmalade / AIR / Frima** and review its report.
 4. Install the conversion over the existing PocketOuya-signed copy and use
    ordinary **Play**, not Engine test.
 5. If it still crashes, use **Capture crash log** for a fresh trace.
