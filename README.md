@@ -173,7 +173,7 @@ This does not add GameMaker engine support to Unity, Marmalade or AIR games.
 | Touch controls — OUYA / Android input | Embedded pad: OUYA Unity native input, Marmalade key callbacks, or Android gamepad/keyboard fallback. |
 | Offline purchases — OUYA Unity SDK | Local receipts for the detected supported Java Unity SDK; other protocols remain unchanged. |
 | Touch + OUYA Unity offline purchases | Combines the preceding input and receipt options. |
-| Startup repairs — Unity / Marmalade / AIR / Frima | Exact-library fixes: Unity 4.1.1f4 embedded-runtime promotion/loading (Abbigale), Unity/Mono 4.1.5f1 loading, Vector 1.0.7 Marmalade loading/JNI surface release, inspected Adobe AIR code literals and Frima Space Shooter 1.1.3 initializer. |
+| Startup repairs — Unity / Marmalade / AIR / Frima | Exact-library fixes: Unity 4.3.4f1 NativeActivity main/Mono/player loading, Unity 4.1.1f4 embedded-runtime promotion/loading (Abbigale), Unity/Mono 4.1.5f1 loading, Vector 1.0.7 Marmalade loading/JNI surface release, inspected Adobe AIR code literals and Frima Space Shooter 1.1.3 initializer. |
 | Startup repairs + touch — Unity / Marmalade / AIR / Frima | Same startup fixes plus the embedded pad. |
 
 The conversion report names the engine/component and problem for each matched
@@ -188,7 +188,8 @@ unsupported. See [AIR/Frima evidence and Abbigale payload requirements](docs/air
 Choose **Startup repairs — Unity / Marmalade / AIR / Frima** when adding any game's
 original complete APK. Repair matching uses exact native-library fingerprints,
 not a game/package name. The catalog supports the inspected ARM32 Mono/Unity
-4.1.5f1 builds (direct or verified proxy/embedded layouts), plus the inspected
+4.1.5f1 builds (direct or verified proxy/embedded layouts), the inspected Unity
+4.1.1f4 Abbigale payloads and Unity 4.3.4f1 NativeActivity main/Mono/player builds, plus the inspected
 Vector 1.0.7 Marmalade library and three extension libraries. Vector repair also
 guards the null JNI buffer release identified in the follow-up phone crash.
 It checks each component independently and keeps
@@ -200,8 +201,8 @@ repair can leave another startup blocker; this is not a universal text-relocatio
 fix. Startup repair without touch adds no controls. Choose **Startup repairs + touch — Unity / Marmalade / AIR / Frima** to also embed the pad; its DEX compatibility
 is reported separately. Both modes now offer an independent offline purchase checkbox, preselected by the global default. Leave it off to preserve purchase checks. Use normal Play and
 capture a fresh crash if it fails. Vector 1.0.7 launch and touch input were confirmed on the owner's phone;
-other game/build combinations remain unverified.
-See [catalog behavior](docs/native-runtime-repair.md) and
+Abbigale launch was also confirmed for its inspected runtime pair. Other game/build combinations remain unverified.
+See [Unity NativeActivity evidence](docs/unity-nativeactivity-runtime-repair.md), [catalog behavior](docs/native-runtime-repair.md) and
 [the original runtime investigation](docs/muffin-knight-runtime-repair.md).
 
 

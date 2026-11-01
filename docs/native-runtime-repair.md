@@ -20,10 +20,16 @@ See [AIR/Frima repair evidence](air-frima-runtime-repairs.md). Per-file read and
 startup-inspection limits are now 24 MiB to include the inspected 18 MiB Core;
 overall repair/inspection budgets remain 64/32 MiB.
 
+The inspected Unity 4.3.4f1 NativeActivity build adds direct `libmain.so`, Mono
+and player profiles using the same existing initializer/atexit routine. See
+[inspection, fingerprints and validation](unity-nativeactivity-runtime-repair.md).
+Abbigale’s Unity 4.1.1f4 payload promotion and its owner-confirmed launch are
+documented in [the payload investigation](air-frima-runtime-repairs.md).
+
 ## Matching and behavior
 
-For cataloged library names (Mono/Unity, Vector and the three supported Marmalade
-extensions) under existing `lib/armeabi-v7a/` or
+For cataloged library names (including Unity main/Mono/player, Vector,
+Marmalade extensions, AIR and Frima) under existing `lib/armeabi-v7a/` or
 `lib/armeabi/` directories:
 
 - A matching installed original runtime is repaired directly. Embedded assets

@@ -751,3 +751,33 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   original APKs with desired startup/touch mode, review supported/unchanged
   purchase report, normal Play and try in-game purchase button where supported.
   Global-dialog behavior and game acceptance remain phone tests.
+
+
+- **2026-11-01 — Unity 4.3.4f1 NativeActivity / AD2442 text relocations:**
+  owner supplied libmain, Mono, Unity, OUYA extension and original manifest after
+  NativeActivity rejected libmain for TEXTREL. All three runtimes use existing
+  ARM initializer + optional Thumb atexit repair patterns, so added exact catalog
+  profiles, not a new repair algorithm. Version string4.3.4f1(e444f76e01cd).
+  Main source df20f390..., init0x21f8,target0x8000,thunk0x2208,atexitPLT0x20b0;
+  Mono source3ff6f788...,init0x15b08,target0x3bd2b0; player source9f1bd219...,
+  init0x6bb30,target0xa2e000,thunk0x6bb40,atexitPLT0x6b140. Outputs respectively
+  bc152baf4f9d17ec8f47040b0988bc3a1b2b914d4b93c45f723cdac6f00e6326,
+  580c868118528120640588c4f993cf25c1f16b7a77882262c7fd6092be06d9bd,
+  2d11f8117a4db369788e3185d05185b39dff9cfdd08aa06c13ed47501be6633e.
+  OUYA extension has no TEXTREL/nonwritable relocation and remains unchanged.
+  Source manifest package com.burningthumb.mobile.AD2442,target16->23 explains
+  linker enforcement; touch wrapper frame alone does not prove regression.
+  Existing routine compacts code relocations/counts, updates thunk unwind and
+  verifies all remaining writes target RW before clearing declaration. No
+  mapping/permission/Android-policy changes or broad unknown-library patches.
+  Tests: supplied manifest+native packaging fixture (NOT full game: no DEX/assets
+  supplied), THREE exact native outputs, no TEXTREL, package/extension/asset
+  marker preservation, no helper and idempotence. Unicorn initializer/atexit
+  arguments, ARM/Thumb caller/target, stack/callee-saved registers and original
+  RX/RW mappings at three biases pass. Optional test-ad2442-runtime-pic.py uses
+  user-owned APKs. Prior host/native/receipt/log suites and Android Java compile
+  pass. Labels/docs updated, no binaries committed. **Next:** install branch
+  build, reconvert ORIGINAL COMPLETE game APK with Startup repairs (+touch if
+  wanted), leave offline purchase checkbox off for isolated startup test, confirm
+  THREE Unity4.3.4f1 files repaired, install update, normal Play and fresh global
+  log on failure. No Android startup/gameplay/input/purchase success claimed.
