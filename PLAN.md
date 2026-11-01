@@ -692,3 +692,35 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   No speculative recursion branch patch or stack-limit workaround. **Next:**
   original APK's assets/libs/armeabi-v7a/libmono.so and libunity.so, individually
   zipped if needed, full launch global log and tombstone maps when available.
+
+
+- **2026-11-01 — Real Abbigale payloads supplied and fingerprinted:** owner
+  supplied full Mono (3,917,412 bytes, SHA9816e13e...) and Unity (9,204,864 bytes,
+  SHA2442a0cf...), unlike previous small proxies. Unity version 4.1.1f4. All four
+  repeating anonymous-frame offsets map to this Unity C++ string/error cycle.
+  strlen PLT0x63350/GOT0x8bbd74 feeds a size that exceeds _S_create's limit, then
+  constructing the size-error message repeats. Message at0x80a4a0 matches runtime
+  address; r4/r5=0xe63320e5 is consistent with a resolver/function-pointer return
+  used as a length. IFUNC handling by the legacy embedded loader is a plausible
+  cause, NOT proven without phone GOT/libc evidence. Controlled Unicorn test
+  reproduces exact four frames with that return and avoids cycle with length22.
+  Added two exact runtime catalog profiles using existing PIC primitive: Mono
+  init0x15a60,target0x3bc2d0; Unity init0x64910,target0x8bd000,Thumb thunk0x64920,
+  atexitPLT0x64028. Outputs e888ab00e407ab46d67d6ab32e7573ca0f571fcc9c3fe57d214c336e7e53498e
+  and15b92db63f6869bd1f34f13db7a12a0e89bea9765f87d7f08b114cf490482746.
+  Catalog promotes repaired actual assets/libs payloads into installed lib paths
+  when known proxies match, bypassing custom symbol resolution through normal
+  Android loading. No strlen/exception bypass, added stack, vendor substitution,
+  segment permission/mapping change or embedded asset modification. Exact unknown
+  builds still unchanged; old 4.1.5f1/loader/AIR/Frima/Vector profiles retained.
+  Tests: actual archive two-payload promotion, output hashes, unrelated bytes,
+  no repair-only helper, idempotence; combined real-APK touch hooks/helper plus
+  two runtime promotions; instruction initializer/atexit argument/stack/interwork
+  at three biases under RX/RW; modeled recursion/control; host suites; Android
+  app/bridge Java and D8 pass. Optional script test-abbigale-runtime-pic.py uses
+  user-owned APKs, no game/native bytes committed. Docs/labels updated.
+  **Next:** install branch build, reconvert ORIGINAL COMPLETE Abbigale APK with
+  Startup repairs (+touch if desired), verify TWO real Unity4.1.1f4 runtimes
+  repaired/promoted rather than loader-only, install update, normal Play, export
+  fresh global log on failure. Gameplay remains UNVERIFIED; further engine/JNI/
+  Android/dependency issues possible. Server integration remains removed.

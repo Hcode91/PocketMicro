@@ -18,6 +18,8 @@ public final class NativeRuntimeRepair {
         }
     }
     private static final List<Profile> CATALOG=Arrays.asList(
+        new Profile("libmono.so","9816e13ed0ce4d690c9c99ca5187168e08dfacfb4387002becf072153868970c","e888ab00e407ab46d67d6ab32e7573ca0f571fcc9c3fe57d214c336e7e53498e","a280a957e102a2b0e075f339ddff6a648a27af8d8ecfb2a994a43905d38cf15c","Unity 4.1.1f4 / Mono — real runtime text-relocation repair; normal Android loading when promoted",0x15a60,0x3bc2d0,-1,0),
+        new Profile("libunity.so","2442a0cffee5f77854895316151573bceabcb2b6278e472aff74b3236d0d3c2a","15b92db63f6869bd1f34f13db7a12a0e89bea9765f87d7f08b114cf490482746","aee89345929061f1e52fe72a7874796a8d3cdba8a663bf370a14cea896b05961","Unity 4.1.1f4 player — real runtime text-relocation repair; bypass legacy embedded loader when promoted",0x64910,0x8bd000,0x64920,0x64028),
         new Profile("libmono.so","a280a957e102a2b0e075f339ddff6a648a27af8d8ecfb2a994a43905d38cf15c","857d1f4e4f107dbcc429dcddb5a3bd6fa2f10fdbb42b953da141d4ac3d8d4e06",null,"Unity Mono loader-only — text-relocation fix; embedded runtime not validated",0x3af8,0x17000,0x3b08,0x3a14),
         new Profile("libunity.so","aee89345929061f1e52fe72a7874796a8d3cdba8a663bf370a14cea896b05961","cdbe592192dc48608ca8d908d4879f120ee33eb0cd2bfa128fd7169baa598ab5",null,"Unity player loader-only — text-relocation fix; embedded runtime not validated",0x1760,0xc000,0x1770,0x167c),
         new Profile("libSpaceShooter.so","92a31b66bf1127993764a29481866c6dfa0b02889f1d850ceca06a74b3f3fe33","f242435f27d97c46cbe4e26d5b6baf2ce41e6ef72bca1985425af3699f77870e",null,"Frima / Space Shooter 1.1.3 — text-relocation initializer fix",0x74210,0x1ed620,-1,0),

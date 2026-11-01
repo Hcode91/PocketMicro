@@ -150,6 +150,9 @@ successful Abbigale launch is claimed and no donor runtime is substituted.
 
 ### Follow-up device crash: 2026-11-01 19:22
 
+This was the assessment before the full payloads were supplied. The next section
+records the subsequent matching and candidate repair.
+
 The owner's new trace reports native SIGSEGV/SEGV_ACCERR, a stack-overflow hint,
 and 512 frames. Offsets `0x7c3248`, `0x7d84e8`, `0x7d8784`, `0x7d8868` repeat
 in the anonymous mapping based at `0xdb8e0000`; the top frame is `0x7c322c`.
@@ -172,3 +175,65 @@ full global log from that launch. Separate ZIPs avoid uploading all game assets.
 A complete tombstone with memory maps, if available, can identify the anonymous
 mapping. No additional Abbigale binary change is made for this unsymbolized
 crash; the loader-only repair remains explicitly partial.
+
+### Full Unity 4.1.1f4 payloads supplied: normal-loader candidate
+
+The owner subsequently supplied the real embedded files: Mono 3,917,412 bytes
+and Unity 9,204,864 bytes. Unity contains version `4.1.1f4 (89a83a44d45a)`.
+All four repeating crash offsets match instruction boundaries/calls in this
+Unity payload. The actual cycle constructs a C++ string, requests its backing
+storage, rejects an excessive size and constructs the size-error string again.
+The error string at `0x80a4a0` is `basic_string::_S_create`.
+
+The call at `0x7d8854` reaches the `strlen` PLT at `0x63350`, whose GOT slot is
+`0x8bbd74`. The exception message's runtime address (`0xdc0ea4a0`) equals the
+anonymous base plus that string offset. The captured `r4/r5 = 0xe63320e5` is
+consistent with a function address being used as a length, rather than the
+message's 22-byte length. An old custom symbol resolver calling an IFUNC resolver
+as if it were `strlen` is a plausible cause. The phone's libc and GOT contents
+were not captured, so **that cause is not established**.
+
+An instruction test of these actual functions reproduces the exact four-frame
+cycle when a `strlen` stand-in returns `0xe63320e5`. Returning the correct length
+instead reaches normal allocation without the cycle. This is a controlled
+mechanism test, not a measurement of the phone's resolver.
+
+Added exact-source/output catalog entries using the existing PC-relative repair:
+
+| Payload | Source SHA-256 | Repaired SHA-256 |
+| --- | --- | --- |
+| Mono | `9816e13ed0ce4d690c9c99ca5187168e08dfacfb4387002becf072153868970c` | `e888ab00e407ab46d67d6ab32e7573ca0f571fcc9c3fe57d214c336e7e53498e` |
+| Unity | `2442a0cffee5f77854895316151573bceabcb2b6278e472aff74b3236d0d3c2a` | `15b92db63f6869bd1f34f13db7a12a0e89bea9765f87d7f08b114cf490482746` |
+
+Mono has one text relocation: its ARM initializer at `0x15a60` references
+`0x3bc2d0`. Unity has two: the initializer at `0x64910` references `0x8bd000`,
+and the Thumb destructor thunk at `0x64920` has an ABS32 function literal.
+Its repaired tail call uses the original `__cxa_atexit` PLT at `0x64028`.
+Relocation tables/counts and Thumb unwind metadata are updated; remaining writes
+must target writable segments before DT_TEXTREL is removed. No permission flags
+or original segment mappings are changed.
+
+When the known proxies and these exact payloads occur together in an original
+APK, the converter promotes the repaired payloads to the installed `lib/` paths.
+Android then loads the real libraries directly, bypassing the legacy embedded
+loader's resolution path. SONAMEs, dependencies, symbol version tables and all
+other runtime code remain intact. Embedded asset copies stay byte-identical.
+No `strlen` replacement, exception suppression, larger stack or donor runtime is
+introduced. Other payload builds remain independently fingerprinted/unsupported.
+
+Local verification: two-file promotion; unrelated DEX/resources/OUYA extension
+preserved; no helper DEX in repair-only mode; output hashes and idempotence;
+initializer/atexit instruction behavior, ARM/Thumb caller/target combinations at
+three load biases under original RX/RW mappings. Optional reproduction:
+
+```sh
+python3 scripts/test-abbigale-runtime-pic.py original.apk converted.apk
+```
+
+The input must include the matching original payloads under `assets/libs/`.
+This candidate has **not** been validated by Android gameplay. To test, install
+the new PocketOuya build, reconvert the original complete Abbigale APK with
+**Startup repairs** (optionally with touch), and verify the report says two real
+Unity 4.1.1f4 runtimes were repaired/promoted, rather than loader-only repair.
+Install the converted update and use normal Play. Export a fresh global log if
+another failure follows. Server integration remains removed.

@@ -160,7 +160,7 @@ This does not add GameMaker engine support to Unity, Marmalade or AIR games.
 | Touch controls — OUYA / Android input | Embedded pad: OUYA Unity native input, Marmalade key callbacks, or Android gamepad/keyboard fallback. |
 | Offline purchases — OUYA Unity SDK | Local receipts for the detected supported Java Unity SDK; other protocols remain unchanged. |
 | Touch + OUYA Unity offline purchases | Combines the preceding input and receipt options. |
-| Startup repairs — Unity / Marmalade / AIR / Frima | Exact-library fixes: Unity/Mono 4.1.5f1 loading, Vector 1.0.7 Marmalade loading/JNI surface release, inspected Adobe AIR code literals and Frima Space Shooter 1.1.3 initializer. |
+| Startup repairs — Unity / Marmalade / AIR / Frima | Exact-library fixes: Unity 4.1.1f4 embedded-runtime promotion/loading (Abbigale), Unity/Mono 4.1.5f1 loading, Vector 1.0.7 Marmalade loading/JNI surface release, inspected Adobe AIR code literals and Frima Space Shooter 1.1.3 initializer. |
 | Startup repairs + touch — Unity / Marmalade / AIR / Frima | Same startup fixes plus the embedded pad. |
 
 The conversion report names the engine/component and problem for each matched
@@ -223,8 +223,10 @@ Startup repairs now include **Frima / Space Shooter 1.1.3** and the inspected
 **Adobe AIR Core and native-extension** libraries. Choose either engine startup
 repair option when importing the original complete APK; the report names the
 matched files. Zombie Toaster is only covered if its AIR library hashes match.
-Abbigale's supplied lib/ files are Unity loader proxies. Exact loader-only
-repairs now handle their own text relocations when embedded runtimes are unknown
-or absent; those payloads remain unchanged and explicitly unvalidated. A further
-embedded-runtime loading error may still require the assets/libs files. No other
-game's runtimes are substituted. These candidates need phone launch testing.
+Abbigale's full Unity 4.1.1f4 payloads are now fingerprinted. For a matching
+original complete APK, startup repairs promote the repaired real Mono/player
+runtimes from assets/libs into the installed lib paths, bypassing its legacy
+embedded loader. This is a candidate for the repeating native string-error
+crash; it still needs phone validation. The report should show two real runtimes
+repaired/promoted. Unknown/missing payloads retain the partial loader-only option
+and its explicit limitations. No other game's runtimes are substituted.
