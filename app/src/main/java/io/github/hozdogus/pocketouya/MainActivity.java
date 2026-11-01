@@ -117,6 +117,7 @@ public class MainActivity extends Activity {
         add.setOnClickListener(v -> pickApk());
         header.addView(add);
         root.addView(header);
+        Button doctor=new Button(this);doctor.setText("APK COMPATIBILITY DOCTOR");doctor.setOnClickListener(v->startActivity(new Intent(this,ApkDoctorActivity.class)));root.addView(doctor);
         Button purchases=new Button(this);purchases.setText("OFFLINE PURCHASE OPTIONS");purchases.setOnClickListener(v->showPurchaseOptions());root.addView(purchases);
         Button logs=new Button(this);logs.setText("GLOBAL LOG / EXPORT");logs.setOnClickListener(v->startActivity(new Intent(this,GlobalLogActivity.class)));root.addView(logs);
 
@@ -378,10 +379,10 @@ public class MainActivity extends Activity {
     private void showPurchaseOptions() {
         LinearLayout content=new LinearLayout(this);content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(20),dp(8),dp(20),dp(8));
         android.widget.CheckBox enabled=new android.widget.CheckBox(this);
-        enabled.setText("Try offline purchases by default for every game conversion");
+        enabled.setText("Try offline purchases by default for Add game conversions");
         enabled.setChecked(prefs().getBoolean(OFFLINE_DEFAULT,false));content.addView(enabled);
         TextView info=new TextView(this);
-        info.setText("This preselects offline purchases whenever you add a game, including conversions with engine startup repairs and touch controls. You can turn it off for an individual conversion.\n\nMatching OUYA Unity games receive local product and purchase responses. Use the game's own purchase/unlock button; successful local purchases are remembered in that game's data. No payment or server is used by this compatibility feature.\n\nOther billing APIs, server-only content and custom checks may not work. The conversion report says whether support was added or the purchase checks stayed unchanged. This does not make every game fully offline; original game code may still access the network.\n\nAlready installed games need reconverting from their original complete APKs. Changing this setting does not alter existing games. Clearing game data or uninstalling deletes local receipts.");content.addView(info);
+        info.setText("This preselects offline purchases whenever you use Add game, including conversions with engine startup repairs and touch controls. The APK doctor uses manifest/native repairs only and does not use this default. You can turn it off for an individual conversion.\n\nMatching OUYA Unity games receive local product and purchase responses. Use the game's own purchase/unlock button; successful local purchases are remembered in that game's data. No payment or server is used by this compatibility feature.\n\nOther billing APIs, server-only content and custom checks may not work. The conversion report says whether support was added or the purchase checks stayed unchanged. This does not make every game fully offline; original game code may still access the network.\n\nAlready installed games need reconverting from their original complete APKs. Changing this setting does not alter existing games. Clearing game data or uninstalling deletes local receipts.");content.addView(info);
         android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
         new AlertDialog.Builder(this).setTitle("Global offline purchase default").setView(scroll)
             .setPositiveButton("Save",(dialog,which)->{

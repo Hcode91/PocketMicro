@@ -26,10 +26,13 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,offline,false);
     }
     public static ManifestPatcher.Result rebuild(File in, File out, byte[] bridge, boolean touch, boolean offline, boolean runtimeRepair) throws IOException {
+        return rebuild(in,out,bridge,touch,offline,runtimeRepair,ManifestPatcher.MIN_TARGET);
+    }
+    public static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,int minimumTarget)throws IOException {
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
             if(manifestEntry==null)throw new IOException("Not an Android app (no AndroidManifest.xml).");
-            ManifestPatcher.Result result=ManifestPatcher.patch(readBounded(zip.getInputStream(manifestEntry),4*1024*1024));
+            ManifestPatcher.Result result=ManifestPatcher.patch(readBounded(zip.getInputStream(manifestEntry),4*1024*1024),minimumTarget);
             java.util.Map<String,byte[]> replacements=new java.util.LinkedHashMap<>();
             if(runtimeRepair){
                 NativeRuntimeRepair.Plan repair=NativeRuntimeRepair.plan(zip);

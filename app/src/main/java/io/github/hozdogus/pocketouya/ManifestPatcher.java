@@ -36,7 +36,10 @@ public final class ManifestPatcher {
 
     private ManifestPatcher() {}
 
-    public static Result patch(byte[] axml) {
+    public static Result patch(byte[] axml) { return patch(axml,MIN_TARGET); }
+
+    public static Result patch(byte[] axml,int minimumTarget) {
+        if(minimumTarget<23||minimumTarget>24)throw new IllegalArgumentException("Unsupported target policy");
         byte[] data = axml.clone();
         ByteBuffer b = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
         List<String> strings = new ArrayList<>();
@@ -109,17 +112,17 @@ public final class ManifestPatcher {
 
         if (targetValueOffset >= 0) {
             r.newTarget = r.oldTarget;
-            if (r.oldTarget < MIN_TARGET) {
-                b.putInt(targetValueOffset, MIN_TARGET);
-                r.newTarget = MIN_TARGET;
+            if (r.oldTarget < minimumTarget) {
+                b.putInt(targetValueOffset, minimumTarget);
+                r.newTarget = minimumTarget;
                 r.changed = true;
             }
         } else if (minSdkValueOffset >= 0) {
             // No targetSdkVersion: Android treats minSdkVersion as the target.
             r.newTarget = r.minSdk;
-            if (r.minSdk < MIN_TARGET) {
-                b.putInt(minSdkValueOffset, MIN_TARGET);
-                r.newTarget = MIN_TARGET;
+            if (r.minSdk < minimumTarget) {
+                b.putInt(minSdkValueOffset, minimumTarget);
+                r.newTarget = minimumTarget;
                 r.changed = true;
             }
         } else {

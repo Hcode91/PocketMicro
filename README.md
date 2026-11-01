@@ -21,6 +21,15 @@ refuse to install apps built for anything older than Android 6. PocketOuya fixes
   provide general OUYA services. Experimental touch and offline purchase options are available during conversion (see below).
 - If you have the original (un-patched) game installed, uninstall it first – the signatures differ.
 
+## APK compatibility doctor
+
+Use **APK COMPATIBILITY DOCTOR** to scan an original APK against this phone,
+review known fixes and unresolved issues, prepare a separately signed copy, and
+export the APK/report or explicitly install it. The first version handles SDK
+target conversion and fingerprinted native repairs. It does not add touch or
+purchase hooks. It cannot guarantee a launch or repair every Android/API/CPU
+incompatibility. See [workflow and limitations](docs/apk-doctor.md).
+
 ## Touch controls and offline purchases (experimental)
 
 Conversion can now inspect games by their activity and SDK layout, across multiple

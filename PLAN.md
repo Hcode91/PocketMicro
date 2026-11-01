@@ -781,3 +781,34 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   wanted), leave offline purchase checkbox off for isolated startup test, confirm
   THREE Unity4.3.4f1 files repaired, install update, normal Play and fresh global
   log on failure. No Android startup/gameplay/input/purchase success claimed.
+
+
+- **2026-11-01 — APK compatibility doctor inside PocketOuya:** owner chose
+  integration into PocketOuya rather than separate app. Added unexported doctor
+  activity and home button: select original APK without install permission,
+  bounded private streaming copy, non-executing preflight, supported-fix preview,
+  explicit Prepare, separate signed output with ApkVerifier verification,
+  post-conversion inspection plus applied/original reports, full APK/report
+  document-picker export, optional explicit PackageInstaller handoff and library
+  tracking for ordinary launch/global logs. No automatic installation/launch,
+  network, new permissions, vendor bytes or touch/purchase injection. Add game
+  global purchase default remains separate. Temporary copies/cache restoration,
+  close cleanup, export-before-exit and signer/update/save risks documented.
+  Scanner checks SDK requirements, packaged ABI vs Build.SUPPORTED_ABIS, missing
+  DEX/split hints, duplicate entries/structural bounds, exact native repair plan,
+  residual TEXTREL. Reports unresolved CPU/minSdk/API/server/runtime/16KiB/security
+  limits explicitly; silence not success. Phone APIs35/36 use doctor target floor
+  24; existing converter methods retain floor23. Parameterized fixed-size manifest
+  patch/Rebuilder overloads preserve already-higher targets and old behavior.
+  No-target/minSdk fallback retains prior semantics and is disclosed. Post36
+  policy unverified. No universal compatibility or APK-safety claim.
+  Tests: API floors/high target/minSdk/device ABI/residual native/split hints,
+  immutable scan, conversion asset preservation, malformed manifest/duplicate ZIP
+  rejection; all prior host/native/receipt/journal suites; Android Java compilation.
+  Supplied AD2442 native/manifest fixture (not complete game) passes full doctor
+  scan -> three repairs/target24 -> v1/v2 signing -> signature verification ->
+  post-scan, with original unchanged. Docs/apk-doctor.md details limitations.
+  **Next:** branch build, APK COMPATIBILITY DOCTOR -> scan/review -> Prepare ->
+  Export APK/report or explicit Install; protect existing saves/signature updates.
+  Phone UI/picker/installer/lifecycle restoration and actual app launches remain
+  device tests. Use existing global log after a chosen launch for later blockers.
