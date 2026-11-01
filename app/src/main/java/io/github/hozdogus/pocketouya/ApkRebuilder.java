@@ -26,6 +26,10 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,offline,false);
     }
     public static ManifestPatcher.Result rebuild(File in, File out, byte[] bridge, boolean touch, boolean offline, boolean runtimeRepair) throws IOException {
+        return rebuild(in,out,bridge,touch,offline,runtimeRepair,false);
+    }
+    public static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,boolean server)throws IOException {
+        if(server&&offline)throw new IOException("Choose a single service adapter");
         if(runtimeRepair&&offline)throw new IOException("Test runtime repair separately from purchase options");
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
@@ -38,7 +42,7 @@ public final class ApkRebuilder {
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);
             boolean appendBridge=false;int nextDex=2;
-            if(touch||offline){
+            if(touch||offline||server){
                 if(bridge==null||bridge.length==0)throw new IOException("Converter compatibility bridge is missing");
                 java.util.Map<String,byte[]> input=new java.util.LinkedHashMap<>();long total=0;
                 Enumeration<? extends ZipEntry> entries=zip.entries();
@@ -53,7 +57,9 @@ public final class ApkRebuilder {
                     nextDex=Math.max(nextDex,number+1);
                 }
                 if(!input.containsKey("classes.dex"))throw new IOException("Missing primary DEX; compatibility cannot be inspected");
-                GameCompatibilityPatcher.Result plan=GameCompatibilityPatcher.patch(input,result.launcherActivities,touch,offline);
+                GameCompatibilityPatcher.Result plan=GameCompatibilityPatcher.patch(input,result.launcherActivities,touch,offline,server&&result.newTarget<30);
+                result.serverEnabled=plan.serverEnabled;
+                if(server&&result.newTarget>=30)plan.report+="\nCommunity server adapter skipped: target API 30+ requires package-visibility declarations this converter does not add. Original service calls preserved.";
                 replacements.putAll(plan.dex);appendBridge=plan.needsBridge();result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+plan.report;
             }
             if(!nativeWarnings.isEmpty())result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+nativeWarnings;

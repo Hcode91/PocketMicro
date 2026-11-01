@@ -117,6 +117,7 @@ public class MainActivity extends Activity {
         add.setOnClickListener(v -> pickApk());
         header.addView(add);
         root.addView(header);
+        Button service=new Button(this);service.setText("OUYA COMMUNITY SERVER");service.setOnClickListener(v->startActivity(new Intent(this,StouyapiActivity.class)));root.addView(service);
         Button logs=new Button(this);logs.setText("GLOBAL LOG / EXPORT");logs.setOnClickListener(v->startActivity(new Intent(this,GlobalLogActivity.class)));root.addView(logs);
 
         TextView section = new TextView(this);
@@ -247,11 +248,12 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle(g.label)
                 .setItems(new String[] { "Play", "App info", "Uninstall", "Engine test (developer)",
-                        "Play with GameMaker engine + touch (beta)", "Capture crash log" }, (d, which) -> {
+                        "Play with GameMaker engine + touch (beta)", "Capture crash log", "Community server access" }, (d, which) -> {
                     if (which == 0) launch(g);
                     else if (which == 3) engineTest(g);
                     else if (which == 4) playWithEngine(g);
                     else if (which == 5) startActivity(new Intent(this,CrashCaptureActivity.class).putExtra("package",g.pkg));
+                    else if (which == 6) serverAccess(g);
                     else if (which == 1)
                         startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                                 Uri.parse("package:" + g.pkg)));
@@ -259,6 +261,14 @@ public class MainActivity extends Activity {
                         startActivity(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + g.pkg)));
                 })
                 .show();
+    }
+
+    private void serverAccess(Game g) {
+        new AlertDialog.Builder(this).setTitle("Server access: "+g.label)
+            .setMessage("Allow this installed game to send its package ID and product requests through PocketOuya to the configured community server? This only works after conversion with the matching OUYA Unity server adapter. It does not change other games or repair native crashes. A reinstall may require approval again.")
+            .setPositiveButton("Allow",(d,w)->{try{StouyapiSettings.allow(this,g.pkg);Toast.makeText(this,"Server access approved",Toast.LENGTH_LONG).show();}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}})
+            .setNeutralButton("Revoke",(d,w)->StouyapiSettings.prefs(this).edit().remove("client:"+g.pkg).apply())
+            .setNegativeButton("Cancel",null).show();
     }
 
     // -------------------------------------------------------- engine test
@@ -374,8 +384,11 @@ public class MainActivity extends Activity {
 
     private void chooseImportMode(Uri uri) {
         new AlertDialog.Builder(this).setTitle("Game conversion")
-                .setItems(new String[]{"Android install compatibility only", "Touch controls — OUYA / Android input", "Offline purchases — OUYA Unity SDK", "Touch + OUYA Unity offline purchases", "Startup repairs — Unity / Marmalade / AIR / Frima", "Startup repairs + touch — Unity / Marmalade / AIR / Frima"}, (d,which)->{
+                .setItems(new String[]{"Android install compatibility only", "Touch controls — OUYA / Android input", "Offline purchases — OUYA Unity SDK", "Touch + OUYA Unity offline purchases", "Startup repairs — Unity / Marmalade / AIR / Frima", "Startup repairs + touch — Unity / Marmalade / AIR / Frima", "Community server — OUYA Unity SDK", "Community server + touch — OUYA Unity SDK"}, (d,which)->{
                     if(which==0)importApk(uri,false,false);
+                    else if(which==6||which==7)new AlertDialog.Builder(this).setTitle("Community server adapter")
+                        .setMessage("Uses the existing stouyapi server configured in OUYA COMMUNITY SERVER. Only the matching OUYA Unity SDK is supported. Server responses are community compatibility data, not official purchases; no payment is made. Game package IDs and product IDs are sent to the server. No automatic APK downloads or installations are requested.\n\nAfter installing, enable the service in settings and approve this game in its menu. Reconvert the original complete APK; native startup fixes remain separate.")
+                        .setPositiveButton("Inspect and convert",(confirm,w)->importApk(uri,which==7,false,false,true)).setNegativeButton("Cancel",null).show();
                     else if(which==4||which==5)new AlertDialog.Builder(this).setTitle("Engine startup repairs")
                         .setMessage("Unity / Mono 4.1.5f1: attempts to fix text-relocation library-loading crashes (matching builds inspected in Muffin Knight).\n\nKnown Unity loader proxies (including Abbigale): fixes text-relocation loading in the small Mono/player loaders. Their embedded runtimes may still need a separate repair; the report identifies loader-only results.\n\nMarmalade / Vector 1.0.7: fixes text-relocation loading and the null JNI surface-buffer release. Launch and touch input are confirmed with the inspected Vector 1.0.7 build.\n\nFrima / Space Shooter 1.1.3: repairs its relocated initializer.\n\nAdobe AIR: repairs code-literal relocations in the inspected Core/native-extension builds. Old private Android media dependencies may still block startup. Zombie Toaster must match these library fingerprints to receive this repair.\n\nOnly exact supported library builds are changed; the report names each matched fix. This is not a universal engine repair. Final Fantasy III startup is not covered. Unity loader proxies require their real runtimes under assets/libs in the original APK. Use the original complete APK.\n\n"+(which==5?"This also embeds the OUYA touch pad into matching game activities; native repair and touch compatibility are reported separately. ":"This mode does not add controls. ")+"A successful launch or input response is not guaranteed. No purchase changes are included.")
                         .setPositiveButton("Convert",(confirm,w)->importApk(uri,which==5,false,true)).setNegativeButton("Cancel",null).show();
@@ -400,6 +413,9 @@ public class MainActivity extends Activity {
         importApk(uri,touch,offlinePurchases,false);
     }
     private void importApk(Uri uri, boolean touch, boolean offlinePurchases, boolean runtimeRepair) {
+        importApk(uri,touch,offlinePurchases,runtimeRepair,false);
+    }
+    private void importApk(Uri uri, boolean touch, boolean offlinePurchases, boolean runtimeRepair, boolean server) {
         showProgress("Copying the game…");
         new Thread(() -> {
             File dir = new File(getCacheDir(), "import-"+java.util.UUID.randomUUID());
@@ -412,10 +428,10 @@ public class MainActivity extends Activity {
 
                 showProgress("Updating it for this version of Android…");
                 byte[] bridge=null;
-                if(touch||offlinePurchases)try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
+                if(touch||offlinePurchases||server)try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
                     bridge=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = ApkRebuilder.rebuild(original, patched, bridge, touch, offlinePurchases,runtimeRepair);
+                ManifestPatcher.Result r = ApkRebuilder.rebuild(original, patched, bridge, touch, offlinePurchases,runtimeRepair,server);
                 original.delete();
 
                 showProgress("Signing…");

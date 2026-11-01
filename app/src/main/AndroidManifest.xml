@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- See installed Ouya games and launchable apps. -->
     <queries>
         <intent>
@@ -26,6 +28,7 @@
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="false"
         android:allowBackup="false">
 
         <activity
@@ -46,6 +49,10 @@
             android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation" />
 
+        <activity android:name=".StouyapiActivity" android:exported="false" />
+        <provider android:name=".StouyapiProvider"
+            android:authorities="${applicationId}.stouyapi"
+            android:exported="true" android:grantUriPermissions="false" />
         <receiver android:name=".InstallReceiver" android:exported="false" />
         <activity android:name=".CrashCaptureActivity" android:exported="false"
             android:configChanges="orientation|screenSize|keyboardHidden" />

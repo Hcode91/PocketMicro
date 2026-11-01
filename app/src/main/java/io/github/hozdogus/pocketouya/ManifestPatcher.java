@@ -31,6 +31,7 @@ public final class ManifestPatcher {
         public boolean changed;
         public final java.util.Set<String> launcherActivities = new java.util.LinkedHashSet<>();
         public String compatibilityReport = "";
+        public boolean serverEnabled;
         public boolean ouyaGame;     // declares tv.ouya.intent.category.GAME
     }
 

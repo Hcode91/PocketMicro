@@ -643,3 +643,31 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   repair was selected, install update and normal Play. If it fails later, export
   new global log to determine embedded runtime versus other native/API blockers.
   No new APK/game launch has been verified on the phone; AIR/stouyapi not changed.
+
+
+- **2026-11-01 — Existing stouyapi server client:** owner changed deployment
+  choice from local phone server to existing/public server. Added independently
+  implemented HTTPS client and OUYA COMMUNITY SERVER settings/test, proposed
+  default https://ouya.cweiske.de from upstream's published HTTP host. Live HTTPS
+  is UNVERIFIED: configured proxy failed before connecting; no HTTP/TLS bypass.
+  Global service disabled initially. Matching legacy Unity conversions can route
+  six plugin APIs through a new ServiceOuya bridge and explicit per-installed-
+  game host provider approval. Android caller UID/package/signer checks, no shared
+  UIDs, no caller-selected URLs/package paths, two concurrent host requests, one
+  bounded bridge worker/queue, timeouts/deadline, 256 KiB response bounds, no
+  redirects, receipt-envelope depth/count limits and purchase SKU/UUID correlation.
+  No official credentials, session mutations, auto-downloads or local server.
+  Server receipts/products remain server data; no offline fallback on failures.
+  Static receipt generation and nonpersistent upstream purchase handler disclosed.
+  Offline options preserved. Unsupported SDK/developer fields and API30+ provider
+  visibility remain unchanged/reported. No PHP implementation or binaries copied.
+  Tests: protocol/transport errors and bounds, envelope decoding, purchase request
+  correlation, Unity callbacks/failure routes/no invented local persistence,
+  six DEX hooks, offline isolation, touch coexistence, complete ZIP helper/assets
+  and API30 skip fixtures pass. App/bridge Android compile and D8 pass; prior
+  host compatibility/native/log suites pass. docs/stouyapi-server.md has scope,
+  privacy/setup and explicit device-test gaps. No public-server/gameplay success
+  claimed. **Next:** install branch build, TEST CONNECTION on phone, save/enable,
+  reconvert original supported Unity game with Community server (+touch), install,
+  approve installed game's access, normal Play; export global log on failure.
+  Device must validate provider authorization/revocation and real API coverage.

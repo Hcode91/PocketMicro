@@ -21,6 +21,21 @@ refuse to install apps built for anything older than Android 6. PocketOuya fixes
   provide general OUYA services. Experimental touch and offline purchase options are available during conversion (see below).
 - If you have the original (un-patched) game installed, uninstall it first – the signatures differ.
 
+## Existing OUYA community server (experimental)
+
+Open **OUYA COMMUNITY SERVER** to configure and test an existing HTTPS stouyapi
+server. The proposed public default is `https://ouya.cweiske.de`; its live HTTPS
+availability is unverified. The in-app test checks status and profile access.
+Enable and save the service, convert an original APK with **Community server —
+OUYA Unity SDK** (optionally with touch), install it, then approve that installed
+game through its **Community server access** menu. Use normal Play.
+
+Only the structurally matching legacy OUYA Unity SDK is adapted. Other SDKs and
+native startup problems remain unsupported. Server profiles/receipts are
+community compatibility responses, not official ownership or payments; new
+purchases may not persist. No downloads are installed automatically. See
+[setup, protocol, privacy and testing limits](docs/stouyapi-server.md).
+
 ## Touch controls and offline purchases (experimental)
 
 Conversion can now inspect games by their activity and SDK layout, across multiple
