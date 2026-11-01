@@ -1,0 +1,138 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'io.github.hozdogus.pocketouya'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'io.github.hozdogus.pocketouya'
+        minSdk 29
+        targetSdk 35
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
+        versionName "0.1." + (System.getenv('GITHUB_RUN_NUMBER') ?: 'dev')
+        ndk { abiFilters 'arm64-v8a' }
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_STL=c++_static', '-DCMAKE_BUILD_TYPE=Release'
+                targets 'pocketouya_engine'
+            }
+        }
+    }
+
+    // Native engine (32-bit ARM translator) – see engine/ and PLAN.md.
+    externalNativeBuild {
+        cmake {
+            path file('../engine/CMakeLists.txt')
+            version '3.22.1+'
+        }
+    }
+    // Use the newest NDK installed on the build machine (its folder name is the version).
+    if (System.getenv('ANDROID_NDK_LATEST_HOME')) {
+        def ndkDir = new File(System.getenv('ANDROID_NDK_LATEST_HOME'))
+        ndkPath ndkDir.path
+        ndkVersion ndkDir.name
+    }
+
+    // Fixed key in the repo so each CI build installs over the last one.
+    signingConfigs {
+        ci {
+            storeFile file('ci.keystore')
+            storePassword 'android'
+            keyAlias 'app'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        debug { signingConfig signingConfigs.ci }
+        release { signingConfig signingConfigs.ci; minifyEnabled false }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packagingOptions {
+        resources { excludes += ['META-INF/*'] }
+    }
+}
+
+def purchaseGuavaVersion = '33.3.1-android'
+dependencies {
+    // Google's APK signing library (same code as the apksigner tool).
+    implementation 'com.android.tools.build:apksig:8.7.3'
+    implementation 'org.smali:dexlib2:2.5.2'
+    // dexlib2 exposes Guava types in public signatures but declares Guava at
+    // runtime scope. Our compiler also needs it when resolving overloads.
+    implementation "com.google.guava:guava:${purchaseGuavaVersion}"
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
+}
+
+// Compile our own bridge into a separate DEX resource for the optional game profile.
+// Game/vendor code is never copied into this project.
+def bridgeClasses = layout.buildDirectory.dir('purchase-bridge/classes')
+def bridgeDex = layout.buildDirectory.dir('purchase-bridge/dex')
+def bridgeRes = layout.buildDirectory.dir('generated/purchase-bridge/res')
+def compileBridge = tasks.register('compilePurchaseBridge', JavaCompile) {
+    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java' }
+    classpath = files(android.bootClasspath)
+    destinationDirectory = bridgeClasses
+    sourceCompatibility = '8'
+    targetCompatibility = '8'
+}
+def dexBridge = tasks.register('dexPurchaseBridge', JavaExec) {
+    dependsOn compileBridge
+    classpath = files(new File(android.sdkDirectory, "build-tools/${android.buildToolsVersion}/lib/d8.jar"))
+    mainClass = 'com.android.tools.r8.D8'
+    inputs.dir bridgeClasses
+    outputs.file bridgeRes.map { it.file('raw/ouya_purchase_bridge.dex') }
+    doFirst {
+        def output = bridgeDex.get().asFile
+        output.mkdirs()
+        args = ['--release', '--min-api', '23', '--lib', android.bootClasspath[0].path,
+                '--output', output.path] + fileTree(bridgeClasses.get().asFile).matching { include '**/*.class' }.files.collect { it.path }
+    }
+    doLast {
+        copy { from new File(bridgeDex.get().asFile, 'classes.dex'); into new File(bridgeRes.get().asFile, 'raw'); rename { 'ouya_purchase_bridge.dex' } }
+    }
+}
+android.sourceSets.main.res.srcDir bridgeRes
+tasks.named('preBuild').configure { dependsOn dexBridge }
+
+// Pure JVM protocol/DEX tests. The fake Android/Unity classes are test-only and
+// never enter the app APK or the injected bridge resource.
+configurations { purchaseHostTests }
+dependencies {
+    purchaseHostTests 'org.smali:dexlib2:2.5.2'
+    purchaseHostTests "com.google.guava:guava:${purchaseGuavaVersion}"
+    purchaseHostTests 'org.json:json:20240303'
+}
+def purchaseTestClasses = layout.buildDirectory.dir('purchase-tests/classes')
+def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCompile) {
+    source files('src/main/java/io/github/hozdogus/pocketouya/OuyaPurchasePatcher.java',
+            'src/main/java/io/github/hozdogus/pocketouya/GameCompatibilityPatcher.java',
+            'src/main/java/io/github/hozdogus/pocketouya/NativeStartupChecks.java',
+            'src/main/java/io/github/hozdogus/pocketouya/ArmRuntimePicRepair.java',
+            'src/main/java/io/github/hozdogus/pocketouya/NativeRuntimeRepair.java',
+            'src/main/java/io/github/hozdogus/pocketouya/MarmaladeRuntimeRepair.java',
+            'src/main/java/io/github/hozdogus/pocketouya/EngineInput.java',
+            'src/main/java/io/github/hozdogus/pocketouya/ApkRebuilder.java',
+            'src/main/java/io/github/hozdogus/pocketouya/ManifestPatcher.java')
+    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java' }
+    source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
+    source rootProject.files('tests/OuyaPurchasePatcherTest.java', 'tests/OfflineCatalogTest.java',
+            'tests/OfflineOuyaTest.java', 'tests/GeneralCompatibilityTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
+    classpath = configurations.purchaseHostTests
+    destinationDirectory = purchaseTestClasses
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+tasks.register('testPurchaseProfile', JavaExec) {
+    dependsOn compilePurchaseTests
+    classpath = files(purchaseTestClasses) + configurations.purchaseHostTests
+    mainClass = 'PurchaseProfileTests'
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A little red-orange cube with a play symbol. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFE8432E" android:pathData="M54,30L76,42L76,66L54,78L32,66L32,42Z" />
+    <path android:fillColor="#FFB8301F" android:pathData="M54,54L76,42L76,66L54,78Z" />
+    <path android:fillColor="#FFF26A55" android:pathData="M54,30L76,42L54,54L32,42Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M47,49L47,67L61,58Z" />
+</vector>
