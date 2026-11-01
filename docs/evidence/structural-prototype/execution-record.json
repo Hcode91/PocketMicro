@@ -1,0 +1,59 @@
+{
+  "recorded_utc": "2026-11-01T22:54:55.510714+00:00",
+  "baseline_commit": "0555487955fcd2fb3fb7c1e9b51a72babba44580",
+  "source_sha256": {
+    "app/src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java": "78bc97758048e0bced0a77d456e1323bed2a248e61facfa401beafee413729ca",
+    "app/src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java": "db1b20163c33ffcb4e477fa6d1cf48b44d29ff770b104e0718dac35504a92786"
+  },
+  "executed": [
+    {
+      "test": "Standalone detector compilation without catalog or repair classes",
+      "result": "VERIFIED"
+    },
+    {
+      "test": "Generated structural layouts/near matches/malformed/truncated inputs",
+      "result": "VERIFIED",
+      "report": "generated-results.json"
+    },
+    {
+      "test": "All 17 real native profiles: exact output hashes, catalog selection, input preservation, idempotence",
+      "result": "VERIFIED",
+      "report": "native-profile-results.json"
+    },
+    {
+      "test": "Missing private fixtures fail audit with 17 SKIPPED and 0 VERIFIED",
+      "result": "VERIFIED",
+      "report": "missing-fixture-behavior.json"
+    },
+    {
+      "test": "scripts/test-compatibility.sh",
+      "result": "VERIFIED"
+    },
+    {
+      "test": "Existing PurchaseProfileTests suites, freshly compiled",
+      "result": "VERIFIED"
+    },
+    {
+      "test": "Full Android app compilation against Android core jdkImage",
+      "result": "VERIFIED"
+    }
+  ],
+  "not_executed": [
+    {
+      "test": "New on-phone launches/input/purchases",
+      "status": "SKIPPED",
+      "reason": "No runtime behavior changed; no device test performed"
+    },
+    {
+      "test": "Unicorn instruction scripts in this milestone",
+      "status": "SKIPPED",
+      "reason": "Existing transformations unchanged; their previous instruction evidence is not counted as newly executed"
+    },
+    {
+      "test": "Public CI replay of proprietary native files",
+      "status": "SKIPPED",
+      "reason": "Files are available locally but are deliberately not committed"
+    }
+  ],
+  "interpretation": "VERIFIED is the named test scope, not gameplay. Full structural acceptance is 7/13; 6 known positives remain UNKNOWN for missing Thumb-mode evidence. Derived parameter agreement for UNKNOWN is not a passing full match."
+}

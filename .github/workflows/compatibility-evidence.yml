@@ -1,0 +1,58 @@
+name: Read-only compatibility evidence
+on:
+  push:
+    branches: [feature/compat-evidence-detector]
+  pull_request:
+    paths:
+      - 'app/src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java'
+      - 'app/src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java'
+      - 'tests/structural/**'
+      - 'tests/native-profile-matrix.json'
+      - '.github/workflows/compatibility-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  read-only-detector:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: '8.12'
+      - name: Freeze existing transformations and compile detector independently
+        run: |
+          python3 - <<'PYCODE'
+          import hashlib,json,pathlib
+          matrix=json.loads(pathlib.Path('tests/native-profile-matrix.json').read_text())
+          for name,expected in matrix['transformation_source_sha256'].items():
+              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==expected, name
+          PYCODE
+          mkdir -p /tmp/standalone-detector
+          javac -d /tmp/standalone-detector app/src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java app/src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java
+      - name: Existing compatibility regression suites
+        run: |
+          bash scripts/test-compatibility.sh
+          gradle :app:testPurchaseProfile --no-daemon
+      - name: Generated structural detector cases
+        run: gradle :app:testStructuralDetector --no-daemon
+      - name: Compile Android sources without building an APK
+        run: gradle :app:compileDebugJavaWithJavac --no-daemon
+      - name: Record unavailable private fixture coverage
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          matrix=json.loads(pathlib.Path('tests/native-profile-matrix.json').read_text())
+          report={'status':'SKIPPED','scope':'private native fixture replay in public CI','executed':0,
+                  'unavailable':len(matrix['profiles']), 'profiles':[{'id':p['id'],'status':'SKIPPED','reason':'PRIVATE_FIXTURE_UNAVAILABLE'} for p in matrix['profiles']]}
+          out=pathlib.Path('app/build/reports/structural/private-fixture-coverage.json');out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compatibility-evidence
+          path: app/build/reports/structural/*.json

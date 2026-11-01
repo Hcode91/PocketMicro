@@ -138,3 +138,33 @@ tasks.register('testPurchaseProfile', JavaExec) {
     classpath = files(purchaseTestClasses) + configurations.purchaseHostTests
     mainClass = 'PurchaseProfileTests'
 }
+
+
+// Read-only prototype: intentionally NOT called by any production repair path.
+def structuralClasses = layout.buildDirectory.dir('structural-tests/classes')
+def compileStructuralTests = tasks.register('compileStructuralDetectorTests', JavaCompile) {
+    dependsOn compilePurchaseTests
+    source files('src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java',
+                 'src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java')
+    source rootProject.fileTree('tests/structural') { include '**/*.java' }
+    classpath = files(purchaseTestClasses) + configurations.purchaseHostTests
+    destinationDirectory = structuralClasses
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+tasks.register('testStructuralDetector', JavaExec) {
+    dependsOn compileStructuralTests
+    classpath = files(structuralClasses, purchaseTestClasses) + configurations.purchaseHostTests
+    mainClass = 'io.github.hozdogus.pocketouya.ArmFinalizerDetectorTest'
+    doFirst { def out=layout.buildDirectory.file('reports/structural/generated.json').get().asFile; out.parentFile.mkdirs(); args out.path }
+}
+tasks.register('auditNativeProfileMatrix', JavaExec) {
+    dependsOn compileStructuralTests
+    classpath = files(structuralClasses, purchaseTestClasses) + configurations.purchaseHostTests
+    mainClass = 'io.github.hozdogus.pocketouya.NativeProfileMatrixAudit'
+    doFirst {
+        if (!project.hasProperty('nativeFixtureIndex')) throw new GradleException('Supply -PnativeFixtureIndex=/private/fixture-index.json; missing fixtures never count as passes')
+        def out=layout.buildDirectory.file('reports/structural/native-matrix.json').get().asFile; out.parentFile.mkdirs()
+        args rootProject.file('tests/native-profile-matrix.json').path, project.property('nativeFixtureIndex'), out.path
+    }
+}

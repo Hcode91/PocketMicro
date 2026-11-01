@@ -827,3 +827,39 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   CI uses API35 and its own Android core image and must verify the new build.
   docs/apk-doctor.md records correct local verification. **Next:** replacement
   APK build, user monitors full build; phone doctor/export/install still pending.
+
+
+- **2026-11-01 — Evidence baseline and read-only structural prototype:** owner
+  authorized only Phase1 baseline/structured evidence and read-only Phase2 for
+  the 13 initializer/atexit profiles. Dedicated branch feature/compat-evidence-detector
+  from0555487. Existing native catalog/ALL four transformation files have frozen
+  source checksums and remain byte-identical; no purchase/unrelated changes.
+  Added immutable CompatibilityEvidence statuses and ArmFinalizerDetector, which
+  compiles without catalog/transformer classes. No filenames/hashes/build offsets
+  in detector; no write API or modified ELF output; transformationAuthorized=false
+  on every outcome. Not referenced by production repair/UI paths.
+  Actual common root is DT_FINI_ARRAY ARM routine, tail-binding __cxa_finalize,
+  not an arbitrary initializer offset. Derives target/optional thunk/PLT from
+  arrays, REL/ABS32, symbols, restricted instructions and unwind metadata. Bounds,
+  CPU/layout, mapping conflicts and data/code distinctions are explicit. Six
+  stripped Thumb cases have shapes/unwind but no independent mode evidence;
+  UNKNOWN rather than guessed acceptance. Global reference/whole-program safety
+  remains outside local recognition; no transformation integration authorized.
+  All17 real native fixtures AVAILABLE locally. Audit verifies expected native
+  output SHA, input preservation, actual catalog selection and idempotence17/17.
+  Family13 evaluated: structural TP7, conservative FN6 (UNKNOWN Thumb mode),
+  other-family TN4, FP0; derived parameter oracle matches13/13 including uncertain
+  partial candidates (not full matches). Generated43 cases: TP12/TN31/FP0/FN0,
+  layout shifts and typed/mapped Thumb evidence, near matches/malformed/truncated/
+  unsupported/skipped. Empty fixture-index control records17 SKIPPED,0verified
+  and exits nonzero. Missing never passing. Fresh legacy host suites and complete
+  Android Java compile against Android core jdkImage pass; no new phone/Unicorn
+  runs, explicitly recorded as not executed. Proprietary bytes/paths not committed.
+  tests/native-profile-matrix.json and docs/evidence/structural-prototype retain
+  baseline and per-case outcomes. New dedicated CI runs existing/generated/core
+  compile checks; public private-fixture replay explicitly SKIPPED. Does not
+  build/install a modified app automatically. docs/structural-detector-milestone.md
+  explains scope, repro and remaining evidence. **Milestone limitation:** full
+  13-profile acceptance NOT demonstrated; six need trustworthy Thumb entry/mapping
+  or validated rooted interworking CFG evidence. Keep exact-build operational
+  fallback. Next work must obtain that evidence, not add fingerprint overrides.

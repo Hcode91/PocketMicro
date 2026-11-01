@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "structural_true_negative": 0,
+  "baseline_verified": 0,
+  "profiles": [
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libmain.so",
+      "detector_status": "SKIPPED",
+      "id": "native-01",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libmono.so",
+      "detector_status": "SKIPPED",
+      "id": "native-02",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libunity.so",
+      "detector_status": "SKIPPED",
+      "id": "native-03",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libmono.so",
+      "detector_status": "SKIPPED",
+      "id": "native-04",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libunity.so",
+      "detector_status": "SKIPPED",
+      "id": "native-05",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libmono.so",
+      "detector_status": "SKIPPED",
+      "id": "native-06",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libunity.so",
+      "detector_status": "SKIPPED",
+      "id": "native-07",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libSpaceShooter.so",
+      "detector_status": "SKIPPED",
+      "id": "native-08",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libCore.so",
+      "detector_status": "SKIPPED",
+      "id": "native-09",
+      "family": "other",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libysshared.so",
+      "detector_status": "SKIPPED",
+      "id": "native-10",
+      "family": "other",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libmono.so",
+      "detector_status": "SKIPPED",
+      "id": "native-11",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libunity.so",
+      "detector_status": "SKIPPED",
+      "id": "native-12",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libvector.so",
+      "detector_status": "SKIPPED",
+      "id": "native-13",
+      "family": "other",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libvector.so",
+      "detector_status": "SKIPPED",
+      "id": "native-14",
+      "family": "other",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libs3edialog_ext.so",
+      "detector_status": "SKIPPED",
+      "id": "native-15",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libs3ewebview_ext.so",
+      "detector_status": "SKIPPED",
+      "id": "native-16",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "library": "libs3eandroidmarketbilling_ext.so",
+      "detector_status": "SKIPPED",
+      "id": "native-17",
+      "family": "initializer_atexit",
+      "baseline_status": "SKIPPED"
+    }
+  ],
+  "fixture_unavailable": 17,
+  "all_fixtures_evaluated": false,
+  "structural_false_positive": 0,
+  "derived_parameter_matches": 0,
+  "scope": "Read-only local-pattern recognition; no transformation integration or whole-program safety proof",
+  "structural_false_negative_including_conservative_unknown": 0,
+  "structural_true_positive": 0,
+  "initializer_family_evaluated": 0,
+  "audit_failures": 0
+}

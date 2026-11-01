@@ -1,0 +1,267 @@
+{
+  "true_negative": 31,
+  "suite": "generated structural layouts",
+  "cases": [
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-0-none"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-0-typed"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-0-mapped"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-28-none"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-28-typed"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-28-mapped"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-84-none"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-84-typed"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-84-mapped"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-128-none"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-128-typed"
+    },
+    {
+      "actual": "SUPPORTED",
+      "reason": "LOCAL_PATTERN_CONTRACT",
+      "expected_supported": true,
+      "case": "layout-128-mapped"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "THUMB_MODE_UNPROVEN",
+      "expected_supported": false,
+      "case": "stripped-thumb"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "THUMB_MODE_CONFLICT",
+      "expected_supported": false,
+      "case": "contradictory-mode"
+    },
+    {
+      "actual": "UNSUPPORTED",
+      "reason": "FINALIZER_MATCH_COUNT",
+      "expected_supported": false,
+      "case": "conditional-tail"
+    },
+    {
+      "actual": "UNSUPPORTED",
+      "reason": "FINALIZER_MATCH_COUNT",
+      "expected_supported": false,
+      "case": "different-register"
+    },
+    {
+      "actual": "UNSUPPORTED",
+      "reason": "FINALIZE_BINDING",
+      "expected_supported": false,
+      "case": "wrong-symbol"
+    },
+    {
+      "actual": "UNSUPPORTED",
+      "reason": "FINALIZER_MATCH_COUNT",
+      "expected_supported": false,
+      "case": "unrooted-byte-pattern"
+    },
+    {
+      "actual": "UNSUPPORTED",
+      "reason": "TARGET_NOT_RW",
+      "expected_supported": false,
+      "case": "target-in-code"
+    },
+    {
+      "actual": "UNSUPPORTED",
+      "reason": "THUNK_LITERALS",
+      "expected_supported": false,
+      "case": "wrong-literal"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "THUNK_BOUNDARY",
+      "expected_supported": false,
+      "case": "wrong-unwind"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "FINI_RELOCATION",
+      "expected_supported": false,
+      "case": "missing-root-relocation"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "DYNSYM",
+      "expected_supported": false,
+      "case": "symbol-stride"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "THUMB_MODE_UNPROVEN",
+      "expected_supported": false,
+      "case": "undefined-thumb-symbol"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "THUMB_MODE_UNPROVEN",
+      "expected_supported": false,
+      "case": "literal-code-overlap"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "PLT_MAPPING",
+      "expected_supported": false,
+      "case": "inconsistent-plt-section"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "REL_DUP",
+      "expected_supported": false,
+      "case": "duplicate-relocation"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "RELOC_SYMBOL",
+      "expected_supported": false,
+      "case": "symbol-index-overflow"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "bad-dynamic-range"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "truncated-0"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "truncated-8"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "truncated-32"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "truncated-51"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "truncated-100"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "truncated-1000"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "FILE_RANGE",
+      "expected_supported": false,
+      "case": "truncated-5000"
+    },
+    {
+      "actual": "UNSUPPORTED",
+      "reason": "MACHINE",
+      "expected_supported": false,
+      "case": "different-cpu"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "SECTIONS_MISSING",
+      "expected_supported": false,
+      "case": "missing-sections"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "ELF_HEADER",
+      "expected_supported": false,
+      "case": "bad-elf-version"
+    },
+    {
+      "actual": "MALFORMED",
+      "reason": "ELF_HEADER",
+      "expected_supported": false,
+      "case": "bad-header-size"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "SECTION_NAMES_MISSING",
+      "expected_supported": false,
+      "case": "unnamed-sections"
+    },
+    {
+      "actual": "UNKNOWN",
+      "reason": "RELOCATION_TABLE_OVERLAP",
+      "expected_supported": false,
+      "case": "overlapping-relocation-targets"
+    },
+    {
+      "actual": "SKIPPED",
+      "reason": "SIZE_LIMIT",
+      "expected_supported": false,
+      "case": "over-budget"
+    }
+  ],
+  "false_positive": 0,
+  "false_negative": 0,
+  "true_positive": 12
+}

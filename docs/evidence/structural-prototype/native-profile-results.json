@@ -1,0 +1,585 @@
+{
+  "schema": 1,
+  "structural_true_negative": 4,
+  "baseline_verified": 17,
+  "profiles": [
+    {
+      "library": "libmain.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-01",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 8696,
+          "thunk": 8712,
+          "target": 32768,
+          "atexit_plt": 8368
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 8696,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUNK_SHAPE",
+            "address": 8712,
+            "scope": "bytes/relocation/unwind only",
+            "detail": "Eight Thumb-shaped halfwords, two data loads, matching target and symbol-bound PLT; instruction mode still requires independent evidence",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUMB_MODE_UNPROVEN",
+            "address": -1,
+            "scope": "read-only detector",
+            "detail": "No Thumb STT_FUNC entry or consistent $t/$d mapping; exidx alone does not prove instruction mode",
+            "status": "UNKNOWN"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "UNKNOWN"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libmono.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-02",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 88840,
+          "thunk": -1,
+          "target": 3920560,
+          "atexit_plt": -1
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 88840,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "LOCAL_PATTERN_CONTRACT",
+            "address": 88840,
+            "scope": "read-only recognition",
+            "detail": "All non-writable relocation targets belong to the recognized family. Global use/reference safety and transformation eligibility are NOT established.",
+            "status": "VERIFIED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "SUPPORTED"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libunity.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-03",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 441136,
+          "thunk": 441152,
+          "target": 10674176,
+          "atexit_plt": 438592
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 441136,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUNK_SHAPE",
+            "address": 441152,
+            "scope": "bytes/relocation/unwind only",
+            "detail": "Eight Thumb-shaped halfwords, two data loads, matching target and symbol-bound PLT; instruction mode still requires independent evidence",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUMB_MODE_UNPROVEN",
+            "address": -1,
+            "scope": "read-only detector",
+            "detail": "No Thumb STT_FUNC entry or consistent $t/$d mapping; exidx alone does not prove instruction mode",
+            "status": "UNKNOWN"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "UNKNOWN"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libmono.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-04",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 88672,
+          "thunk": -1,
+          "target": 3916496,
+          "atexit_plt": -1
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 88672,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "LOCAL_PATTERN_CONTRACT",
+            "address": 88672,
+            "scope": "read-only recognition",
+            "detail": "All non-writable relocation targets belong to the recognized family. Global use/reference safety and transformation eligibility are NOT established.",
+            "status": "VERIFIED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "SUPPORTED"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libunity.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-05",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 411920,
+          "thunk": 411936,
+          "target": 9162752,
+          "atexit_plt": 409640
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 411920,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUNK_SHAPE",
+            "address": 411936,
+            "scope": "bytes/relocation/unwind only",
+            "detail": "Eight Thumb-shaped halfwords, two data loads, matching target and symbol-bound PLT; instruction mode still requires independent evidence",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUMB_MODE_UNPROVEN",
+            "address": -1,
+            "scope": "read-only detector",
+            "detail": "No Thumb STT_FUNC entry or consistent $t/$d mapping; exidx alone does not prove instruction mode",
+            "status": "UNKNOWN"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "UNKNOWN"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libmono.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-06",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 15096,
+          "thunk": 15112,
+          "target": 94208,
+          "atexit_plt": 14868
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 15096,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUNK_SHAPE",
+            "address": 15112,
+            "scope": "bytes/relocation/unwind only",
+            "detail": "Eight Thumb-shaped halfwords, two data loads, matching target and symbol-bound PLT; instruction mode still requires independent evidence",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUMB_MODE_UNPROVEN",
+            "address": -1,
+            "scope": "read-only detector",
+            "detail": "No Thumb STT_FUNC entry or consistent $t/$d mapping; exidx alone does not prove instruction mode",
+            "status": "UNKNOWN"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "UNKNOWN"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libunity.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-07",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 5984,
+          "thunk": 6000,
+          "target": 49152,
+          "atexit_plt": 5756
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 5984,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUNK_SHAPE",
+            "address": 6000,
+            "scope": "bytes/relocation/unwind only",
+            "detail": "Eight Thumb-shaped halfwords, two data loads, matching target and symbol-bound PLT; instruction mode still requires independent evidence",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUMB_MODE_UNPROVEN",
+            "address": -1,
+            "scope": "read-only detector",
+            "detail": "No Thumb STT_FUNC entry or consistent $t/$d mapping; exidx alone does not prove instruction mode",
+            "status": "UNKNOWN"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "UNKNOWN"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libSpaceShooter.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-08",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 475664,
+          "thunk": -1,
+          "target": 2020896,
+          "atexit_plt": -1
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 475664,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "LOCAL_PATTERN_CONTRACT",
+            "address": 475664,
+            "scope": "read-only recognition",
+            "detail": "All non-writable relocation targets belong to the recognized family. Global use/reference safety and transformation eligibility are NOT established.",
+            "status": "VERIFIED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "SUPPORTED"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libCore.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-09",
+      "family": "other",
+      "detector": {
+        "candidates": [],
+        "findings": [{
+          "code": "FINI_ROOTS_MISSING",
+          "address": -1,
+          "scope": "read-only detector",
+          "detail": "DT_FINI_ARRAY evidence required",
+          "status": "UNKNOWN"
+        }],
+        "transformation_authorized": false,
+        "status": "UNKNOWN"
+      },
+      "baseline_status": "VERIFIED"
+    },
+    {
+      "library": "libysshared.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-10",
+      "family": "other",
+      "detector": {
+        "candidates": [],
+        "findings": [{
+          "code": "FINALIZER_MATCH_COUNT",
+          "address": -1,
+          "scope": "read-only detector",
+          "detail": "Expected one metadata-rooted ARM address-load finalizer; found 0",
+          "status": "UNSUPPORTED"
+        }],
+        "transformation_authorized": false,
+        "status": "UNSUPPORTED"
+      },
+      "baseline_status": "VERIFIED"
+    },
+    {
+      "library": "libmono.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-11",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 88672,
+          "thunk": -1,
+          "target": 3916496,
+          "atexit_plt": -1
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 88672,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "LOCAL_PATTERN_CONTRACT",
+            "address": 88672,
+            "scope": "read-only recognition",
+            "detail": "All non-writable relocation targets belong to the recognized family. Global use/reference safety and transformation eligibility are NOT established.",
+            "status": "VERIFIED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "SUPPORTED"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libunity.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-12",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 411424,
+          "thunk": 411440,
+          "target": 9162752,
+          "atexit_plt": 409144
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 411424,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUNK_SHAPE",
+            "address": 411440,
+            "scope": "bytes/relocation/unwind only",
+            "detail": "Eight Thumb-shaped halfwords, two data loads, matching target and symbol-bound PLT; instruction mode still requires independent evidence",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "THUMB_MODE_UNPROVEN",
+            "address": -1,
+            "scope": "read-only detector",
+            "detail": "No Thumb STT_FUNC entry or consistent $t/$d mapping; exidx alone does not prove instruction mode",
+            "status": "UNKNOWN"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "UNKNOWN"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libvector.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-13",
+      "family": "other",
+      "detector": {
+        "candidates": [],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 60000,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "EXTRA_CODE_RELOCATIONS",
+            "address": -1,
+            "scope": "read-only detector",
+            "detail": "Unsupported non-writable relocation outside finalizer/atexit family",
+            "status": "UNSUPPORTED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "UNSUPPORTED"
+      },
+      "baseline_status": "VERIFIED"
+    },
+    {
+      "library": "libvector.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-14",
+      "family": "other",
+      "detector": {
+        "candidates": [],
+        "findings": [{
+          "code": "NO_CODE_RELOCATION",
+          "address": -1,
+          "scope": "read-only detector",
+          "detail": "No non-writable relocation requiring this pattern",
+          "status": "UNSUPPORTED"
+        }],
+        "transformation_authorized": false,
+        "status": "UNSUPPORTED"
+      },
+      "baseline_status": "VERIFIED"
+    },
+    {
+      "library": "libs3edialog_ext.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-15",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 1476,
+          "thunk": -1,
+          "target": 7488,
+          "atexit_plt": -1
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 1476,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "LOCAL_PATTERN_CONTRACT",
+            "address": 1476,
+            "scope": "read-only recognition",
+            "detail": "All non-writable relocation targets belong to the recognized family. Global use/reference safety and transformation eligibility are NOT established.",
+            "status": "VERIFIED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "SUPPORTED"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libs3ewebview_ext.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-16",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 1892,
+          "thunk": -1,
+          "target": 11632,
+          "atexit_plt": -1
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 1892,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "LOCAL_PATTERN_CONTRACT",
+            "address": 1892,
+            "scope": "read-only recognition",
+            "detail": "All non-writable relocation targets belong to the recognized family. Global use/reference safety and transformation eligibility are NOT established.",
+            "status": "VERIFIED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "SUPPORTED"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    },
+    {
+      "library": "libs3eandroidmarketbilling_ext.so",
+      "verification_scope": "existing output SHA-256, immutable input, catalog selection and idempotence; no Android launch",
+      "id": "native-17",
+      "family": "initializer_atexit",
+      "detector": {
+        "candidates": [{
+          "finalizer": 19092,
+          "thunk": -1,
+          "target": 73296,
+          "atexit_plt": -1
+        }],
+        "findings": [
+          {
+            "code": "ROOTED_ARM_FINALIZER",
+            "address": 19092,
+            "scope": "local instruction contract",
+            "detail": "DT_FINI_ARRAY ARM entry; three decoded instructions; tail branch precedes relocated data literal; symbol-bound __cxa_finalize",
+            "status": "VERIFIED"
+          },
+          {
+            "code": "LOCAL_PATTERN_CONTRACT",
+            "address": 19092,
+            "scope": "read-only recognition",
+            "detail": "All non-writable relocation targets belong to the recognized family. Global use/reference safety and transformation eligibility are NOT established.",
+            "status": "VERIFIED"
+          }
+        ],
+        "transformation_authorized": false,
+        "status": "SUPPORTED"
+      },
+      "baseline_status": "VERIFIED",
+      "derived_parameters_match": true
+    }
+  ],
+  "fixture_unavailable": 0,
+  "all_fixtures_evaluated": true,
+  "structural_false_positive": 0,
+  "derived_parameter_matches": 13,
+  "scope": "Read-only local-pattern recognition; no transformation integration or whole-program safety proof",
+  "structural_false_negative_including_conservative_unknown": 6,
+  "structural_true_positive": 7,
+  "initializer_family_evaluated": 13,
+  "audit_failures": 0
+}

@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "baseline_commit": "0555487955fcd2fb3fb7c1e9b51a72babba44580",
+  "profiles": [
+    {
+      "id": "native-01",
+      "library": "libmain.so",
+      "source_sha256": "df20f3907015929b5dc1f8d797aaa8333ae6b92ee1c087d384a82f9569fa8dfb",
+      "output_sha256": "bc152baf4f9d17ec8f47040b0988bc3a1b2b914d4b93c45f723cdac6f00e6326",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        8696,
+        32768,
+        8712,
+        8368
+      ]
+    },
+    {
+      "id": "native-02",
+      "library": "libmono.so",
+      "source_sha256": "3ff6f788b6c25c1fc7e74694b56a00c5fdc873b1310a524055c200aeb41c47e1",
+      "output_sha256": "580c868118528120640588c4f993cf25c1f16b7a77882262c7fd6092be06d9bd",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        88840,
+        3920560,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "native-03",
+      "library": "libunity.so",
+      "source_sha256": "9f1bd21992ebdb845947a9595365ae919e0daacfd019ec6abdb1863fbe284157",
+      "output_sha256": "2d11f8117a4db369788e3185d05185b39dff9cfdd08aa06c13ed47501be6633e",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        441136,
+        10674176,
+        441152,
+        438592
+      ]
+    },
+    {
+      "id": "native-04",
+      "library": "libmono.so",
+      "source_sha256": "9816e13ed0ce4d690c9c99ca5187168e08dfacfb4387002becf072153868970c",
+      "output_sha256": "e888ab00e407ab46d67d6ab32e7573ca0f571fcc9c3fe57d214c336e7e53498e",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        88672,
+        3916496,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "native-05",
+      "library": "libunity.so",
+      "source_sha256": "2442a0cffee5f77854895316151573bceabcb2b6278e472aff74b3236d0d3c2a",
+      "output_sha256": "15b92db63f6869bd1f34f13db7a12a0e89bea9765f87d7f08b114cf490482746",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        411920,
+        9162752,
+        411936,
+        409640
+      ]
+    },
+    {
+      "id": "native-06",
+      "library": "libmono.so",
+      "source_sha256": "a280a957e102a2b0e075f339ddff6a648a27af8d8ecfb2a994a43905d38cf15c",
+      "output_sha256": "857d1f4e4f107dbcc429dcddb5a3bd6fa2f10fdbb42b953da141d4ac3d8d4e06",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        15096,
+        94208,
+        15112,
+        14868
+      ]
+    },
+    {
+      "id": "native-07",
+      "library": "libunity.so",
+      "source_sha256": "aee89345929061f1e52fe72a7874796a8d3cdba8a663bf370a14cea896b05961",
+      "output_sha256": "cdbe592192dc48608ca8d908d4879f120ee33eb0cd2bfa128fd7169baa598ab5",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        5984,
+        49152,
+        6000,
+        5756
+      ]
+    },
+    {
+      "id": "native-08",
+      "library": "libSpaceShooter.so",
+      "source_sha256": "92a31b66bf1127993764a29481866c6dfa0b02889f1d850ceca06a74b3f3fe33",
+      "output_sha256": "f242435f27d97c46cbe4e26d5b6baf2ce41e6ef72bca1985425af3699f77870e",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        475664,
+        2020896,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "native-09",
+      "library": "libCore.so",
+      "source_sha256": "6cc57698961c0dab6bf2d32d443a1c07c5f6befcd552dc25738893f77104c22c",
+      "output_sha256": "b6f2b60be0bd662bf62a1afb4f23deb7d33e715c20fc04b66d322927acd20813",
+      "family": "other",
+      "expected_parameters": null
+    },
+    {
+      "id": "native-10",
+      "library": "libysshared.so",
+      "source_sha256": "b943b7e7631b4ef047f2eeeef6c50ff77dd6756c66f9eb7954a3e846f387b69c",
+      "output_sha256": "92ee9b5a46bf4bf1092bfc73cc747d8cc102312fdad3631d74bc2812765b96a2",
+      "family": "other",
+      "expected_parameters": null
+    },
+    {
+      "id": "native-11",
+      "library": "libmono.so",
+      "source_sha256": "cf6e3b14a342ea3a6d5f064dfb7d8314aa46adb784c5d98e42b1d32a5864029a",
+      "output_sha256": "f366859ac255785e660ff9af9a46cd146d460d4037496d39128530ffc3eb87b1",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        88672,
+        3916496,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "native-12",
+      "library": "libunity.so",
+      "source_sha256": "e827ed895c38e3753c132ba1e0b95207c55cc16b8474fb4e26f1d7f5c719170e",
+      "output_sha256": "aa37e7afd709c19469ed2e7f63f4452a6d6b0275e0801a8c263c14ddcad0268a",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        411424,
+        9162752,
+        411440,
+        409144
+      ]
+    },
+    {
+      "id": "native-13",
+      "library": "libvector.so",
+      "source_sha256": "cf4cd687b0c3c8e1d87c995a96c21c15cdb0c598d59ff35faea620de524c57fe",
+      "output_sha256": "d0c1dfc8fc4c5cd447b7e1aef90c74eaa7cac3b06c7b74bb0f9684d6ffbfd58e",
+      "family": "other",
+      "expected_parameters": null
+    },
+    {
+      "id": "native-14",
+      "library": "libvector.so",
+      "source_sha256": "3aa7134392604f6f2f0877729550862e19f44c5c486743d97cf45a64de40f18b",
+      "output_sha256": "d0c1dfc8fc4c5cd447b7e1aef90c74eaa7cac3b06c7b74bb0f9684d6ffbfd58e",
+      "family": "other",
+      "expected_parameters": null
+    },
+    {
+      "id": "native-15",
+      "library": "libs3edialog_ext.so",
+      "source_sha256": "74f31fd2bec42cb0ccdf4a910d366eb98e27460ef6cb753a8184a21c96d2a22a",
+      "output_sha256": "f100ed0c715e1592d4cacb2475c6e1e9b04d8e8578c409c671c22604ed7716b3",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        1476,
+        7488,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "native-16",
+      "library": "libs3ewebview_ext.so",
+      "source_sha256": "75070fd39ffca484ee68a55916656d0f8a966e0f05cea2dc80d2e52e5e3c8ec8",
+      "output_sha256": "33c18ceddc44b8c8ec02d309a36ebab70e07e7304f4692b75fbce7526d276634",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        1892,
+        11632,
+        -1,
+        0
+      ]
+    },
+    {
+      "id": "native-17",
+      "library": "libs3eandroidmarketbilling_ext.so",
+      "source_sha256": "7e83e8e141245455d6f39c6c751a58323ffb01b4a5427c5c7c6f79537663d367",
+      "output_sha256": "b4ac21ffaeb1845d434f0b8cf5130d68606e9d67edec3bcb5cdca9dd70a99f43",
+      "family": "initializer_atexit",
+      "expected_parameters": [
+        19092,
+        73296,
+        -1,
+        0
+      ]
+    }
+  ],
+  "transformation_source_sha256": {
+    "app/src/main/java/io/github/hozdogus/pocketouya/NativeRuntimeRepair.java": "d96bb97f667b57f9a0aa220d8740c3b20083e6b6690f0e7daeb0c3e691538b43",
+    "app/src/main/java/io/github/hozdogus/pocketouya/ArmRuntimePicRepair.java": "c4bae35f72cc68f8711a1fc2a5b536c71c78802220d6e4e49838bb8e5c40250a",
+    "app/src/main/java/io/github/hozdogus/pocketouya/ArmLiteralPicRepair.java": "b3d21f3dd4d519835a2d10e6dac193eeb048f7b035a39c638006d91499252373",
+    "app/src/main/java/io/github/hozdogus/pocketouya/MarmaladeRuntimeRepair.java": "fcfb435cacac371d8245a7dd7b3db9851fd727102f234a3482c72a96b5db4103"
+  }
+}
