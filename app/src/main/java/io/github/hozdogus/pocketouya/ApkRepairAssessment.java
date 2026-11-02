@@ -73,6 +73,8 @@ public final class ApkRepairAssessment {
             if(dexSkipped)add(findings,CompatibilityEvidence.Status.SKIPPED,"SDK inspection","DEX budget exceeded; no SDK match is assumed.");
             else{
                 var sdk=OuyaServiceCleanupRule.inspect(dex);add(findings,sdk.status,OuyaServiceCleanupRule.ID,sdk.reason);if(sdk.status==CompatibilityEvidence.Status.SUPPORTED)startup=true;if(sdk.status==CompatibilityEvidence.Status.MALFORMED)blocker=true;
+                var air=AirLoaderDiagnosticsRule.inspect(dex);
+                if(air.status!=CompatibilityEvidence.Status.SKIPPED)add(findings,air.status,AirLoaderDiagnosticsRule.ID,air.reason+". Startup repairs can enable this diagnostic; it does not establish repair eligibility or resolve the hidden failure. Export the full global log after testing.");
                 var cpu=UnityCpuStringRule.inspect(dex);if(cpu.applicable)add(findings,CompatibilityEvidence.Status.SUPPORTED,UnityCpuStringRule.ID,"Matching nullable description getter; current crash cause is unverified. Guard is available only with an eligible experimental runtime conversion.");
                 else if(cpu.report.startsWith("UNSUPPORTED"))add(findings,CompatibilityEvidence.Status.UNKNOWN,UnityCpuStringRule.ID,cpu.report);
             }

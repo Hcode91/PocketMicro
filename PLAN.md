@@ -1082,3 +1082,46 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   Phone View multitouch/managed callback response/gameplay remain UNVERIFIED.
   docs/legacy-ouya-input.md records evidence/limits and reconversion instructions.
   No vendor code/assets committed. Push source/tests; link build without waiting.
+
+- **2026-11-02 — AIR hidden loading error evidence (Zombie Hearts Chicken):**
+  owner supplied current ARM32 Core/STL/Stagefright/extension files and repeated
+  nativeSurfaceCreated crash. Core exports that JNI method but still has17 real
+  non-writable RELATIVE writes and TEXTREL; extension matches the existing repaired
+  output; STL/two wrapper files have no TEXTREL. Current catalog changes0 files;
+  writable-only rule correctly rejects Core. Core imports private Android media
+  dependencies; actual device load/ABI outcome remains unknown. Original DEX
+  silently discards UnsatisfiedLinkError from its pair of System.load calls.
+  Unchanged literal PIC algorithm produced a PRIVATE scratch-only candidate:
+  isolated18 loads at3 biases preserve registers/flags/next-PC, unwind meaning,
+  original mappings and RW remaining writes. Mode/reference coverage is not
+  independently established for every site; no mapping/full symbol-table evidence
+  present. Candidate is NOT selected, registered or bundled; no new fingerprint,
+  native algorithm or automatic native repair selection added.
+  Added independent air.loader.report-hidden-error diagnostic rule. Requires
+  matching AIR SDK load/getter/field/register/branch/flag/catch structure; adds
+  one call after move-exception and a private helper using Log.w(String,Throwable),
+  tag PocketOuyaAIR. Helper isolates logging failure; original successful/failed
+  loading, flags, retries and catch continuation retained. Reparse verifies hook
+  and helper; unknown shapes/collisions/protected/malformed/budget inputs retained.
+  Shared startup/doctor coordinator composes this after OUYA cleanup, preserving
+  same-DEX prior edits. Assessment reports diagnostic support separately without
+  recommending native repair solely for logging. Conversion UI explains full log.
+  Supplied DEX matched and idempotence verified: class sets retained;1603 unrelated
+  primary and118 secondary method opcode/reference sequences retained; secondary
+  DEX not replaced. D8 minAPI23 accepts resulting supplied DEX pair. No complete
+  game APK/assets were supplied for an end-to-end repack or phone execution.
+  Executed: new two-layout bounded loader tests (success, either load failing,
+  already loaded, fail-then-success retry, logging failure, throwable identity),
+  idempotence, six near-matches, reserved code in another DEX, malformed/duplicate
+  input, read-only/coordinator/assessment/conversion preservation and same-DEX
+  cleanup composition. Full host/input/purchase/native/doctor/shared suite passes;
+  structural/CPU/assessment/experimental suite passes,43 generated detector cases
+  unchanged TP12/TN31/FP0/FN0. Compatibility/log/export script passes with local JDK
+  PATH; full Android core compile passes (existing annotation/deprecation warnings).
+  Native shared-coordinator replay:12 VERIFIED outputs/replacement scopes match
+  frozen catalog;5 missing fixtures SKIPPED with expected nonzero INCOMPLETE.
+  All17 profiles/four frozen native source hashes unchanged. No purchase logic,
+  touch routes or parked AI/backend work changed. docs/air-loader-diagnostics.md
+  records evidence, limits and original-APK reconversion/full-global-log steps.
+  Phone logging/linker/JNI/gameplay UNVERIFIED. No vendor files/candidate committed.
+  Push source/tests; link GitHub build without waiting for APK completion.

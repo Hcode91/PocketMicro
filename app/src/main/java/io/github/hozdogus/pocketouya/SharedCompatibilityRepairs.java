@@ -36,6 +36,11 @@ public final class SharedCompatibilityRepairs {
             OuyaServiceCleanupRule.Result result=apply?OuyaServiceCleanupRule.repair(dex):OuyaServiceCleanupRule.inspect(dex);
             report.append(result.status).append(' ').append(OuyaServiceCleanupRule.ID).append(": ").append(result.reason).append('\n');
             if(apply)plan.replacements.putAll(result.replacements);
+            Map<String,byte[]> diagnosticInput=new LinkedHashMap<>(dex);
+            if(apply)diagnosticInput.putAll(result.replacements);
+            AirLoaderDiagnosticsRule.Result air=apply?AirLoaderDiagnosticsRule.repair(diagnosticInput):AirLoaderDiagnosticsRule.inspect(diagnosticInput);
+            if(air.status!=CompatibilityEvidence.Status.SKIPPED)report.append(air.status).append(' ').append(AirLoaderDiagnosticsRule.ID).append(": ").append(air.reason).append('\n');
+            if(apply)plan.replacements.putAll(air.replacements);
         }
         report.append("SUPPORTED is inspection evidence; VERIFIED names only local edit checks. Native code relocation, missing services and gameplay may remain unsupported. No purchase changes or helpers are added by these rules.");
         plan.report=report.toString();return plan;
