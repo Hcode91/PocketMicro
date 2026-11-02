@@ -27,16 +27,20 @@ public final class OuyaServiceCleanupRule {
         Object ref=((ReferenceInstruction)i).getReference();if(!(ref instanceof MethodReference))return false;MethodReference m=(MethodReference)ref;
         return m.getDefiningClass().equals("Landroid/content/Context;")&&m.getName().equals("unbindService")&&m.getParameterTypes().equals(Collections.singletonList("Landroid/content/ServiceConnection;"))&&m.getReturnType().equals("V")&&((FiveRegisterInstruction)i).getRegisterCount()==2;
     }
-    // Deliberately small straight-line form. Context and connection must be loaded from this SDK instance.
-    private static int site(Method m){
+    // Straight-line cleanup: this instance's Context and a connection field or typed self receiver.
+    private static int site(Method m,ClassDef owner){
         if(m.getImplementation()==null||AccessFlags.STATIC.isSet(m.getAccessFlags())||!m.getImplementation().getTryBlocks().isEmpty())return -1;
         List<Instruction> code=new ArrayList<>();for(Instruction i:m.getImplementation().getInstructions())code.add(i);
         Instruction guard=null;
-        if(code.size()==5&&code.get(2).getOpcode()==Opcode.IF_EQZ&&((OffsetInstruction)code.get(2)).getCodeOffset()==5){guard=code.remove(2);}
-        if(code.size()!=4||!unbind(code.get(2))||code.get(3).getOpcode()!=Opcode.RETURN_VOID)return -1;
-        FiveRegisterInstruction call=(FiveRegisterInstruction)code.get(2);int self=m.getImplementation().getRegisterCount()-1;
+        int beforeCall=code.size()-3;
+        if(beforeCall>=1&&beforeCall<=2&&code.get(beforeCall).getOpcode()==Opcode.IF_EQZ&&((OffsetInstruction)code.get(beforeCall)).getCodeOffset()==5){guard=code.remove(beforeCall);}
+        int loads=code.size()-2;
+        if(loads<1||loads>2||!unbind(code.get(loads))||code.get(loads+1).getOpcode()!=Opcode.RETURN_VOID)return -1;
+        FiveRegisterInstruction call=(FiveRegisterInstruction)code.get(loads);int self=m.getImplementation().getRegisterCount()-1;
+        if(loads==1&&(call.getRegisterD()!=self||call.getRegisterC()==self||!owner.getInterfaces().contains("Landroid/content/ServiceConnection;")))return -1;
+        if(loads==2&&call.getRegisterD()==self)return -1;
         Set<Integer> registers=new HashSet<>();
-        for(int n=0;n<2;n++){
+        for(int n=0;n<loads;n++){
             Instruction i=code.get(n);if(i.getOpcode()!=Opcode.IGET_OBJECT||!(i instanceof TwoRegisterInstruction)||!(i instanceof ReferenceInstruction))return -1;
             TwoRegisterInstruction r=(TwoRegisterInstruction)i;Object ref=((ReferenceInstruction)i).getReference();if(!(ref instanceof FieldReference))return -1;FieldReference f=(FieldReference)ref;
             if(r.getRegisterB()!=self||r.getRegisterA()==self||!registers.add(r.getRegisterA())||!f.getDefiningClass().equals(TYPE))return -1;
@@ -65,7 +69,7 @@ public final class OuyaServiceCleanupRule {
             }
             if(owner==null)return result(CompatibilityEvidence.Status.SKIPPED,"OUYA content SDK absent");
             if(target==null)return result(CompatibilityEvidence.Status.UNSUPPORTED,"OUYA content shutdown API absent");
-            int context=site(target);
+            int context=site(target,owner);
             if(context==-2)return result(CompatibilityEvidence.Status.SKIPPED,"Supported cleanup already has the verified null-context guard");
             if(context<0)return result(CompatibilityEvidence.Status.UNKNOWN,"Shutdown differs from the supported straight-line field-load/unbind/return contract; unchanged");
             for(Instruction i:target.getImplementation().getInstructions())if(i.getOpcode()==Opcode.IGET_OBJECT){
@@ -73,17 +77,18 @@ public final class OuyaServiceCleanupRule {
                 for(Field field:owner.getFields())if(field.getName().equals(ref.getName())&&field.getType().equals(ref.getType())&&!AccessFlags.STATIC.isSet(field.getAccessFlags()))declared=true;
                 if(!declared)return result(CompatibilityEvidence.Status.UNKNOWN,"Context/connection field definition missing or static; unchanged");
             }
-            String proof="SDK instance Context and ServiceConnection fields feed the single unbindService call in shutdown; no branches/handlers or other effects";
+            String proof="SDK instance Context field and a verified connection field or ServiceConnection receiver feed the single unbindService call; no branches/handlers or other effects";
             if(!apply)return result(CompatibilityEvidence.Status.SUPPORTED,proof);
             MutableMethodImplementation body=new MutableMethodImplementation(target.getImplementation());
-            Label done=body.newLabelForIndex(3);body.addInstruction(2,new BuilderInstruction21t(Opcode.IF_EQZ,context,done));
+            int callIndex=body.getInstructions().size()-2;
+            Label done=body.newLabelForIndex(callIndex+1);body.addInstruction(callIndex,new BuilderInstruction21t(Opcode.IF_EQZ,context,done));
             List<Method> methods=new ArrayList<>();for(Method m:owner.getMethods())methods.add(shutdown(m)?new ImmutableMethod(m.getDefiningClass(),m.getName(),m.getParameters(),m.getReturnType(),m.getAccessFlags(),m.getAnnotations(),m.getHiddenApiRestrictions(),body):m);
             ClassDef changed=new ImmutableClassDef(owner.getType(),owner.getAccessFlags(),owner.getSuperclass(),owner.getInterfaces(),owner.getSourceFile(),owner.getAnnotations(),owner.getFields(),methods);
             DexPool pool=new DexPool(files.get(file).getOpcodes());for(ClassDef c:files.get(file).getClasses())pool.internClass(c.getType().equals(TYPE)?changed:c);
             MemoryDataStore output=new MemoryDataStore();pool.writeTo(output);byte[] bytes=output.getData();
             boolean verified=false;for(ClassDef c:new DexBackedDexFile(null,bytes).getClasses())if(c.getType().equals(TYPE))for(Method m:c.getMethods())if(shutdown(m)){
                 List<Instruction> code=new ArrayList<>();for(Instruction i:m.getImplementation().getInstructions())code.add(i);
-                verified=code.size()==5&&code.get(2).getOpcode()==Opcode.IF_EQZ&&((OneRegisterInstruction)code.get(2)).getRegisterA()==context&&((OffsetInstruction)code.get(2)).getCodeOffset()==5&&unbind(code.get(3))&&code.get(4).getOpcode()==Opcode.RETURN_VOID;
+                verified=site(m,c)==-2&&code.size()==callIndex+3;
             }
             if(!verified)return result(CompatibilityEvidence.Status.UNKNOWN,"Serialized guard verification failed; original DEX preserved");
             Map<String,byte[]> replacements=new LinkedHashMap<>();replacements.put(file,bytes);

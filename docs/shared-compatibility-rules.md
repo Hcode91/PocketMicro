@@ -110,3 +110,27 @@ gradle :app:auditNativeProfileMatrix -PnativeFixtureIndex=/private/fixtures.json
 The optional `SharedRepairFixtureAudit` host runner accepts matrix, private
 fixture index and result JSON paths. It compares the coordinator against the
 unchanged native plan and frozen output hashes. Neither rule reads this oracle.
+
+## Supplied Polarity DEX follow-up
+
+The supplied manifest identifies com.bluebox.PolarityCoop, target16. Its SDK
+shutdown loads a Context field then passes `this` to unbindService. The receiver
+class directly implements ServiceConnection. Extend the same rule to that
+three-instruction form, requiring the declared interface, distinct receiver and
+context registers, the exact call and return, with no other effects or handlers.
+This is an SDK structural variant, with no application ID/hash/offset selection.
+
+Fresh host suites and Android-core compilation pass. Typed-self fixtures cover
+both context paths, repeat repairs and rejection when the interface is absent.
+On the supplied original DEX: rule repair VERIFIED, original input unchanged,
+canonical DEX output with only shutdown omitted identical before/after, repeat
+inspection SKIPPED. The earlier two-field form remains supported.
+
+The Java evidence confirms OuyaContent.init calls bindService with an implicit
+COMMUNITY_CONTENT intent before setting its Context field. UnityOuyaFacade.Init
+calls OuyaFacade.init before constructing its callback listeners. This explains
+the earlier service exception, null listener and null-context shutdown sequence.
+It does not establish the precise cause of the current blank/loading screen.
+Startup service binding, missing native plugin resolution and gameplay remain
+unresolved; managed assemblies and a fresh runtime log are still needed. No
+purchase implementation, native transformer or finalizer detector changes.

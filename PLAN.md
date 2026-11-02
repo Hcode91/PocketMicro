@@ -913,3 +913,17 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   unavailable: applicability/device success unverified. Cleanup guard alone cannot
   fix missing OUYA services; real Mono code relocations remain unsupported by the
   stale-declaration rule. Six-profile instruction-mode/CFG work remains pending.
+
+- **2026-11-02 — Supplied Polarity Java evidence:** manifest confirms package
+  com.bluebox.PolarityCoop/target16. DEX proves typed ServiceConnection-self
+  shutdown variant; generalized existing cleanup rule to one Context field plus
+  verified self receiver, preserving the original two-field form. No title/hash/
+  offset selection. Fresh host suites and Android-core compilation pass; typed/
+  untyped-self positive/negative paths, null/non-null behavior and idempotence
+  tested. Actual supplied DEX repair verified; original preserved and canonical
+  serialization excluding only shutdown identical across before/after. Earlier
+  init exception precedes Context storage and facade listener construction,
+  explaining prior null listener/shutdown errors. Blank-screen cause remains
+  UNKNOWN; this cleanup change does not supply a service or repair initialization.
+  Need managed assemblies/current runtime trace for the remaining startup wait.
+  No purchase/native/finalizer transformations changed; proprietary DEX not shipped.

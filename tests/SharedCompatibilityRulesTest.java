@@ -43,6 +43,16 @@ public final class SharedCompatibilityRulesTest {
    }}throw new AssertionError("cleanup did not terminate");
   }throw new AssertionError("shutdown missing");
  }
+ static byte[] selfConnection(boolean typed)throws Exception{
+  ClassDef owner=null;for(ClassDef c:new DexBackedDexFile(null,dex(0,false)).getClasses())if(c.getType().equals(type))owner=c;
+  List<Method> methods=new ArrayList<>();for(Method m:owner.getMethods()){
+   List<Instruction> code=new ArrayList<>();code.add(new ImmutableInstruction22c(Opcode.IGET_OBJECT,0,1,new ImmutableFieldReference(type,"context0","Landroid/content/Context;")));
+   code.add(new ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL,2,0,1,0,0,0,new ImmutableMethodReference("Landroid/content/Context;","unbindService",List.of("Landroid/content/ServiceConnection;"),"V")));
+   code.add(new ImmutableInstruction10x(Opcode.RETURN_VOID));
+   methods.add(new ImmutableMethod(type,"shutdown",List.of(),"V",1,Set.of(),Set.of(),new ImmutableMethodImplementation(2,code,List.of(),List.of())));
+  }
+  return GeneralCompatibilityTest.dex(new ImmutableClassDef(type,1,"Ljava/lang/Object;",typed?List.of("Landroid/content/ServiceConnection;"):List.of(),null,Set.of(),owner.getFields(),methods));
+ }
  public static void main(String[]args)throws Exception{
   for(int layout=0;layout<2;layout++){
    byte[] original=elf(layout),before=original.clone();var scan=WritableRelocationRule.inspect(original);check(scan.status==CompatibilityEvidence.Status.SUPPORTED&&scan.replacement()==null,"read-only native scan");
@@ -64,6 +74,11 @@ public final class SharedCompatibilityRulesTest {
    check(OuyaServiceCleanupRule.repair(Map.of("classes2.dex",output)).status==CompatibilityEvidence.Status.SKIPPED,"already guarded status and no repeated edits");
    check(OuyaServiceCleanupRule.repair(Map.of("classes.dex",dex(layout,true))).status==CompatibilityEvidence.Status.UNKNOWN,"different shutdown effects rejected");
   }
+  byte[] self=selfConnection(true),copy=self.clone();var selfFixed=OuyaServiceCleanupRule.repair(Map.of("classes.dex",self));
+  check(selfFixed.status==CompatibilityEvidence.Status.VERIFIED,"typed ServiceConnection receiver supported");
+  byte[] guarded=selfFixed.replacements.get("classes.dex");check(Arrays.equals(self,copy)&&unbindCalls(guarded,false)==0&&unbindCalls(guarded,true)==1,"self connection behavior and input preservation");
+  check(OuyaServiceCleanupRule.repair(Map.of("classes.dex",guarded)).status==CompatibilityEvidence.Status.SKIPPED,"self guard idempotence");
+  check(OuyaServiceCleanupRule.repair(Map.of("classes.dex",selfConnection(false))).status==CompatibilityEvidence.Status.UNKNOWN,"untyped self receiver rejected");
   for(int n:new int[]{0,1,51,52,100,0x310,0x384})check(WritableRelocationRule.repair(Arrays.copyOf(elf(0),n)).replacement()==null,"truncation never repaired");
   check(OuyaServiceCleanupRule.repair(Map.of("classes.dex",new byte[]{1})).status==CompatibilityEvidence.Status.MALFORMED,"malformed DEX preserved");
   byte[] duplicate=dex(0,false);check(OuyaServiceCleanupRule.repair(Map.of("classes.dex",duplicate,"classes2.dex",duplicate)).status==CompatibilityEvidence.Status.MALFORMED,"duplicate SDK classes rejected");
