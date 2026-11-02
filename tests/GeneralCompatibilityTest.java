@@ -111,7 +111,27 @@ public final class GeneralCompatibilityTest {
     check(bridgeCalls(ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex"))),"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==6);
     check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));
    }
+   // Common application preparation path: ordinary, purchase and doctor/startup
+   // selections all attempt touch hooks without a per-mode touch flag.
+   byte[] beforeInstall=Files.readAllBytes(original);
+   for(boolean offline:new boolean[]{false,true})for(boolean startup:new boolean[]{false,true})for(int floor:new int[]{23,24}){
+    ManifestPatcher.Result prepared=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,offline,startup,false,floor);
+    check(prepared.newTarget==floor&&prepared.compatibilityReport.contains("Touch pad: enabled"));
+    try(ZipFile zip=new ZipFile(converted.toFile())){
+     byte[] game=zip.getInputStream(zip.getEntry("classes2.dex")).readAllBytes();lifecycle(game);check(bridgeCalls(game,"Lio/github/hcode91/pocketouya/bridge/TouchControls;")>0);
+     check(Arrays.equals(helper,zip.getInputStream(zip.getEntry("classes3.dex")).readAllBytes()));
+     byte[] purchase=zip.getInputStream(zip.getEntry("classes.dex")).readAllBytes();
+     if(offline)check(bridgeCalls(purchase,"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==6);else check(Arrays.equals(source.get("classes.dex"),purchase));
+     check(Arrays.equals(new byte[]{4,5,6},zip.getInputStream(zip.getEntry("assets/test")).readAllBytes()));
+    }
+    check(Arrays.equals(beforeInstall,Files.readAllBytes(original)));
+   }
+   try{ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),null,false,false,false,23);throw new AssertionError("Missing automatic touch bridge accepted");}catch(IOException expected){check(expected.getMessage().contains("bridge"));}
    ApkRebuilder.rebuild(original.toFile(),converted.toFile());try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")==null);check(Arrays.equals(source.get("classes.dex"),ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex")))));}
+   ModernApkDoctorTest.apk(original,manifest(false),protectedSource);byte[] protectedOriginal=Files.readAllBytes(original);
+   ManifestPatcher.Result skipped=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,false,false,false,23);
+   check(skipped.compatibilityReport.contains("reserved instructions"));check(Arrays.equals(protectedOriginal,Files.readAllBytes(original)));
+   try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes4.dex")==null);for(var entry:protectedSource.entrySet())check(Arrays.equals(entry.getValue(),zip.getInputStream(zip.getEntry(entry.getKey())).readAllBytes()));}
   }finally{try(var paths=Files.list(temp)){for(Path p:paths.toArray(Path[]::new))Files.delete(p);}Files.delete(temp);}
   System.out.println("Cross-game/multidex detection, activity/alias parsing, feature isolation, unsupported reporting, inherited lifecycle, reinjection and ZIP preservation tests pass");
  }

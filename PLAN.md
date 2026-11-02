@@ -1016,3 +1016,29 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   frozen17 profiles/four source hashes unchanged. No phone touch/provider/Shizuku
   flow test available. docs/game-support-export.md and updated conversion docs
   describe usage/limits. Push source/tests to GitHub and link build without waiting.
+
+
+- **2026-11-02 — Automatic touch preparation for every installation method:**
+  owner requested controls by default regardless of install route. Add game
+  standard/suggested/manual/startup/purchase/experimental and APK doctor now use
+  one prepareForInstall entry point, which always requests the existing touch
+  patcher. Removed touch checkboxes and duplicate with/without-touch menu modes;
+  four manual repair/purchase choices remain. Input support/skips still reported;
+  protected/reserved DEX stays byte-identical without an appended helper. Doctor
+  now loads bridge and prepares controls before signing/export/install. Versioned
+  readiness marker prevents doctor copies prepared under the old controls-off
+  policy being installed/exported without re-preparation. Other purchase defaults,
+  experimental purchase isolation, native algorithms/catalog and detector intact.
+  Low-level explicit conversion APIs keep prior behavior for tests/inspection.
+  Already installed games still need reconverting; outside installers unaffected.
+  Tests executed: full host compatibility/input/purchase/native/doctor suite,
+  structural/CPU/assessment/experimental suite (43 detector cases unchanged,
+  TP12/TN31/FP0/FN0), compatibility/log/export script, Android-core compilation.
+  New preparation checks cover ordinary and startup/doctor paths with purchases
+  on/off at both API floors, input hooks/helper/assets/original preservation,
+  unchanged purchase DEX when off, missing bridge rejection, protected DEX skips
+  and experimental CPU/native/touch composition. All pass. Four frozen native
+  source hashes checked unchanged;17 catalog profiles retained. Native replay
+  not repeated for this policy/UI change (prior12 VERIFIED,5 fixture SKIPPED).
+  Phone touch/provider flows untested. Updated assessment/experiment/shared-rule
+  docs. Push source/tests and link GitHub build without waiting for completion.

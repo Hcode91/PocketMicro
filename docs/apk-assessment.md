@@ -23,17 +23,24 @@ Recommendations are based on inspected structure and actual supported rules:
 The checker does not infer a working purchase/input fix from engine names or
 string markers. A supported nullable CPU getter is reported as a pattern; its
 runtime failure is unverified by the scan and its guard remains coupled to an
-eligible explicit experiment. Touch/purchase selections are separate. Existing
+eligible explicit experiment. Touch preparation is independent of purchase selection. Existing
 purchase preferences remain visible in the existing confirmation flow.
 
-The suggested conversion and explicit experimental confirmation now both show
-**Add on-screen touch controls**, checked initially. Uncheck it for a conversion
-without controls. Manual conversion choices keep their previous initial touch
-selection. The existing input patcher checks the launch activity and reports the
-selected native or fallback route; the checkbox alone does not prove a game will
-respond. The experiment keeps purchases off and composes touch hooks after the
-CPU guard, preserving both repairs. Reconvert the complete original APK to add
-controls to an already installed native-only experimental conversion.
+Every PocketOuya installation preparation path now requests on-screen controls
+automatically: suggested/standard conversion, manual conversion, purchase modes,
+startup repairs, the explicit Unity experiment and the APK doctor (including its
+exported APK). The duplicate touch-only menu variants and touch checkboxes have
+been removed. All app paths use `ApkRebuilder.prepareForInstall`; low-level
+explicit APIs retain their previous behavior for inspection and tests.
+
+The existing input patcher checks the launch activity and reports the selected
+native/fallback route or why controls were skipped. Unsupported/protected DEX is
+preserved; automatic attempts do not prove input response. The experiment keeps
+purchases off and composes touch hooks after the CPU guard. Doctor purchase
+behavior and other purchase preferences are unchanged. Reconvert the complete
+original APK to add controls to an already installed native-only conversion.
+Doctor copies prepared before this policy must be prepared again before export
+or installation; a versioned readiness marker prevents reuse of stale copies.
 
 The APK doctor includes the same recommendation. Its ordinary **Prepare fixes**
 does not select experiments; an experimental finding tells the user to use Add

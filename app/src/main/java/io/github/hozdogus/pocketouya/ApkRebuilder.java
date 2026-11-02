@@ -16,6 +16,11 @@ import java.util.zip.ZipOutputStream;
 public final class ApkRebuilder {
     private ApkRebuilder() {}
 
+    /** All app install/export preparation paths request controls; low-level APIs remain explicit. */
+    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean offline,boolean runtimeRepair,boolean experimental,int minimumTarget)throws IOException {
+        if(experimental&&(offline||runtimeRepair))throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup/purchase repairs");
+        return rebuild(in,out,bridge,true,offline,runtimeRepair,minimumTarget,experimental);
+    }
     public static ManifestPatcher.Result rebuild(File in, File out) throws IOException {
         return rebuild(in,out,null,false,false);
     }

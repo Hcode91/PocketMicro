@@ -12,6 +12,7 @@ public final class ModernApkDoctorTest {
    byte[] manifest=GeneralCompatibilityTest.manifest(false);
    apk(in,manifest,Map.of("classes.dex",new byte[]{1},"assets/preserve",new byte[]{2,3}));byte[] original=Files.readAllBytes(in);
    String report=ModernApkDoctor.inspect(in.toFile(),35,new String[]{"arm64-v8a"});
+   check(report.contains("doctor also attempts on-screen controls")&&report.contains("No purchase hooks are added by the doctor."));
    check(report.contains("SUPPORTED FIX")&&report.contains("target to API 24")&&report.contains("No lib/ libraries"));
    check(Arrays.equals(original,Files.readAllBytes(in)));check(ManifestPatcher.patch(manifest).newTarget==23);
    var converted=ApkRebuilder.rebuild(in.toFile(),out.toFile(),null,false,false,true,24);check(converted.newTarget==24);

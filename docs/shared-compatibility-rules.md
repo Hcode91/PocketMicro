@@ -59,7 +59,7 @@ remain unverified; no working-game claim is made.
 
 `SharedCompatibilityRepairs` keeps all existing exact native plans first, then
 attempts the independent stale-declaration rule on remaining native entries and
-the SDK cleanup rule on bounded application DEX. Subsequent optional touch and
+the SDK cleanup rule on bounded application DEX. Subsequent touch and
 purchase conversion reads the resulting DEX; existing feature-isolation suites
 are retained. A combined shared-rule/touch path is checked in the APK fixture.
 Purchase validation and the four frozen native transformation/catalog sources

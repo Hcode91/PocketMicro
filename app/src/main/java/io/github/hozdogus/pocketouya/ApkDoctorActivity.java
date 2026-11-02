@@ -32,7 +32,7 @@ public final class ApkDoctorActivity extends Activity {
     private Button button(LinearLayout root,String label,Runnable action){Button b=new Button(this);b.setText(label);b.setOnClickListener(v->action.run());root.addView(b);return b;}
     private File file(String name){return new File(dir,name);}
     private boolean scanned(){return dir!=null&&file("original.apk").isFile()&&file("report.txt").isFile();}
-    private boolean ready(){return scanned()&&file("ready").isFile()&&file("signed.apk").isFile();}
+    private boolean ready(){try{return scanned()&&file("ready").isFile()&&file("signed.apk").isFile()&&readText(file("ready")).equals("touch-v1");}catch(IOException e){return false;}}
     private void render(){
         pick.setEnabled(!busy);prepare.setEnabled(!busy&&scanned());export.setEnabled(!busy&&ready());install.setEnabled(!busy&&ready());saveReport.setEnabled(!busy&&scanned());
         if(!busy){try{text.setText(scanned()?readText(file("report.txt")):"Select an original APK to inspect it for this phone. Nothing is installed automatically. Supported fixes produce a separately signed APK; unresolved issues stay visible. Scan results do not prove the APK is safe or that it will run. Export results before leaving this screen; working copies use temporary app storage.");}catch(Exception e){text.setText("Saved report unavailable. Select the APK again.");}}
@@ -51,18 +51,19 @@ public final class ApkDoctorActivity extends Activity {
         writeText(file("report.txt"),report);
     });}
     private void prepare(){new AlertDialog.Builder(this).setTitle("Prepare a converted copy?")
-        .setMessage("This raises an old target where supported, applies exact native-library repairs, and signs a new APK with PocketOuya's key. It does not resolve every reported issue. The publisher's original signing identity cannot be retained. Existing updates or signature checks may fail. No controls or purchase hooks are added.")
+        .setMessage("This raises an old target where supported, applies exact native-library repairs, and signs a new APK with PocketOuya's key. It does not resolve every reported issue. The publisher's original signing identity cannot be retained. Existing updates or signature checks may fail. On-screen touch controls are attempted automatically using supported input routes; the report explains any unsupported layouts. No purchase hooks are added.")
         .setPositiveButton("Prepare",(d,w)->job("Preparing and verifying converted APK…",()->{
             String before=ModernApkDoctor.inspect(file("original.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);
             file("ready").delete();file("signed.apk").delete();
             writeText(file("report.txt"),before);
             try{
-                ManifestPatcher.Result r=ApkRebuilder.rebuild(file("original.apk"),file("patched.apk"),null,false,false,true,ModernApkDoctor.minimumTarget(Build.VERSION.SDK_INT));
+                byte[] bridge;try(InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)){bridge=ApkRebuilder.readAll(input);}
+                ManifestPatcher.Result r=ApkRebuilder.prepareForInstall(file("original.apk"),file("patched.apk"),bridge,false,true,false,ModernApkDoctor.minimumTarget(Build.VERSION.SDK_INT));
                 GameSigner.sign(this,file("patched.apk"),file("signed.apk"));
                 if(!new com.android.apksig.ApkVerifier.Builder(file("signed.apk")).build().verify().isVerified())throw new IOException("Converted APK signature verification failed");
                 String after=ModernApkDoctor.inspect(file("signed.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);
                 writeText(file("report.txt"),"PREPARED COPY — signature verification passed; launch not tested.\nPackage: "+r.packageName+"\n\nApplied conversion results:\n"+r.compatibilityReport+"\n\nPOST-CONVERSION INSPECTION\n"+after+"\n\nORIGINAL INSPECTION\n"+before);
-                writeText(file("package.txt"),r.packageName);if(!file("ready").createNewFile())throw new IOException("Could not mark prepared APK");
+                writeText(file("package.txt"),r.packageName);writeText(file("ready"),"touch-v1");
             }catch(Exception e){file("ready").delete();file("signed.apk").delete();throw e;}
             finally{file("patched.apk").delete();}
         })).setNegativeButton("Cancel",null).show();}

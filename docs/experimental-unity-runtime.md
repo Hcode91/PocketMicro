@@ -8,12 +8,12 @@ game signing and install behavior are retained.
 This option reproduces the locally tested Monocle experiment using structural
 evidence. It can match other APKs with the same restricted structure. No package
 IDs, build hashes or catalog offsets select it. The original APK stays intact.
-Ordinary startup repairs and the APK doctor do not enable this option. The confirmation offers
-**Add on-screen touch controls**, checked initially, using the existing shared
-input patcher. Uncheck it to retain the previous experiment-only behavior.
-Offline purchase hooks remain off. The native-only programmatic overloads keep
-their original behavior. Touch hooks compose after the CPU guard and the report
-names the input route or explains why it was skipped; phone input is unverified.
+Ordinary startup repairs and the APK doctor do not enable this option. Every app conversion,
+including this experiment, now attempts the existing shared touch-input hooks
+automatically. Purchases remain off in this experiment. Low-level native-only
+programmatic overloads keep their original behavior. Touch hooks compose after
+the CPU guard and the report names the input route or explains why it was
+skipped; phone input is unverified.
 
 Both packaged ARM32 libraries must declare matching proxy SONAMEs and have the
 read-only detector's fully recognized, ARM-only finalizer form. Both real payloads
@@ -82,7 +82,7 @@ Phone startup after this guard remains untested. CI is triggered on push; per th
 owner's instruction, do not wait for APK build completion before handing over its
 GitHub link. Reconvert the complete original APK using the same explicit option.
 
-## Optional touch composition
+## Touch composition
 
 Generated fixtures verify the ARM native promotion, non-null CPU getter and
 OUYA native touch lifecycle hooks together, with one helper DEX and unchanged
