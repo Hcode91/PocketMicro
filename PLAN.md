@@ -1125,3 +1125,26 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   records evidence, limits and original-APK reconversion/full-global-log steps.
   Phone logging/linker/JNI/gameplay UNVERIFIED. No vendor files/candidate committed.
   Push source/tests; link GitHub build without waiting for APK completion.
+
+- **2026-11-02 — AIR diagnostic confirmed by phone global log:**
+  owner supplied full global journal. Latest Zombie Hearts launch at22:59:29
+  shows STL load ok, then Android linker and PocketOuyaAIR both report Core
+  rejected for TEXTREL, followed by nativeSurfaceCreated missing binding.
+  Diagnostic executes on the actual Android14 phone; this initial loader cause
+  is now VERIFIED. No private-media dependency error is observed at this stage;
+  native repair/full startup remain unverified. No additional crash-only log is
+  required to establish this blocker. Raw owner journal remains private.
+  Continued private read-only validation with Capstone5.0.6, rooted in ELF
+  function symbols/entry point/dynamic init/fini metadata, not a repair oracle.
+  Bounded exploratory traversal:858 roots,111872 decoded starts,62 overlapping
+  instruction/data claims,2444 unresolved indirect/PC-write/system edges; no
+  independently rooted path to the18 proposed load sites established. Counts
+  are research observations, not passed tests or complete control-flow proof.
+  Cannot safely authorize the scratch PIC candidate using successful raw ARM
+  decoding/unwind proximity alone. Current Core result remains UNSUPPORTED for
+  automatic repair; no fingerprint/catalog expansion or native/source algorithm
+  changes. Updated diagnostic evidence document with observed cause and precise
+  remaining mode/reference evidence gap. All17 catalog profiles/four frozen
+  source hashes checked unchanged; no application code changed this follow-up,
+  so app suites/build need not be repeated. Push evidence only; no new APK fix
+  or confirmed gameplay is claimed.

@@ -95,3 +95,37 @@ native loading and gameplay remain unverified.
   counts are recorded in PLAN.md. No missing fixture counts as passing.
 
 No vendor APK, DEX, library, assets or scratch candidate is stored in Git.
+
+## Confirmed device result: 2026-11-02 22:59:29
+
+The owner's subsequent full global log confirms that the diagnostic runs in the
+game process on Android 14. Within the same launch and class-loader namespace,
+`libstlport_shared.so` loads successfully at 22:59:29.563. At 22:59:29.566 the
+Android linker rejects `libCore.so` with `has text relocations`. The diagnostic
+logs that original `UnsatisfiedLinkError` under `PocketOuyaAIR`, including the
+AIR loader stack. The later missing `nativeSurfaceCreated` binding occurs at
+22:59:29.722. Core's text-relocation rejection is now a **verified device loading
+failure**, rather than an inference from that later exception. No missing-media
+dependency failure has yet been observed for this launch.
+
+This validates the diagnostic on this device/build. It does not validate a native
+repair. The inspected Core remains unsupported by automatic native repair, and
+its complete game startup remains unverified. Another crash-only export is not
+needed to establish this blocker.
+
+Further private, read-only research used Capstone 5.0.6 to explore bounded ARM/
+Thumb control flow from 858 independent ELF function-symbol, entry-point and
+dynamic initializer/finalizer roots. The limited traversal decoded 111,872
+instruction starts, encountered 62 overlapping/code-data ambiguity claims and
+2,444 unresolved indirect-call/PC-write/system-instruction edges. It did not
+reach the 18 proposed literal-load sites from those roots. These are exploratory
+analysis counts, not regression tests or proof of whole-program coverage. In
+particular, neither raw successful ARM decoding nor nearby unwind entries supply
+the missing independent mode and reference evidence. The scratch candidate
+therefore remains excluded from the catalog and automatic transformations.
+
+The next native-repair milestone requires independently justified instruction
+boundaries and reference coverage for the relocated literals, including indirect
+control flow where necessary, followed by transformation/postcondition checks.
+Existing isolated instruction tests cover only part of that contract. No new
+APK-specific fingerprint or guessed offset is introduced to bypass it.
