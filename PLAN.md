@@ -863,3 +863,19 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   13-profile acceptance NOT demonstrated; six need trustworthy Thumb entry/mapping
   or validated rooted interworking CFG evidence. Keep exact-build operational
   fallback. Next work must obtain that evidence, not add fingerprint overrides.
+
+- **2026-11-02 — Build the evidence baseline for phone testing:** owner requested
+  an app build while the next instruction-mode investigation remains unfinished.
+  Enable the existing Android APK workflow on feature/compat-evidence-detector
+  and gate packaging on both existing compatibility profiles and generated
+  read-only detector tests. No production Java/native/bridge changes; frozen
+  transformation checksums unchanged. Branch builds upload signed APK artifacts
+  but do not publish the main-branch release. Supplied cumulative game journal
+  confirms Monocle Man's libmono TEXTREL rejection and Polarity's OUYA content
+  service initialization error followed by null-context unbind during shutdown;
+  these are observations, not newly implemented fixes. Latest Tomatoes Vs Onions
+  capture loads its native runtime but reports a surface without a frame; no
+  fatal exception in that session and no gameplay-success conclusion. Existing
+  detector remains 7/13 supported, 6 unknown; bounded CFG work is still pending.
+  Local compatibility checks run with the available JDK. Full APK/CI outcomes
+  must be checked on the resulting workflow run; phone installation untested.

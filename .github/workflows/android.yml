@@ -2,7 +2,7 @@ name: Android APK
 
 on:
   push:
-    branches: [main, master, feature/ouya-purchase-compatibility]
+    branches: [main, master, feature/ouya-purchase-compatibility, feature/compat-evidence-detector]
   workflow_dispatch:
 
 permissions:
@@ -26,8 +26,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '8.12'
-      - name: Test offline purchase profile
-        run: gradle :app:testPurchaseProfile --no-daemon
+      - name: Test compatibility profiles and read-only detector
+        run: gradle :app:testPurchaseProfile :app:testStructuralDetector --no-daemon
       - name: Check Android Java and bridge packaging
         run: gradle :app:compileDebugJavaWithJavac --no-daemon
       - name: Build engine host tools (milestone checks)
