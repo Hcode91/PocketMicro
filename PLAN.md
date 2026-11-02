@@ -1148,3 +1148,57 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   source hashes checked unchanged; no application code changed this follow-up,
   so app suites/build need not be repeated. Push evidence only; no new APK fix
   or confirmed gameplay is claimed.
+
+- **2026-11-02 — Crash pass first; owner running baseline and reusable SDK/NDK rules:**
+  owner confirms21 running games (including Knightmare Tower, absent from journal)
+  and identifies six control-issue titles. Recorded baseline and deferred controls
+  in docs/crash-repair-pass.md. Exclude old Space Shooter/Abbigale/Monocle crashes
+  from current crash targets. Journal contains20 other crash/engine-stop titles;
+  separated confirmed causes, existing repairs, new candidates and missing inputs.
+  Implemented independent android.legacy-sdk.explicit-service rule for legacy
+  MOGA/Google Analytics SDK Context.bindService calls. Direct/range invokes retain
+  registers/args/results; private helper copies only otherwise implicit Intents
+  for the two SDK actions and sets their provider package. Explicit/unknown/null
+  inputs retain original platform call; no fabricated binding, service, permissions
+  or controller. Candidate games: Abbaye des Morts, Zombie Kill of the Week,
+  Zombie Outbreak, YOU DON'T KNOW JACK. Their actual APKs not supplied/verified.
+  Added ouya.game-data.null-cursor-close: null-only Cursor.close guards in SDK
+  getGameData(String):String. Move incoming/try labels to guard, preserving
+  queries/returns/non-null closes/original exceptions. No fake provider, saved
+  data or receipts. X S.E.E.D is a logged candidate; actual APK unavailable.
+  Added elf.arm32.ndk-dependency-path: strict bounded ELF/dynamic/string/mapping
+  and relocation checks; allowlisted public NDK host paths become existing basename
+  suffix indices in DT_NEEDED. Only those index words change; code/strings/relocs/
+  permissions/length retained. Reject aliases, private imports, unsupported layouts,
+  metadata writes and excessive dependencies. Zombie Driver HD log identifies this
+  defect, but its native fixture is unavailable; namespace/phone boot unverified.
+  Coordinator composes new rules with old cleanup/AIR diagnostics/stale declarations.
+  Assessment recommends startup route for matching defects; report names each rule
+  and residual unsupported findings. No helper DEX needed for new rules. Updated
+  startup menu/explanation; doctor preparation marker v2 requires regeneration of
+  older prepared copies. Purchase code, input mappings, native algorithms/catalog,
+  read-only finalizer detector and parked AI/backend remain unchanged.
+  Executed: generated NDK fixtures across layouts and Windows/Unix separators,
+  read-only/immutability/byte-scope/idempotence, near-matches/private names, malformed
+  bounds, file aliases/alignment, metadata/BSS relocations, resolver/packed rejection
+  and dependency budget. Two SDK namespaces/direct+high-range registers; recognized/
+  unknown/null actions, explicit Intent identity/extras, real true/false binding,
+  missing provider/permission errors/null Intent, collisions/signature/receiver/
+  super-call near-matches, protected/malformed/duplicate DEX. Cursor models cover
+  null/non-null cleanup, incoming branches and catch-all original error propagation,
+  purchase-method retention. Combined conversion/asset preservation/assessment pass.
+  Full host/input/purchase/native/doctor/shared and structural/CPU/assessment/
+  experimental suites pass. Generated detector unchanged43 cases TP12/TN31/FP0/FN0.
+  Full Android core compile passes (existing annotation/deprecation warnings);
+  generated high-register helper/caller D8 minAPI23 and compatibility/log/export
+  script pass. Available real Polarity DEX matches3 cursor sites and old shutdown
+  cleanup; composed repair and idempotence pass. Running Monocle's complete APK
+  has no new SDK match; all5 native inputs have no eligible dependency edit. Its
+  original bytes retained. Other20 baseline APK fixtures unavailable, not passing.
+  Native replay12 VERIFIED with exact old replacement sets/output hashes;5 fixtures
+  unavailable (including after attachment search), explicitly SKIPPED with nonzero
+  INCOMPLETE. All17 profiles/four frozen source hashes checked unchanged. Actual
+  six targeted game APKs/phone startup remain UNVERIFIED. Native/graphics/device-ID
+  and translated-engine failures remain pending necessary binaries/context; no
+  guessed flags/count clamps/IDs or new APK-specific fingerprints. No vendor input
+  or raw journal committed. Push source/tests/report; link build without waiting.

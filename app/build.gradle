@@ -121,6 +121,8 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/WritableRelocationRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/OuyaServiceCleanupRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/AirLoaderDiagnosticsRule.java',
+            'src/main/java/io/github/hozdogus/pocketouya/NdkDependencyPathRule.java',
+            'src/main/java/io/github/hozdogus/pocketouya/LegacySdkCrashRules.java',
             'src/main/java/io/github/hozdogus/pocketouya/SharedCompatibilityRepairs.java',
             'src/main/java/io/github/hozdogus/pocketouya/ExperimentalUnityRuntimeRepair.java',
             'src/main/java/io/github/hozdogus/pocketouya/UnityCpuStringRule.java',
@@ -136,6 +138,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
     source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
     source rootProject.files('tests/OuyaPurchasePatcherTest.java', 'tests/OfflineCatalogTest.java',
+            'tests/PlatformCrashRulesTest.java',
             'tests/OfflineOuyaTest.java', 'tests/GeneralCompatibilityTest.java', 'tests/LegacyOuyaInputTest.java', 'tests/AirLoaderDiagnosticsTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
     classpath = configurations.purchaseHostTests
     destinationDirectory = purchaseTestClasses

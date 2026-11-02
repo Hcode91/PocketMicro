@@ -22,6 +22,9 @@ public final class SharedCompatibilityRepairs {
             if(name.matches("lib/[^/]+/[^/]+\\.so")&&!existing.replacements.containsKey(name)){
                 long size=e.getSize();if(++nativeCount>128||size<0||size>24L*1024*1024||size>nativeBudget){report.append("SKIPPED ").append(WritableRelocationRule.ID).append(": native inspection budget\n");continue;}
                 nativeBudget-=size;byte[] bytes=ApkRebuilder.readBounded(zip.getInputStream(e),24*1024*1024);
+                NdkDependencyPathRule.Result dependency=apply?NdkDependencyPathRule.repair(bytes):NdkDependencyPathRule.inspect(bytes);
+                if(dependency.status!=CompatibilityEvidence.Status.SKIPPED)report.append(dependency.status).append(' ').append(NdkDependencyPathRule.ID).append(" [").append(name).append("]: ").append(dependency.reason).append('\n');
+                byte[] dependencyBytes=dependency.replacement();if(dependencyBytes!=null){bytes=dependencyBytes;plan.replacements.put(name,bytes);}
                 WritableRelocationRule.Result result=apply?WritableRelocationRule.repair(bytes):WritableRelocationRule.inspect(bytes);
                 if(result.status!=CompatibilityEvidence.Status.SKIPPED)report.append(result.status).append(' ').append(WritableRelocationRule.ID).append(" [").append(name).append("]: ").append(result.reason).append('\n');
                 byte[] changed=result.replacement();if(changed!=null)plan.replacements.put(name,changed);
@@ -38,11 +41,13 @@ public final class SharedCompatibilityRepairs {
             if(apply)plan.replacements.putAll(result.replacements);
             Map<String,byte[]> diagnosticInput=new LinkedHashMap<>(dex);
             if(apply)diagnosticInput.putAll(result.replacements);
+            LegacySdkCrashRules.Result sdk=apply?LegacySdkCrashRules.repair(diagnosticInput):LegacySdkCrashRules.inspect(diagnosticInput);
+            report.append(sdk.report());if(apply){plan.replacements.putAll(sdk.replacements);diagnosticInput.putAll(sdk.replacements);}
             AirLoaderDiagnosticsRule.Result air=apply?AirLoaderDiagnosticsRule.repair(diagnosticInput):AirLoaderDiagnosticsRule.inspect(diagnosticInput);
             if(air.status!=CompatibilityEvidence.Status.SKIPPED)report.append(air.status).append(' ').append(AirLoaderDiagnosticsRule.ID).append(": ").append(air.reason).append('\n');
             if(apply)plan.replacements.putAll(air.replacements);
         }
-        report.append("SUPPORTED is inspection evidence; VERIFIED names only local edit checks. Native code relocation, missing services and gameplay may remain unsupported. No purchase changes or helpers are added by these rules.");
+        report.append("SUPPORTED is inspection evidence; VERIFIED names only local edit checks. Native code relocation, missing services and gameplay may remain unsupported. No purchase changes or additional helper DEXs are added by these rules.");
         plan.report=report.toString();return plan;
     }
     private SharedCompatibilityRepairs(){}

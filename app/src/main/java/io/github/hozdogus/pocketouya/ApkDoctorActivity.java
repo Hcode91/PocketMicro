@@ -12,6 +12,7 @@ import java.util.*;
 
 /** Scan, review, prepare, export/install. No APK code executes during inspection. */
 public final class ApkDoctorActivity extends Activity {
+    private static final String PREPARATION_VERSION="platform-crash-rules-v2";
     private static final int PICK=71,SAVE_APK=72,SAVE_REPORT=73;
     private TextView text;private Button pick,prepare,export,install,saveReport;
     private File dir;private volatile boolean busy;
@@ -32,7 +33,7 @@ public final class ApkDoctorActivity extends Activity {
     private Button button(LinearLayout root,String label,Runnable action){Button b=new Button(this);b.setText(label);b.setOnClickListener(v->action.run());root.addView(b);return b;}
     private File file(String name){return new File(dir,name);}
     private boolean scanned(){return dir!=null&&file("original.apk").isFile()&&file("report.txt").isFile();}
-    private boolean ready(){try{return scanned()&&file("ready").isFile()&&file("signed.apk").isFile()&&readText(file("ready")).equals("touch-v1");}catch(IOException e){return false;}}
+    private boolean ready(){try{return scanned()&&file("ready").isFile()&&file("signed.apk").isFile()&&readText(file("ready")).equals(PREPARATION_VERSION);}catch(IOException e){return false;}}
     private void render(){
         pick.setEnabled(!busy);prepare.setEnabled(!busy&&scanned());export.setEnabled(!busy&&ready());install.setEnabled(!busy&&ready());saveReport.setEnabled(!busy&&scanned());
         if(!busy){try{text.setText(scanned()?readText(file("report.txt")):"Select an original APK to inspect it for this phone. Nothing is installed automatically. Supported fixes produce a separately signed APK; unresolved issues stay visible. Scan results do not prove the APK is safe or that it will run. Export results before leaving this screen; working copies use temporary app storage.");}catch(Exception e){text.setText("Saved report unavailable. Select the APK again.");}}
@@ -63,7 +64,7 @@ public final class ApkDoctorActivity extends Activity {
                 if(!new com.android.apksig.ApkVerifier.Builder(file("signed.apk")).build().verify().isVerified())throw new IOException("Converted APK signature verification failed");
                 String after=ModernApkDoctor.inspect(file("signed.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);
                 writeText(file("report.txt"),"PREPARED COPY — signature verification passed; launch not tested.\nPackage: "+r.packageName+"\n\nApplied conversion results:\n"+r.compatibilityReport+"\n\nPOST-CONVERSION INSPECTION\n"+after+"\n\nORIGINAL INSPECTION\n"+before);
-                writeText(file("package.txt"),r.packageName);writeText(file("ready"),"touch-v1");
+                writeText(file("package.txt"),r.packageName);writeText(file("ready"),PREPARATION_VERSION);
             }catch(Exception e){file("ready").delete();file("signed.apk").delete();throw e;}
             finally{file("patched.apk").delete();}
         })).setNegativeButton("Cancel",null).show();}

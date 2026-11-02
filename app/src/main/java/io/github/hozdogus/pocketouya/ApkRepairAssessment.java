@@ -61,7 +61,9 @@ public final class ApkRepairAssessment {
                 ZipEntry e=it.nextElement();String n=e.getName();
                 if(n.matches("lib/[^/]+/[^/]+\\.so")){
                     long size=e.getSize();if(++nativeCount>128||size<0||size>24L*1024*1024||size>nativeBudget){if(nativeCount==129||nativeCount<=128)add(findings,CompatibilityEvidence.Status.SKIPPED,"Native inspection",n+": size/count/budget limit");continue;}
-                    nativeBudget-=size;var r=WritableRelocationRule.inspect(ApkRebuilder.readBounded(zip.getInputStream(e),24*1024*1024));
+                    nativeBudget-=size;byte[] bytes=ApkRebuilder.readBounded(zip.getInputStream(e),24*1024*1024);
+                    var dependency=NdkDependencyPathRule.inspect(bytes);if(dependency.status!=CompatibilityEvidence.Status.SKIPPED)add(findings,dependency.status,NdkDependencyPathRule.ID,n+": "+dependency.reason);if(dependency.status==CompatibilityEvidence.Status.SUPPORTED)startup=true;
+                    var r=WritableRelocationRule.inspect(bytes);
                     if(r.status==CompatibilityEvidence.Status.SUPPORTED){startup=true;add(findings,r.status,WritableRelocationRule.ID,n+": "+r.reason);}
                     else if(r.status!=CompatibilityEvidence.Status.SKIPPED)add(findings,r.status,WritableRelocationRule.ID,n+": "+r.reason);
                 }
@@ -73,6 +75,7 @@ public final class ApkRepairAssessment {
             if(dexSkipped)add(findings,CompatibilityEvidence.Status.SKIPPED,"SDK inspection","DEX budget exceeded; no SDK match is assumed.");
             else{
                 var sdk=OuyaServiceCleanupRule.inspect(dex);add(findings,sdk.status,OuyaServiceCleanupRule.ID,sdk.reason);if(sdk.status==CompatibilityEvidence.Status.SUPPORTED)startup=true;if(sdk.status==CompatibilityEvidence.Status.MALFORMED)blocker=true;
+                var platform=LegacySdkCrashRules.inspect(dex);for(var finding:platform.findings){if(finding.status!=CompatibilityEvidence.Status.SKIPPED)add(findings,finding.status,finding.id,finding.detail);if(finding.status==CompatibilityEvidence.Status.MALFORMED)blocker=true;}if(platform.supported())startup=true;
                 var air=AirLoaderDiagnosticsRule.inspect(dex);
                 if(air.status!=CompatibilityEvidence.Status.SKIPPED)add(findings,air.status,AirLoaderDiagnosticsRule.ID,air.reason+". Startup repairs can enable this diagnostic; it does not establish repair eligibility or resolve the hidden failure. Export the full global log after testing.");
                 var cpu=UnityCpuStringRule.inspect(dex);if(cpu.applicable)add(findings,CompatibilityEvidence.Status.SUPPORTED,UnityCpuStringRule.ID,"Matching nullable description getter; current crash cause is unverified. Guard is available only with an eligible experimental runtime conversion.");
