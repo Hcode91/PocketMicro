@@ -1,7 +1,7 @@
 name: Read-only compatibility evidence
 on:
   push:
-    branches: [feature/compat-evidence-detector]
+    branches: [feature/compat-evidence-detector, feature/shared-compatibility-rules]
   pull_request:
     paths:
       - 'app/src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java'

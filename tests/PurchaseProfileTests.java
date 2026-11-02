@@ -2,6 +2,7 @@ public final class PurchaseProfileTests {
     public static void main(String[] args) throws Exception {
         io.github.hozdogus.pocketouya.OuyaPurchasePatcherTest.main(new String[0]);
         io.github.hozdogus.pocketouya.GeneralCompatibilityTest.main(new String[0]);
+        io.github.hozdogus.pocketouya.SharedCompatibilityRulesTest.main(new String[0]);
         io.github.hozdogus.pocketouya.NativeRuntimeRepairTest.main(new String[0]);
         io.github.hozdogus.pocketouya.MarmaladeRuntimeRepairTest.main(new String[0]);
         io.github.hozdogus.pocketouya.EngineInputTest.main(new String[0]);

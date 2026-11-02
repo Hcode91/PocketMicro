@@ -1,0 +1,92 @@
+{
+  "verified": 12,
+  "profiles": [
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "id": "native-01",
+      "status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "id": "native-02",
+      "status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "id": "native-03",
+      "status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "id": "native-04",
+      "status": "SKIPPED"
+    },
+    {
+      "reason": "FIXTURE_UNAVAILABLE",
+      "id": "native-05",
+      "status": "SKIPPED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-06",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-07",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-08",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-09",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-10",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-11",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-12",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-13",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-14",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-15",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-16",
+      "status": "VERIFIED"
+    },
+    {
+      "scope": "shared coordinator output and replacement set equal existing native plan and frozen output hash",
+      "id": "native-17",
+      "status": "VERIFIED"
+    }
+  ],
+  "complete": false,
+  "skipped": 5
+}

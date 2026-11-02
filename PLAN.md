@@ -879,3 +879,37 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   detector remains 7/13 supported, 6 unknown; bounded CFG work is still pending.
   Local compatibility checks run with the available JDK. Full APK/CI outcomes
   must be checked on the resulting workflow run; phone installation untested.
+
+- **2026-11-02 — Shared repair attempts, separately scoped from the detector:**
+  owner asked to return to fixes applicable to other APKs and selected BOTH the
+  OUYA cleanup and native families. Branch feature/shared-compatibility-rules
+  from1d85252 preserves the detector-only branch. Baseline APK run41421926645
+  succeeded and uploaded PocketOuya-apk; no phone install was executed.
+  Added independent WritableRelocationRule: no fingerprints/offsets/instruction
+  decoding; only clears stale DT_TEXTREL/DF_TEXTREL after bounded ARM32 REL/PLT
+  proof that every supported loader write is aligned RW and avoids metadata.
+  Rejects actual code writes, unsupported types/formats/resolvers/COPY, aliased
+  mappings, incomplete evidence and malformed ranges/symbols/RELCOUNT. Separate
+  copy, reparse/proof and byte-edit-scope checks. No RX permission changes.
+  OuyaServiceCleanupRule matches only shared SDK shutdown's two declared instance
+  field loads, single Context.unbindService and return; adds verified null-context
+  branch, preserving the non-null path and exceptions. No service replacement,
+  billing changes or helper. Other forms UNKNOWN, reserved/malformed DEX unchanged.
+  Coordinator retains legacy native plan first, then these opt-in shared rules.
+  Doctor read-only preview and explicit Prepare/startup conversion report rule
+  IDs/status/reasons; ordinary conversion stays isolated. New repair DEX is input
+  to optional touch/purchase processing rather than discarded. Original 17-profile
+  catalog and FOUR algorithm source checksums, purchase/bridge code and structural
+  detector byte-identical; no integration of finalizer recognition into repairs.
+  Fresh full host suites and Android-core compilation pass; new fixtures exercise
+  shifted addresses/registers/names, null/non-null paths, negative native forms,
+  truncated/malformed inputs, ZIP/asset preservation, option isolation and repeat
+  edits. Existing generated43 remain TP12/TN31/FP0/FN0. Real replay NOW has12
+  VERIFIED and5 SKIPPED (native01-05 attachment originals unavailable); both direct
+  audit and coordinator comparison match every available expected output/hash/set.
+  Audit exits nonzero for missing5, never counts them as passing. No source-based
+  assumption substitutes for missing fixtures. docs/shared-compatibility-rules.md
+  and docs/evidence/shared-rules document outcomes. Polarity/Monocle original APKs
+  unavailable: applicability/device success unverified. Cleanup guard alone cannot
+  fix missing OUYA services; real Mono code relocations remain unsupported by the
+  stale-declaration rule. Six-profile instruction-mode/CFG work remains pending.

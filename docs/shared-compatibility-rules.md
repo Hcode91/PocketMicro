@@ -1,0 +1,112 @@
+# Shared repair attempts
+
+These rules run when the user chooses **Engine startup repairs** during import,
+or **Prepare fixes** in the APK compatibility doctor. Normal conversion leaves
+them off. The doctor first reports read-only applicability results. Reconvert
+the original complete APK to try a rule; changing PocketOuya does not change
+already installed games.
+
+This work is on `feature/shared-compatibility-rules`, based on `1d85252`.
+The read-only finalizer detector and its seven-supported/six-unknown milestone
+are unchanged and remain disconnected from transformation selection.
+
+## `elf.arm32.stale-textrel`
+
+This rule supports ELF32 little-endian ARM shared libraries with complete,
+bounded ordinary REL/PLT relocation metadata. It checks each supported loader
+write's width, alignment and writable load mapping. It rejects code writes,
+unknown relocation types, COPY/resolver relocations, packed/RELA/RELR tables,
+missing descriptors, overlapping tables/mappings, aliased load bytes and writes
+into dynamic/relocation metadata. RELCOUNT prefixes are checked independently.
+Symbol-indexed relocations require file-backed SYMTAB/SYMENT evidence.
+
+Only when every write passes does it remove a stale DT_TEXTREL entry and clear
+DF_TEXTREL. Other flags, load permissions, instructions and relocation records
+are unchanged. It reparses the result, rechecks the relocation proof and checks
+that every changed byte is within dynamic metadata. Inspection returns no
+modified bytes. Repairs return a separate copy.
+
+This is **not** a general text-relocation rewrite. A libmono.so that actually
+writes to executable memory stays unsupported by this rule. Monocle Man's log
+proves loader rejection but cannot establish whether its declarations are stale;
+the original library must be inspected. Filenames, APK packages, hashes and
+instruction-pattern guesses do not select this rule.
+
+## `ouya.content.null-context-cleanup`
+
+This rule recognizes the shared OUYA content SDK's instance `shutdown()V`
+method, rather than an application package. The supported body consists solely
+of two instance-field loads (Context and ServiceConnection), one exact
+Context.unbindService call and return. Both registers must be distinct and
+loaded from this instance's declared fields. Branches, handlers, other effects,
+different signatures and instruction forms are rejected or left unknown.
+
+The transformation inserts a null-context branch to the original return, and
+checks the serialized instructions, register and branch destination. With a
+non-null context the original unbind executes and its exceptions still propagate.
+No exception swallowing, replacement service, network backend, purchase changes
+or helper DEX is added. Already guarded output is skipped. Duplicate classes,
+malformed or reserved-opcode DEX preserve the original DEX set.
+
+Polarity's log verifies a null-context crash in OuyaContent.shutdown after an
+earlier implicit service-intent failure. This rule addresses only the cleanup
+crash **if its original DEX matches**. It does not resolve failed initialization,
+an unavailable service or missing native dependencies. Polarity's original APK
+was unavailable for this implementation, so applicability and phone behavior
+remain unverified; no working-game claim is made.
+
+## Composition and diagnostics
+
+`SharedCompatibilityRepairs` keeps all existing exact native plans first, then
+attempts the independent stale-declaration rule on remaining native entries and
+the SDK cleanup rule on bounded application DEX. Subsequent optional touch and
+purchase conversion reads the resulting DEX; existing feature-isolation suites
+are retained. A combined shared-rule/touch path is checked in the APK fixture.
+Purchase validation and the four frozen native transformation/catalog sources
+are unchanged. No new fingerprint or build-specific offset was added.
+
+Reports show rule ID, inspected file where relevant, status and reason:
+SUPPORTED means applicability evidence; VERIFIED means the named local output
+checks passed; UNSUPPORTED means an excluded form; UNKNOWN means insufficient
+evidence; MALFORMED means invalid structure; SKIPPED means absence, an existing
+guard, or an explicit analysis limit. These results do not certify gameplay or
+APK safety. Separate original/native loading warnings may still be shown in
+the read-only preview, before an eligible stale-declaration repair is applied.
+
+## Executed checks
+
+- Fresh host compatibility/purchase/input/native/doctor suites pass.
+- Shared-rule fixtures vary native layout, data addresses, registers, field
+  names, unrelated game classes and native filename. Read-only inspection and
+  original APK preservation, null/non-null cleanup execution, idempotence,
+  asset preservation, no helper injection and disabled-option isolation pass.
+- Actual code writes, unknown/COPY/resolver relocation types, packed formats,
+  incomplete descriptors, invalid symbols/RELCOUNT, self-modifying metadata,
+  truncated ELF, different cleanup effects, malformed and duplicate-class DEX
+  are rejected as tested. No tested negative was repaired. These bounded tests
+  do not establish universal false-positive or false-negative rates.
+- The unchanged detector's 43 generated cases still pass: TP12/TN31/FP0/FN0.
+- Local real-native replay: **12 verified, five unavailable and SKIPPED**
+  (native-01 through native-05). Both direct baseline replay and shared
+  coordinator comparison preserve every available expected output hash and
+  replacement set. Missing fixtures cause audit commands to exit nonzero;
+  the complete 17-profile replay is **not** a new passing result.
+- Full app Java compilation against Android core stubs passes; normal existing
+  annotation/deprecation warnings remain. Phone installation/gameplay and the
+  two new rules on Monocle Man/Polarity are not executed.
+
+Reports: `docs/evidence/shared-rules/native-profile-replay.json` and
+`coordinator-replay.json`. Private binaries and their local paths are not shipped.
+
+Reproduce with the normal Android/Gradle setup:
+
+```sh
+bash scripts/test-compatibility.sh
+gradle :app:testPurchaseProfile :app:testStructuralDetector
+gradle :app:compileDebugJavaWithJavac
+gradle :app:auditNativeProfileMatrix -PnativeFixtureIndex=/private/fixtures.json
+```
+
+The optional `SharedRepairFixtureAudit` host runner accepts matrix, private
+fixture index and result JSON paths. It compares the coordinator against the
+unchanged native plan and frozen output hashes. Neither rule reads this oracle.

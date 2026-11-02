@@ -35,7 +35,7 @@ public final class ApkRebuilder {
             ManifestPatcher.Result result=ManifestPatcher.patch(readBounded(zip.getInputStream(manifestEntry),4*1024*1024),minimumTarget);
             java.util.Map<String,byte[]> replacements=new java.util.LinkedHashMap<>();
             if(runtimeRepair){
-                NativeRuntimeRepair.Plan repair=NativeRuntimeRepair.plan(zip);
+                SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true);
                 replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);
@@ -49,7 +49,7 @@ public final class ApkRebuilder {
                     if(!name.matches("classes(?:[2-9]|[1-9][0-9]+)?\\.dex"))continue;
                     int number=name.equals("classes.dex")?1:Integer.parseInt(name.substring(7,name.length()-4));
                     if(number>1000 || input.size()>=64)throw new IOException("Too many game DEX files");
-                    byte[] bytes=readBounded(zip.getInputStream(entry),32*1024*1024);total+=bytes.length;
+                    byte[] bytes=replacements.get(name);if(bytes==null)bytes=readBounded(zip.getInputStream(entry),32*1024*1024);total+=bytes.length;
                     if(total>64L*1024*1024)throw new IOException("DEX analysis exceeds the 64 MiB limit; try normal conversion");
                     if(input.put(name,bytes)!=null)throw new IOException("Duplicate DEX entry");
                     nextDex=Math.max(nextDex,number+1);
@@ -90,7 +90,7 @@ public final class ApkRebuilder {
                 || n.endsWith(".DSA") || n.endsWith(".EC");
     }
 
-    private static byte[] readBounded(InputStream in, int maximum) throws IOException {
+    static byte[] readBounded(InputStream in, int maximum) throws IOException {
         try(InputStream input=in; ByteArrayOutputStream output=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[8192]; int total=0;
             for(int n;(n=input.read(buffer))!=-1;) {
