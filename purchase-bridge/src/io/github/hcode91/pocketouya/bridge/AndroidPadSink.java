@@ -12,7 +12,7 @@ public final class AndroidPadSink implements VirtualPad.Sink {
     private final Activity activity;
     private final boolean keyboard;
     private final Map<Integer,Long> downTimes=new HashMap<>();
-    private float x,y;
+    private float x,y,z,rz;
     private WeakReference<View> unity=new WeakReference<>(null);
     private Method inject;
     public AndroidPadSink(Activity activity,boolean keyboard){this.activity=activity;this.keyboard=keyboard;}
@@ -27,9 +27,10 @@ public final class AndroidPadSink implements VirtualPad.Sink {
     }
     public void axis(int axis,float value){
         if(keyboard)return;
-        if(axis==0)x=value;else if(axis==1)y=value;else return;
+        if(axis==0)x=value;else if(axis==1)y=value;else if(axis==11)z=value;else if(axis==14)rz=value;else return;
         MotionEvent.PointerProperties property=new MotionEvent.PointerProperties();property.id=0;property.toolType=MotionEvent.TOOL_TYPE_UNKNOWN;
         MotionEvent.PointerCoords coords=new MotionEvent.PointerCoords();coords.setAxisValue(MotionEvent.AXIS_X,x);coords.setAxisValue(MotionEvent.AXIS_Y,y);
+        coords.setAxisValue(MotionEvent.AXIS_Z,z);coords.setAxisValue(MotionEvent.AXIS_RZ,rz);
         coords.setAxisValue(MotionEvent.AXIS_HAT_X,x);coords.setAxisValue(MotionEvent.AXIS_HAT_Y,y);
         long now=SystemClock.uptimeMillis();
         MotionEvent event=MotionEvent.obtain(now,now,MotionEvent.ACTION_MOVE,1,new MotionEvent.PointerProperties[]{property},new MotionEvent.PointerCoords[]{coords},0,0,1,1,KeyCharacterMap.VIRTUAL_KEYBOARD,0,InputDevice.SOURCE_JOYSTICK,0);

@@ -135,7 +135,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
     source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
     source rootProject.files('tests/OuyaPurchasePatcherTest.java', 'tests/OfflineCatalogTest.java',
-            'tests/OfflineOuyaTest.java', 'tests/GeneralCompatibilityTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
+            'tests/OfflineOuyaTest.java', 'tests/GeneralCompatibilityTest.java', 'tests/LegacyOuyaInputTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
     classpath = configurations.purchaseHostTests
     destinationDirectory = purchaseTestClasses
     sourceCompatibility = '17'

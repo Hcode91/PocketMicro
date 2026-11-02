@@ -15,6 +15,9 @@ import java.util.*;
 public final class TouchControls extends FrameLayout {
     private static final Map<Activity,WeakReference<TouchControls>> installed=new WeakHashMap<>();
     private static final Map<android.app.Application,Boolean> watched=new WeakHashMap<>();
+    private static final Set<Activity> legacy=Collections.newSetFromMap(new WeakHashMap<Activity,Boolean>());
+    public static void watchLegacy(Activity activity){legacy.add(activity);watch(activity);}
+    public static void installLegacy(Activity activity){legacy.add(activity);install(activity);}
     private static final Set<Activity> resumed=Collections.newSetFromMap(new WeakHashMap<Activity,Boolean>());
     public static void watch(Activity activity){
         try{watchApplication(activity);}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to watch game activities",error);}
@@ -37,11 +40,12 @@ public final class TouchControls extends FrameLayout {
             public void onActivityPaused(Activity current){resumed.remove(current);release(current);}
             public void onActivityStopped(Activity current){release(current);}
             public void onActivitySaveInstanceState(Activity current,android.os.Bundle state){}
-            public void onActivityDestroyed(Activity current){release(current);installed.remove(current);}
+            public void onActivityDestroyed(Activity current){release(current);installed.remove(current);legacy.remove(current);}
         });
         watched.put(app,true);
     }
     private VirtualPad pad;
+    private LookStick look;
     private final VirtualPad.Sink nativeSink;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final List<View> panels=new ArrayList<>();
@@ -69,11 +73,14 @@ public final class TouchControls extends FrameLayout {
         setMotionEventSplittingEnabled(true);setFocusable(false);setClickable(false);
         setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         VirtualPad.Sink detected;
-        try{detected=new OuyaPadSink(activity);}catch(Exception|LinkageError unavailable){
+        try{detected=legacy.contains(activity)?new LegacyOuyaPadSink(activity):new OuyaPadSink(activity);}catch(Exception|LinkageError unavailable){
             try{detected=new MarmaladePadSink(activity,false);}catch(Exception|LinkageError absent){detected=null;}
         }
         nativeSink=detected;
-        int mode=activity.getSharedPreferences("pocketouya_touch_settings_v1",Activity.MODE_PRIVATE).getInt("mode",0);
+        android.content.SharedPreferences settings=activity.getSharedPreferences("pocketouya_touch_settings_v1",Activity.MODE_PRIVATE);
+        int mode=settings.getInt("mode",0);
+        if(nativeSink instanceof LegacyOuyaPadSink&&!settings.getBoolean("legacy_json_v1",false)){mode=0;settings.edit().putInt("mode",0).putBoolean("legacy_json_v1",true).apply();}
+        Log.i("PocketOuyaControls","Input route: "+(nativeSink instanceof LegacyOuyaPadSink?"legacy OUYA JSON controller":nativeSink instanceof OuyaPadSink?"OUYA native":nativeSink instanceof MarmaladePadSink?"Marmalade":"Android fallback")+"; mode="+mode);
         pad=createPad(activity,mode);
         LinearLayout directions=column();
         row(directions,null,button("↑",VirtualPad.UP,0xff555555),null);
@@ -85,6 +92,7 @@ public final class TouchControls extends FrameLayout {
         row(faces,button("U",VirtualPad.U,0xff1479ad),null,button("A",VirtualPad.A,0xffa73b36));
         row(faces,null,button("O",VirtualPad.O,0xff318b42),null);
         addPanel(faces,Gravity.BOTTOM|Gravity.RIGHT,16,22);
+        if(!(nativeSink instanceof MarmaladePadSink)&&getResources().getDisplayMetrics().widthPixels>=dp(500)){look=new LookStick(activity);FrameLayout.LayoutParams lookLayout=new FrameLayout.LayoutParams(dp(100),dp(100),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);lookLayout.setMargins(0,0,0,dp(22));panels.add(look);addView(look,lookLayout);}
         LinearLayout top=new LinearLayout(activity);top.setGravity(Gravity.CENTER);
         top.addView(button("L1",VirtualPad.L1,0xff555555));
         top.addView(button("Select",VirtualPad.SELECT,0xff555555));
@@ -102,7 +110,7 @@ public final class TouchControls extends FrameLayout {
         inputLayout.setMargins(dp(106),dp(8),0,0);addView(input,inputLayout);
         input.setOnClickListener(v->{
             releasePad();
-            String[] options=new String[]{nativeSink instanceof MarmaladePadSink?"Auto (Marmalade keys)":nativeSink==null?"Auto (Android gamepad)":"Auto (OUYA native)","Android gamepad","Keyboard"};
+            String[] options=new String[]{nativeSink instanceof LegacyOuyaPadSink?"Auto (legacy OUYA JSON)":nativeSink instanceof MarmaladePadSink?"Auto (Marmalade keys)":nativeSink==null?"Auto (Android gamepad)":"Auto (OUYA native)","Android gamepad","Keyboard"};
             new android.app.AlertDialog.Builder(activity).setTitle("Game input mode").setItems(options,(dialog,which)->{
                 releasePad();usable=true;
                 try{pad=createPad(activity,which);}catch(Exception error){usable=false;Log.e("PocketOuyaControls","Input mode unavailable",error);return;}
@@ -162,11 +170,28 @@ public final class TouchControls extends FrameLayout {
         });
         return button;
     }
+    private final class LookStick extends View {
+        private final android.graphics.Paint paint=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private int pointer=-1;private float x,y;
+        LookStick(Activity activity){super(activity);setFocusable(false);setContentDescription("Right stick: drag to look");}
+        void resetPointer(){pointer=-1;x=0;y=0;invalidate();}
+        @Override protected void onDraw(android.graphics.Canvas canvas){super.onDraw(canvas);float cx=getWidth()/2f,cy=getHeight()/2f,r=Math.min(cx,cy)-dp(5);
+            paint.setStyle(android.graphics.Paint.Style.STROKE);paint.setStrokeWidth(dp(1));paint.setColor(0x99ffffff);canvas.drawCircle(cx,cy,r,paint);
+            paint.setStyle(android.graphics.Paint.Style.FILL);paint.setColor(0x66555555);canvas.drawCircle(cx,cy,r,paint);paint.setColor(0xaaffffff);canvas.drawCircle(cx+x*r*0.65f,cy+y*r*0.65f,r*0.25f,paint);
+            paint.setColor(Color.WHITE);paint.setTextSize(dp(12));paint.setTextAlign(android.graphics.Paint.Align.CENTER);canvas.drawText("Look / RS",cx,cy-r*0.5f,paint);
+        }
+        @Override public boolean onTouchEvent(MotionEvent event){int action=event.getActionMasked(),index=event.getActionIndex();
+            if(action==MotionEvent.ACTION_DOWN&&pointer<0)pointer=event.getPointerId(index);
+            if(action==MotionEvent.ACTION_CANCEL||((action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_POINTER_UP)&&event.getPointerId(index)==pointer)){resetPointer();stick(0,0);return true;}
+            int at=event.findPointerIndex(pointer);if(at>=0){float radius=Math.max(1,Math.min(getWidth(),getHeight())/2f-dp(5));x=(event.getX(at)-getWidth()/2f)/radius;y=(event.getY(at)-getHeight()/2f)/radius;double length=Math.hypot(x,y);if(length>1){x/=length;y/=length;}stick(x,y);invalidate();}return true;
+        }
+    }
+    private void stick(float x,float y){if(!usable)return;try{pad.rightStick(x,y);}catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Right stick input disabled after input error",error);}}
     private void hold(int key,Object owner,boolean down){
         if(!usable)return;
         try{pad.hold(key,owner,down);}catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Touch input disabled after native input error",error);}
     }
-    private void releasePad(){handler.removeCallbacksAndMessages(null);try{pad.releaseAll();}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to release virtual controller",error);}}
+    private void releasePad(){handler.removeCallbacksAndMessages(null);if(look!=null)look.resetPointer();try{pad.releaseAll();}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to release virtual controller",error);}}
     @Override public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(!focused)releasePad();}
     @Override protected void onDetachedFromWindow(){releasePad();super.onDetachedFromWindow();}
 }

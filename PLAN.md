@@ -1042,3 +1042,43 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   not repeated for this policy/UI change (prior12 VERIFIED,5 fixture SKIPPED).
   Phone touch/provider flows untested. Updated assessment/experiment/shared-rule
   docs. Push source/tests and link GitHub build without waiting for completion.
+
+
+- **2026-11-02 — Monocle visible pad ignored; shared legacy OUYA JSON input:**
+  owner screenshot shows gameplay and pad, but input not registering. Kept AI/
+  GitHub-only diagnosis work PARKED on its separate branch/PR4; returned to
+  feature/shared-compatibility-rules at4fecc665 for this game-input repair.
+  Inspected supplied original DEX and managed assemblies without executing them.
+  Launcher owns old Gson/UnitySendMessage JSON SDK, not modern OUYA JNI route.
+  checkDevices excludes Android virtual devices; managed InputListener drops
+  events without a matching descriptor, maps DeviceName, reads nested KeyEvent
+  mKeyCode/mRepeatCount and AxisX/Y/Z/RZ. Existing fallback's keyboard device ID
+  does not establish that controller. Java SDK managed player starts1, playerNum0.
+  Added structural route recognition based on DTO/gate types, enumeration and
+  snapshot references, Gson/Unity target and callback signatures/names. No game
+  name/hash/offset selection, purchase changes or native/managed algorithm edits.
+  Matched lifecycle hooks select new LegacyOuyaPadSink. It announces an in-process
+  player1 descriptor, retains physical snapshot descriptors, respects enable
+  gates, rejects ID collision, and sends existing button/axis JSON messages.
+  Does not create a real Android InputDevice. Reannounces before events to cover
+  GameObject readiness/later device snapshots. First use migrates old fallback
+  mode once to Auto(legacy OUYA JSON); subsequent manual choices respected.
+  Added center-bottom Look/RS drag pad on wide non-Marmalade layouts, independent
+  Z/RZ axes in VirtualPad and Android fallback. Radial clamp/deadzone/dedup;
+  release/cancel/hide/focus/pause/mode switch cleanup neutralizes both sticks,
+  continuing other releases if one sink operation fails. Existing movement keys
+  and modern OUYA/Marmalade behavior retained. Selected route logged.
+  Tests executed: full host/native/input/purchase/doctor/shared rules and generated
+  structural/CPU/assessment/experimental suites pass;43 native detector cases
+  unchanged TP12/TN31/FP0/FN0. New two-namespace SDK fixtures and near-matches reject
+  wrong fields/callbacks/targets; fake consumer covers descriptors/player numbers,
+  key JSON, both sticks, physical preservation, disabled gates/collision/release.
+  Stick tests cover clamp, deadzone, repeats, overlap and failed-axis cleanup.
+  Java8 bridge + D8 minAPI23, Android-core compile and compatibility/log/export
+  script pass. Full supplied Monocle conversion matches new route, resolves new
+  lifecycle/helper methods, preserves29 assets/original, CPU getter guard and
+  prior emulated native repair bytes.17-profile/four frozen source hashes remain
+  unchanged; native replay not repeated (previous12 verified,5 fixtures skipped).
+  Phone View multitouch/managed callback response/gameplay remain UNVERIFIED.
+  docs/legacy-ouya-input.md records evidence/limits and reconversion instructions.
+  No vendor code/assets committed. Push source/tests; link build without waiting.
