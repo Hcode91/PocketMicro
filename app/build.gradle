@@ -116,6 +116,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
     source files('src/main/java/io/github/hozdogus/pocketouya/OuyaPurchasePatcher.java',
             'src/main/java/io/github/hozdogus/pocketouya/GameCompatibilityPatcher.java',
             'src/main/java/io/github/hozdogus/pocketouya/ModernApkDoctor.java',
+            'src/main/java/io/github/hozdogus/pocketouya/ApkRepairAssessment.java',
             'src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java',
             'src/main/java/io/github/hozdogus/pocketouya/WritableRelocationRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/OuyaServiceCleanupRule.java',

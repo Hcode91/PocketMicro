@@ -10,6 +10,7 @@ public final class ExperimentalUnityRuntimeRepair {
     public static final class Plan {
         public final Map<String,byte[]> replacements=new LinkedHashMap<>();
         public String report;
+        public boolean applicable;
     }
     private static final String ROOT="lib/armeabi-v7a/",ASSET="assets/libs/armeabi-v7a/";
     private static byte[] read(ZipFile zip,String name)throws IOException{
@@ -45,7 +46,9 @@ public final class ExperimentalUnityRuntimeRepair {
             }
         }
     }
-    public static Plan plan(ZipFile zip){
+    public static Plan inspect(ZipFile zip){return evaluate(zip,false);}
+    public static Plan plan(ZipFile zip){return evaluate(zip,true);}
+    private static Plan evaluate(ZipFile zip,boolean apply){
         Plan plan=new Plan();String prefix="Experimental Unity embedded runtime repair\n\n";
         try{
             Set<String> names=new HashSet<>();Enumeration<? extends ZipEntry> entries=zip.entries();while(entries.hasMoreElements()){
@@ -59,6 +62,9 @@ public final class ExperimentalUnityRuntimeRepair {
             if(!soname(mono).equals("libmono.so")||!soname(unity).equals("libunity.so"))throw new IOException("Embedded SONAME mismatch");
             writableRelocations(mono);if(NativeStartupChecks.hasTextRelocations(mono))throw new IOException("Embedded Mono needs a separate repair");
             var c=recognized(unity).candidates.get(0);
+            var sourceElf=new ArmRuntimePicRepair.Elf(unity);var tags=sourceElf.dynamic();
+            if(!tags.containsKey(22)||sourceElf.value(tags,0x6ffffffa)<1||(tags.containsKey(30)&&(sourceElf.value(tags,30)&4)!=0))throw new IOException("Unsupported declaration/relative-count preconditions");
+            if(!apply){plan.applicable=true;plan.report=prefix+"SUPPORTED EXPERIMENTAL CANDIDATE: proxy/payload SONAMEs, clean Mono and independently rooted ARM-only Unity finalizer match. No modified bytes generated. Whole-program safety and phone startup remain unverified.";return plan;}
             byte[] repaired=ArmRuntimePicRepair.repairLayout(unity,(int)c.finalizer,(int)c.target,-1,0);
             writableRelocations(repaired);if(NativeStartupChecks.hasTextRelocations(repaired))throw new IOException("Unity still declares text relocations");
             // This experiment may not change program mappings or permissions.
@@ -66,9 +72,9 @@ public final class ExperimentalUnityRuntimeRepair {
             int stride=((unity[43]&255)<<8)|(unity[42]&255),count=((unity[45]&255)<<8)|(unity[44]&255);
             if(ph<0||stride<32||count>128||ph+(long)stride*count>unity.length)throw new IOException("Invalid program headers");
             for(int n=ph;n<ph+stride*count;n++)if(unity[n]!=repaired[n])throw new IOException("Program headers changed");
-            plan.replacements.put(ROOT+"libmono.so",mono);plan.replacements.put(ROOT+"libunity.so",repaired);
+            plan.applicable=true;plan.replacements.put(ROOT+"libmono.so",mono);plan.replacements.put(ROOT+"libunity.so",repaired);
             plan.report=prefix+"APPLIED (experimental): recognized proxy pair and matching embedded ARM32 runtimes. Promoted Mono unchanged and repaired the metadata-rooted ARM finalizer in Unity. Both output relocation tables write only to writable load memory. Program headers/permissions unchanged. No Thumb edits or catalog fingerprints were used.\n\nLocal verification does not establish whole-program reference safety or successful Android startup/gameplay. Assets remain byte-identical. Use normal Play and export the full log if it fails.";
-        }catch(IOException|RuntimeException error){plan.replacements.clear();plan.report=prefix+"UNSUPPORTED / NOT APPLIED: "+error.getMessage()+"\nAll native files preserved. This option requires a complete original APK with the supported proxy/payload structure; uncertain or Thumb-dependent cases are excluded.";}
+        }catch(IOException|RuntimeException error){plan.applicable=false;plan.replacements.clear();plan.report=prefix+"UNSUPPORTED / NOT APPLIED: "+error.getMessage()+"\nAll native files preserved. This option requires a complete original APK with the supported proxy/payload structure; uncertain or Thumb-dependent cases are excluded.";}
         return plan;
     }
     private ExperimentalUnityRuntimeRepair(){}

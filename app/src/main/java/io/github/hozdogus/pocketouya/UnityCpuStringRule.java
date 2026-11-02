@@ -17,9 +17,12 @@ public final class UnityCpuStringRule {
  public static final class Result {
   public final Map<String,byte[]> replacements=new LinkedHashMap<>();
   public String report;
+  public boolean applicable;
  }
  private static boolean target(Method m){return m.getName().equals("getCPUType")&&m.getParameterTypes().isEmpty()&&m.getReturnType().equals("Ljava/lang/String;");}
- public static Result repair(Map<String,byte[]> input){
+ public static Result inspect(Map<String,byte[]> input){return evaluate(input,false);}
+ public static Result repair(Map<String,byte[]> input){return evaluate(input,true);}
+ private static Result evaluate(Map<String,byte[]> input,boolean apply){
   Result result=new Result();result.report="SKIPPED "+ID+": getter absent";
   try{
    Map<String,DexBackedDexFile> dex=new LinkedHashMap<>();Set<String> seen=new HashSet<>();ClassDef owner=null;Method method=null;String file=null;long total=0;
@@ -42,6 +45,7 @@ public final class UnityCpuStringRule {
    int receiver=((OneRegisterInstruction)code.get(0)).getRegisterA(),reg=((OneRegisterInstruction)code.get(2)).getRegisterA();
    FieldReference field=(FieldReference)((ReferenceInstruction)code.get(0)).getReference();MethodReference call=(MethodReference)((ReferenceInstruction)code.get(1)).getReference();FiveRegisterInstruction invoke=(FiveRegisterInstruction)code.get(1);
    if(!field.getDefiningClass().equals(TYPE)||!field.getType().equals(call.getDefiningClass())||!call.getParameterTypes().isEmpty()||!call.getReturnType().equals("Ljava/lang/String;")||invoke.getRegisterCount()!=1||invoke.getRegisterC()!=receiver||((OneRegisterInstruction)code.get(3)).getRegisterA()!=reg)throw new IllegalArgumentException("getter register/type contract differs");
+   result.applicable=true;if(!apply){result.report="SUPPORTED "+ID+": supported nullable CPU-description getter; whether it returns null on this phone is unverified. No modified DEX generated.";return result;}
    List<Instruction> guarded=new ArrayList<>(code.subList(0,3));guarded.add(new ImmutableInstruction21t(Opcode.IF_NEZ,reg,4));guarded.add(new ImmutableInstruction21c(Opcode.CONST_STRING,reg,new ImmutableStringReference("Unknown CPU")));guarded.add(code.get(3));
    List<Method> methods=new ArrayList<>();for(Method m:owner.getMethods())methods.add(target(m)?new ImmutableMethod(m.getDefiningClass(),m.getName(),m.getParameters(),m.getReturnType(),m.getAccessFlags(),m.getAnnotations(),m.getHiddenApiRestrictions(),new ImmutableMethodImplementation(m.getImplementation().getRegisterCount(),guarded,Collections.emptyList(),Collections.emptyList())):m);
    var changed=new ImmutableClassDef(owner.getType(),owner.getAccessFlags(),owner.getSuperclass(),owner.getInterfaces(),owner.getSourceFile(),owner.getAnnotations(),owner.getFields(),methods);
@@ -52,7 +56,7 @@ public final class UnityCpuStringRule {
    }
    if(!verified)throw new IllegalArgumentException("serialized guard verification failed");
    result.replacements.put(file,bytes);result.report="VERIFIED "+ID+": original getter retained; null result becomes Unknown CPU. Non-null descriptions unchanged. This addresses the supported null JNI string path; phone startup remains unverified.";
-  }catch(Exception error){result.replacements.clear();result.report="UNSUPPORTED "+ID+": "+error.getClass().getSimpleName()+" ("+error.getMessage()+"); original DEX preserved";}
+  }catch(Exception error){result.applicable=false;result.replacements.clear();result.report="UNSUPPORTED "+ID+": "+error.getClass().getSimpleName()+" ("+error.getMessage()+"); original DEX preserved";}
   return result;
  }
  private UnityCpuStringRule(){}

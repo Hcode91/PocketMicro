@@ -352,7 +352,7 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_APK && resultCode == RESULT_OK && data != null && data.getData() != null)
-            chooseImportMode(data.getData());
+            assessImport(data.getData());
     }
 
     private void showProgress(String msg) {
@@ -389,6 +389,39 @@ public class MainActivity extends Activity {
                 if(prefs().edit().putBoolean(OFFLINE_DEFAULT,enabled.isChecked()).commit())Toast.makeText(this,"Default saved. Reconvert original APKs to apply it.",Toast.LENGTH_LONG).show();
                 else Toast.makeText(this,"Could not save purchase default",Toast.LENGTH_LONG).show();
             }).setNegativeButton("Cancel",null).show();
+    }
+
+    private boolean assessingApk;
+    private void assessImport(Uri uri) {
+        if(assessingApk)return;
+        assessingApk=true;showProgress("Assessing APK and supported fixes…");
+        new Thread(()->{
+            File cached=new File(getCacheDir(),"assessment-"+java.util.UUID.randomUUID()+".apk");
+            try {
+                try(java.io.InputStream in=getContentResolver().openInputStream(uri);java.io.OutputStream out=new java.io.FileOutputStream(cached)){
+                    byte[] buffer=new byte[65536];long total=0;int count;
+                    if(in==null)throw new java.io.IOException("Cannot open selected APK");
+                    while((count=in.read(buffer))!=-1){total+=count;if(total>2L*1024*1024*1024)throw new java.io.IOException("APK exceeds 2 GiB assessment limit");out.write(buffer,0,count);}
+                }
+                ApkRepairAssessment.Result assessment=ApkRepairAssessment.inspect(cached,android.os.Build.VERSION.SDK_INT,android.os.Build.SUPPORTED_ABIS);
+                ui.post(()->{if(!isFinishing()&&!isDestroyed())showApkAssessment(uri,assessment);});
+            }catch(Exception error){ui.post(()->{if(!isFinishing()&&!isDestroyed())new AlertDialog.Builder(this).setTitle("APK assessment unavailable").setMessage(error.toString()+"\n\nNo compatibility recommendation or installation was performed. Choose the original complete APK.").setPositiveButton("OK",null).show();});}
+            finally {cached.delete();hideProgress();ui.post(()->assessingApk=false);}
+        },"apk-repair-assessment").start();
+    }
+    private void showApkAssessment(Uri uri,ApkRepairAssessment.Result assessment) {
+        TextView text=new TextView(this);text.setPadding(dp(20),dp(12),dp(20),dp(12));text.setText(assessment.report);text.setTextIsSelectable(true);
+        android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(text);
+        AlertDialog.Builder dialog=new AlertDialog.Builder(this).setTitle("APK assessment and suggested fixes").setView(scroll).setNegativeButton("Cancel",null);
+        if(assessment.suggested==ApkRepairAssessment.Route.NONE)dialog.setPositiveButton("All conversion options",(d,w)->chooseImportMode(uri));
+        else {
+            String label=assessment.suggested==ApkRepairAssessment.Route.EXPERIMENTAL?"Review experiment":assessment.suggested==ApkRepairAssessment.Route.STARTUP?"Review suggested fixes":"Review standard conversion";
+            dialog.setPositiveButton(label,(d,w)->{
+                if(assessment.suggested==ApkRepairAssessment.Route.EXPERIMENTAL)confirmExperimentalImport(uri);
+                else confirmImport(uri,false,false,assessment.suggested==ApkRepairAssessment.Route.STARTUP);
+            }).setNeutralButton("All conversion options",(d,w)->chooseImportMode(uri));
+        }
+        dialog.show();
     }
 
     private void chooseImportMode(Uri uri) {
@@ -455,7 +488,7 @@ public class MainActivity extends Activity {
                 if(touch||offlinePurchases)try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
                     bridge=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = experimental?ApkRebuilder.rebuildExperimental(original,patched):ApkRebuilder.rebuild(original, patched, bridge, touch, offlinePurchases,runtimeRepair);
+                ManifestPatcher.Result r = experimental?ApkRebuilder.rebuildExperimental(original,patched,ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT)):ApkRebuilder.rebuild(original, patched, bridge, touch, offlinePurchases,runtimeRepair,ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT));
                 original.delete();
 
                 showProgress("Signing…");

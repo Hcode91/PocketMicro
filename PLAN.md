@@ -966,3 +966,24 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   startup repair alone did NOT establish successful gameplay; new guard untested
   on phone. Push fixes/tests to GitHub; owner explicitly says do not wait for build
   completion. Provide running build link and ask reconversion of original APK.
+
+- **2026-11-02 — Assess APKs and suggest supported conversion paths:** owner
+  requested a checker when importing/installing. Add game now copies to bounded
+  temporary storage, runs ApkRepairAssessment off UI thread and shows evidence
+  before choosing conversion. Suggest standard/startup/explicit experimental or
+  no fix for proven minSdk/ABI/package limits. Individual statuses/reasons and
+  skipped budgets retained; no scan installs or edits APKs. Manual options and
+  experiment confirmation remain. Doctor report includes same recommendation and
+  explains that its Prepare action does not run experiments. Added read-only
+  inspect entry points for experimental Unity and CPU getter; no output bytes in
+  those inspectors. Existing catalog preview uses transient copies as before.
+  Main conversion target floor now agrees with doctor/assessment for phone API35+
+  (24; API34 remains23), without lowering higher targets. No purchase logic or
+  native algorithms/catalog/detector changes. Tests: all host/generated suites;
+  standard/stale/SDK/experimental routing, CPU/minSdk limits, malformed/missing/
+  Thumb cases, read-only preservation and API floor alignment; Android-core Java
+  compile. Real supplied Monocle is an experimental candidate with original bytes
+  unchanged; known native15 suggests startup catalog repair. Native/coordinator
+  replay12 VERIFIED,5 unavailable SKIPPED, incomplete exits nonzero. Phone UI and
+  installs untested. docs/apk-assessment.md documents bounds and limitations.
+  Push changes/tests and provide GitHub build link without waiting for completion.

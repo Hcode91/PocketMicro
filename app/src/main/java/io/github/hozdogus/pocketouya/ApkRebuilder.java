@@ -32,7 +32,10 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,offline,runtimeRepair,minimumTarget,false);
     }
     public static ManifestPatcher.Result rebuildExperimental(File in,File out)throws IOException {
-        return rebuild(in,out,null,false,false,false,ManifestPatcher.MIN_TARGET,true);
+        return rebuildExperimental(in,out,ManifestPatcher.MIN_TARGET);
+    }
+    public static ManifestPatcher.Result rebuildExperimental(File in,File out,int minimumTarget)throws IOException {
+        return rebuild(in,out,null,false,false,false,minimumTarget,true);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,int minimumTarget,boolean experimental)throws IOException {
         try (ZipFile zip = new ZipFile(in)) {
