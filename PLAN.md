@@ -987,3 +987,32 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   replay12 VERIFIED,5 unavailable SKIPPED, incomplete exits nonzero. Phone UI and
   installs untested. docs/apk-assessment.md documents bounds and limitations.
   Push changes/tests and provide GitHub build link without waiting for completion.
+
+
+- **2026-11-02 — Touch choice with suggested/experimental fixes; game support export:**
+  owner confirmed repaired game works but lacked controls, and requested game-log
+  export with installed APK, split above20MB. Suggested conversion and explicit
+  Unity confirmation now offer checked touch checkbox; manual choices retain
+  previous initial selection. Optional experimental rebuild passes existing bridge
+  through the existing input patcher after the CPU guard, preserving both. Old
+  native-only overloads remain; purchases stay off in experiment, global/default
+  purchase behavior elsewhere unchanged. No new native algorithms/catalog entries.
+  Game menu Capture log + export APK opens/starts Shizuku capture when ready;
+  return stops/displays package-scoped crash output. Export log + APK chooses SAF
+  folder, streams installed base/splits as unchanged APKs or raw numbered parts
+  <=20,000,000bytes, plus named-game log and completion/reassembly/SHA-256 file.
+  Excludes OBB/downloads/saves/private data; converted installed copy is identified
+  as such, never claimed original. No capture/missing final output remains explicit.
+  New folder per export; source-change/write failures reject and clean partial
+  folder when provider permits. No upload. Global journal/export unchanged.
+  Tests executed: compatibility/log/export script, full host suites, unchanged43
+  structural cases TP12/TN31/FP0/FN0, new combined native/CPU/touch fixtures and
+  missing-bridge rejection; Android-core compile. Export boundaries, actual20MB+1,
+  split installs, byte reassembly, SHA-256, immutable input, missing/unsafe/duplicate
+  sources, destination failure and concurrent truncation pass. Full supplied
+  Monocle conversion preserves29 assets, original APK and prior emulated native
+  output; CPU guard retained with input hooks/helper. Native matrix replay verifies
+  12 available outputs;5 unavailable SKIPPED, nonzero INCOMPLETE, no failures;
+  frozen17 profiles/four source hashes unchanged. No phone touch/provider/Shizuku
+  flow test available. docs/game-support-export.md and updated conversion docs
+  describe usage/limits. Push source/tests to GitHub and link build without waiting.

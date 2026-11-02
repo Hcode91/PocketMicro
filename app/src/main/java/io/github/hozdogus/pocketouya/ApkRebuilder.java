@@ -35,7 +35,11 @@ public final class ApkRebuilder {
         return rebuildExperimental(in,out,ManifestPatcher.MIN_TARGET);
     }
     public static ManifestPatcher.Result rebuildExperimental(File in,File out,int minimumTarget)throws IOException {
-        return rebuild(in,out,null,false,false,false,minimumTarget,true);
+        return rebuildExperimental(in,out,null,false,minimumTarget);
+    }
+    /** Explicit experiment with optional existing touch bridge; purchases remain off. */
+    public static ManifestPatcher.Result rebuildExperimental(File in,File out,byte[] bridge,boolean touch,int minimumTarget)throws IOException {
+        return rebuild(in,out,bridge,touch,false,false,minimumTarget,true);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,int minimumTarget,boolean experimental)throws IOException {
         try (ZipFile zip = new ZipFile(in)) {

@@ -26,6 +26,15 @@ runtime failure is unverified by the scan and its guard remains coupled to an
 eligible explicit experiment. Touch/purchase selections are separate. Existing
 purchase preferences remain visible in the existing confirmation flow.
 
+The suggested conversion and explicit experimental confirmation now both show
+**Add on-screen touch controls**, checked initially. Uncheck it for a conversion
+without controls. Manual conversion choices keep their previous initial touch
+selection. The existing input patcher checks the launch activity and reports the
+selected native or fallback route; the checkbox alone does not prove a game will
+respond. The experiment keeps purchases off and composes touch hooks after the
+CPU guard, preserving both repairs. Reconvert the complete original APK to add
+controls to an already installed native-only experimental conversion.
+
 The APK doctor includes the same recommendation. Its ordinary **Prepare fixes**
 does not select experiments; an experimental finding tells the user to use Add
 game to review that option. The Android install target used by both ordinary and

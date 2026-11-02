@@ -19,6 +19,26 @@ public final class ExperimentalUnityRuntimeRepairTest {
     try(ZipFile z=new ZipFile(in.toFile())){var p=ExperimentalUnityRuntimeRepair.plan(z);check(p.replacements.size()==2);check(Arrays.equals(p.replacements.get("lib/armeabi-v7a/libmono.so"),files.get("assets/libs/armeabi-v7a/libmono.so")));check(!NativeStartupChecks.hasTextRelocations(p.replacements.get("lib/armeabi-v7a/libunity.so")));}
     ApkRebuilder.rebuildExperimental(in.toFile(),out.toFile());check(Arrays.equals(original,Files.readAllBytes(in)));try(ZipFile z=new ZipFile(out.toFile())){for(String name:files.keySet())if(!name.equals("AndroidManifest.xml")&&!name.startsWith("lib/"))check(Arrays.equals(files.get(name),z.getInputStream(z.getEntry(name)).readAllBytes()));check(ExperimentalUnityRuntimeRepair.plan(z).replacements.isEmpty());}
     ApkRebuilder.rebuild(in.toFile(),out.toFile());try(ZipFile z=new ZipFile(out.toFile())){check(Arrays.equals(files.get("lib/armeabi-v7a/libunity.so"),z.getInputStream(z.getEntry("lib/armeabi-v7a/libunity.so")).readAllBytes()));}
+    // Compose native promotion, CPU guard and the existing touch lifecycle patcher.
+    Map<String,byte[]> touch=GeneralCompatibilityTest.input(false,true);
+    java.util.List<org.jf.dexlib2.iface.ClassDef> classes=new ArrayList<>();
+    for(var c:new org.jf.dexlib2.dexbacked.DexBackedDexFile(null,touch.get("classes2.dex")).getClasses())if(!c.getType().equals(UnityCpuStringRule.TYPE))classes.add(c);
+    for(var c:new org.jf.dexlib2.dexbacked.DexBackedDexFile(null,UnityCpuStringRuleTest.fixture(0,false)).getClasses())classes.add(c);
+    touch.put("classes2.dex",GeneralCompatibilityTest.dex(classes.toArray(org.jf.dexlib2.iface.ClassDef[]::new)));
+    files.putAll(touch);archive(in,files);byte[] touchOriginal=Files.readAllBytes(in);
+    byte[] helper=GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;","Ljava/lang/Object;",List.of()));
+    var combined=ApkRebuilder.rebuildExperimental(in.toFile(),out.toFile(),helper,true,23);
+    check(combined.compatibilityReport.contains("1 use the OUYA native"));
+    check(Arrays.equals(touchOriginal,Files.readAllBytes(in)));
+    try(ZipFile z=new ZipFile(out.toFile())){
+     byte[] patched=z.getInputStream(z.getEntry("classes2.dex")).readAllBytes();GeneralCompatibilityTest.lifecycle(patched);
+     check(UnityCpuStringRuleTest.execute(patched,null).equals("Unknown CPU"));check(UnityCpuStringRuleTest.execute(patched,"CPU").equals("CPU"));
+     check(Arrays.equals(helper,z.getInputStream(z.getEntry("classes3.dex")).readAllBytes()));check(z.getEntry("classes4.dex")==null);
+     check(Arrays.equals(files.get("classes.dex"),z.getInputStream(z.getEntry("classes.dex")).readAllBytes()));
+     check(!NativeStartupChecks.hasTextRelocations(z.getInputStream(z.getEntry("lib/armeabi-v7a/libunity.so")).readAllBytes()));
+     for(String name:files.keySet())if(name.startsWith("assets/"))check(Arrays.equals(files.get(name),z.getInputStream(z.getEntry(name)).readAllBytes()));
+    }
+    try{ApkRebuilder.rebuildExperimental(in.toFile(),out.toFile(),null,true,23);throw new AssertionError("Missing touch bridge accepted");}catch(java.io.IOException expected){check(expected.getMessage().contains("bridge"));}
     files.put("assets/libs/armeabi-v7a/libunity.so",fixture(shift,"libunity.so",false,true));archive(in,files);try(ZipFile z=new ZipFile(in.toFile())){check(ExperimentalUnityRuntimeRepair.plan(z).replacements.isEmpty());}
     files.remove("assets/libs/armeabi-v7a/libmono.so");archive(in,files);try(ZipFile z=new ZipFile(in.toFile())){check(ExperimentalUnityRuntimeRepair.plan(z).replacements.isEmpty());}
     files.put("assets/libs/armeabi-v7a/libmono.so",new byte[]{1});archive(in,files);try(ZipFile z=new ZipFile(in.toFile())){check(ExperimentalUnityRuntimeRepair.plan(z).replacements.isEmpty());}
