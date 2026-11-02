@@ -29,6 +29,12 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,offline,runtimeRepair,ManifestPatcher.MIN_TARGET);
     }
     public static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,int minimumTarget)throws IOException {
+        return rebuild(in,out,bridge,touch,offline,runtimeRepair,minimumTarget,false);
+    }
+    public static ManifestPatcher.Result rebuildExperimental(File in,File out)throws IOException {
+        return rebuild(in,out,null,false,false,false,ManifestPatcher.MIN_TARGET,true);
+    }
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,int minimumTarget,boolean experimental)throws IOException {
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
             if(manifestEntry==null)throw new IOException("Not an Android app (no AndroidManifest.xml).");
@@ -36,6 +42,10 @@ public final class ApkRebuilder {
             java.util.Map<String,byte[]> replacements=new java.util.LinkedHashMap<>();
             if(runtimeRepair){
                 SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true);
+                replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
+            }
+            if(experimental){
+                ExperimentalUnityRuntimeRepair.Plan repair=ExperimentalUnityRuntimeRepair.plan(zip);
                 replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);

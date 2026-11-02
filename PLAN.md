@@ -927,3 +927,24 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   UNKNOWN; this cleanup change does not supply a service or repair initialization.
   Need managed assemblies/current runtime trace for the remaining startup wait.
   No purchase/native/finalizer transformations changed; proprietary DEX not shipped.
+
+- **2026-11-02 — Explicit embedded Unity experiment in PocketOuya:** user
+  expressly requested the Monocle experiment as an app option after distinguishing
+  it from already pushed shared repairs. Added separate Add game experimental
+  choice, with confirmation/report before install, isolated from ordinary startup
+  repairs/doctor and touch/purchase hooks. Structural proxy SONAME pair, complete
+  embedded payloads, supported ARM-only finalizers, clean Mono and post-repair
+  writable Unity relocations required; Thumb/uncertain/missing cases rejected.
+  No APK package/hash/offset selection. Detector remains read-only; caller passes
+  derived ARM addresses to unchanged existing transformer only for this explicit
+  option. Both promotions transactional; all assets/DEX/input preserved. Original
+  17 catalog entries/four algorithm checksums unchanged. Fresh host and generated
+  suites, new shifted/negative/isolated-path fixtures and Android-core compilation
+  pass. Full supplied Monocle APK recovered from three verified split volumes;
+  app option reproduces prior emulated Unity bytes and preserves 29 assets/DEX.
+  Prior native emulator experiment:9 comparison pairs/3biases/18 executions, same
+  call argument/registers/SP/LR/CPSR under original permissions. Whole-program
+  reference safety and Android/gameplay remain UNVERIFIED, disclosed in UI/report.
+  No game bytes committed. docs/experimental-unity-runtime.md records boundaries.
+  Build new PocketOuya in GitHub; user selects original complete APK and explicit
+  experimental option, then normal Play and full runtime log if unsuccessful.

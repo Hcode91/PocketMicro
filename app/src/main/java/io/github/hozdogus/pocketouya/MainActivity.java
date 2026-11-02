@@ -393,8 +393,16 @@ public class MainActivity extends Activity {
 
     private void chooseImportMode(Uri uri) {
         new AlertDialog.Builder(this).setTitle("Game conversion")
-            .setItems(new String[]{"Android install compatibility", "Touch controls — OUYA / Android input", "Offline purchases — OUYA Unity SDK", "Touch + OUYA Unity offline purchases", "Startup repairs — Unity / Marmalade / AIR / Frima", "Startup repairs + touch — Unity / Marmalade / AIR / Frima"},(dialog,which)->
-                confirmImport(uri,which==1||which==3||which==5,which==2||which==3,which==4||which==5))
+            .setItems(new String[]{"Android install compatibility", "Touch controls — OUYA / Android input", "Offline purchases — OUYA Unity SDK", "Touch + OUYA Unity offline purchases", "Startup repairs — Unity / Marmalade / AIR / Frima", "Startup repairs + touch — Unity / Marmalade / AIR / Frima", "Experimental Unity embedded-runtime repair"},(dialog,which)-> {
+                if(which==6)confirmExperimentalImport(uri);
+                else confirmImport(uri,which==1||which==3||which==5,which==2||which==3,which==4||which==5);})
+            .setNegativeButton("Cancel",null).show();
+    }
+
+    private void confirmExperimentalImport(Uri uri) {
+        new AlertDialog.Builder(this).setTitle("Experimental Unity runtime repair")
+            .setMessage("Use the complete original APK. This attempts the ARM-only embedded-runtime repair tested locally with Monocle Man: replace a structurally matched proxy pair with its real runtimes and repair Unity's ARM finalizer. It can also match other APKs with the same supported structure.\n\nLocal checks do not prove whole-program safety or phone startup. Unsupported layouts and Thumb-dependent repairs remain unchanged. The report explains the result before installation. Assets and DEX are preserved; touch and offline purchase hooks are not added in this isolated experiment. Existing saves may matter when replacing an installed game.\n\nOrdinary startup repairs and the APK doctor do not select this experiment.")
+            .setPositiveButton("Inspect and prepare test",(dialog,which)->importApk(uri,false,false,false,true))
             .setNegativeButton("Cancel",null).show();
     }
 
@@ -429,6 +437,9 @@ public class MainActivity extends Activity {
         importApk(uri,touch,offlinePurchases,false);
     }
     private void importApk(Uri uri, boolean touch, boolean offlinePurchases, boolean runtimeRepair) {
+        importApk(uri,touch,offlinePurchases,runtimeRepair,false);
+    }
+    private void importApk(Uri uri, boolean touch, boolean offlinePurchases, boolean runtimeRepair, boolean experimental) {
         showProgress("Copying the game…");
         new Thread(() -> {
             File dir = new File(getCacheDir(), "import-"+java.util.UUID.randomUUID());
@@ -444,7 +455,7 @@ public class MainActivity extends Activity {
                 if(touch||offlinePurchases)try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
                     bridge=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = ApkRebuilder.rebuild(original, patched, bridge, touch, offlinePurchases,runtimeRepair);
+                ManifestPatcher.Result r = experimental?ApkRebuilder.rebuildExperimental(original,patched):ApkRebuilder.rebuild(original, patched, bridge, touch, offlinePurchases,runtimeRepair);
                 original.delete();
 
                 showProgress("Signing…");

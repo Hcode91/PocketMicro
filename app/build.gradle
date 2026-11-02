@@ -120,6 +120,8 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/WritableRelocationRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/OuyaServiceCleanupRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/SharedCompatibilityRepairs.java',
+            'src/main/java/io/github/hozdogus/pocketouya/ExperimentalUnityRuntimeRepair.java',
+            'src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java',
             'src/main/java/io/github/hozdogus/pocketouya/NativeStartupChecks.java',
             'src/main/java/io/github/hozdogus/pocketouya/ArmRuntimePicRepair.java',
             'src/main/java/io/github/hozdogus/pocketouya/NativeRuntimeRepair.java',

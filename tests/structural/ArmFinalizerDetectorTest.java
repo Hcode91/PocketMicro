@@ -36,6 +36,7 @@ public final class ArmFinalizerDetectorTest {
   f=new StructuralFixture(0,false,"none");f.b.putShort(50,(short)0);check(run("unnamed-sections",f.bytes,false).status==UNKNOWN);
   f=new StructuralFixture(0,false,"none");f.b.putInt(f.rel+8,f.got).putInt(f.rel+12,(1<<8)|22);check(run("overlapping-relocation-targets",f.bytes,false).status==UNKNOWN);
   check(run("over-budget",new byte[24*1024*1024+1],false).status==SKIPPED);
+  ExperimentalUnityRuntimeRepairTest.main(new String[0]);
   JSONObject result=new JSONObject().put("suite","generated structural layouts").put("true_positive",tp).put("true_negative",tn).put("false_positive",fp).put("false_negative",fn).put("cases",cases);
   if(args.length>0)Files.writeString(Path.of(args[0]),result.toString(2));System.out.println(result.toString());
  }
