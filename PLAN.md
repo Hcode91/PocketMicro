@@ -948,3 +948,21 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   No game bytes committed. docs/experimental-unity-runtime.md records boundaries.
   Build new PocketOuya in GitHub; user selects original complete APK and explicit
   experimental option, then normal Play and full runtime log if unsuccessful.
+
+- **2026-11-02 — Monocle phone test reaches new CPU-string crash:** owner supplied
+  UnityMain SIGSEGV in strlen(NULL), with libunity callers70dcc/2dcb98/265058.
+  Traced those bytes to JNI getCPUType and a nullable Java CPU-description getter.
+  Its provider reads/caches Processor from /proc/cpuinfo; missing Processor is
+  plausible but the actual phone file is not captured. Added independent shared
+  UnityCpuStringRule for exactly the supported field/delegate/result/return SDK
+  contract. Preserve original provider/non-null/empty results and exceptions;
+  replace only null description with Unknown CPU. CPU capability flags unchanged.
+  Experimental conversion attempts this after successful native promotion; no
+  ordinary/doctor/purchase changes. Assets/prior native bytes unchanged, eligible
+  DEX now differs only in getter (canonical comparison verified on supplied DEX).
+  Tests: full host,43 detector cases,new CPU null/non-null/empty/Unicode/register/
+  idempotence/negative fixtures; Android-core compile; full APK preserves29 assets
+  and DEX outside getter. Native algorithms/catalog checksums unchanged. Previous
+  startup repair alone did NOT establish successful gameplay; new guard untested
+  on phone. Push fixes/tests to GitHub; owner explicitly says do not wait for build
+  completion. Provide running build link and ask reconversion of original APK.

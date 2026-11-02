@@ -47,6 +47,14 @@ public final class ApkRebuilder {
             if(experimental){
                 ExperimentalUnityRuntimeRepair.Plan repair=ExperimentalUnityRuntimeRepair.plan(zip);
                 replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
+                if(!repair.replacements.isEmpty()){
+                    java.util.Map<String,byte[]> dexInput=new java.util.LinkedHashMap<>();long budget=64L*1024*1024;
+                    for(ZipEntry e:java.util.Collections.list(zip.entries()))if(e.getName().matches("classes(?:[2-9]|[1-9][0-9]+)?\\.dex")){
+                        if(dexInput.size()>=64||e.getSize()<0||e.getSize()>32L*1024*1024||e.getSize()>budget)throw new IOException("Experimental DEX budget exceeded");
+                        byte[] bytes=readBounded(zip.getInputStream(e),32*1024*1024);budget-=bytes.length;dexInput.put(e.getName(),bytes);
+                    }
+                    UnityCpuStringRule.Result cpu=UnityCpuStringRule.repair(dexInput);replacements.putAll(cpu.replacements);result.compatibilityReport+="\n\n"+cpu.report;
+                }
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);
             boolean appendBridge=false;int nextDex=2;

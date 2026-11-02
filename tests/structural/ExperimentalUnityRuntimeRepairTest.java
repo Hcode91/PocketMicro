@@ -13,7 +13,7 @@ public final class ExperimentalUnityRuntimeRepairTest {
  public static void main(String[]args)throws Exception{
   Path dir=Files.createTempDirectory("unity-experiment-");try{Path in=dir.resolve("in.apk"),out=dir.resolve("out.apk");
    for(int shift:new int[]{0,28,84}){
-    Map<String,byte[]> files=new LinkedHashMap<>();files.put("AndroidManifest.xml",GeneralCompatibilityTest.manifest(false));files.put("classes.dex",new byte[]{1,2,3});files.put("assets/game-data",new byte[]{7,8});
+    Map<String,byte[]> files=new LinkedHashMap<>();files.put("AndroidManifest.xml",GeneralCompatibilityTest.manifest(false));files.put("classes.dex",GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lexample/Game;","Ljava/lang/Object;",List.of())));files.put("assets/game-data",new byte[]{7,8});
     files.put("lib/armeabi-v7a/libmono.so",fixture(shift,"libmono_proxy.so",false,false));files.put("lib/armeabi-v7a/libunity.so",fixture(shift,"libunity_proxy.so",false,false));
     files.put("assets/libs/armeabi-v7a/libmono.so",fixture(shift,"libmono.so",true,false));files.put("assets/libs/armeabi-v7a/libunity.so",fixture(shift,"libunity.so",false,false));archive(in,files);byte[] original=Files.readAllBytes(in);
     try(ZipFile z=new ZipFile(in.toFile())){var p=ExperimentalUnityRuntimeRepair.plan(z);check(p.replacements.size()==2);check(Arrays.equals(p.replacements.get("lib/armeabi-v7a/libmono.so"),files.get("assets/libs/armeabi-v7a/libmono.so")));check(!NativeStartupChecks.hasTextRelocations(p.replacements.get("lib/armeabi-v7a/libunity.so")));}
