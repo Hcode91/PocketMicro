@@ -11,6 +11,11 @@ import org.jf.dexlib2.immutable.*;
 import org.jf.dexlib2.immutable.instruction.*;
 
 public final class GameMakerPadTest {
+    /** Stand-in for UE3JavaApp's native joystick callbacks. */
+    public static class Ue3Base { final List<String> calls = new ArrayList<>();
+        public boolean NativeCallback_JoystickAxisEvent(int d, int a, int axis, float v, long t) { calls.add("axis " + d + " " + a + " " + axis + " " + v + " " + t); return true; }
+        public boolean NativeCallback_JoystickButtonEvent(int d, int a, int k, long t) { calls.add("button " + d + " " + a + " " + k + " " + t); return true; } }
+    public static final class Ue3Activity extends Ue3Base {}
     static void check(boolean ok, String why) { if (!ok) throw new AssertionError(why); }
     static final String R = GameMakerPadPatcher.RUNNER;
 
@@ -70,6 +75,15 @@ public final class GameMakerPadTest {
         check(forwarded.contains(VirtualPad.O + ":0") && forwarded.contains(VirtualPad.LEFT + ":0"), "keys also forwarded for keyboard menus");
         check(GameMakerPad.mapping(1) == -1 && GameMakerPad.mapping(32789) == -1, "unknown GML codes unmapped");
         pad.releaseAll(); check(GameMakerPad.axes()[0] == 0f && GameMakerPad.buttons()[14] == 0f, "release clears state");
+        // Unreal Engine 3 route: native joystick callbacks called directly on the activity.
+        Ue3Activity ue3 = new Ue3Activity();
+        Ue3PadSink usink = new Ue3PadSink(ue3, () -> 1234L);
+        VirtualPad upad = new VirtualPad(usink);
+        upad.hold(VirtualPad.O, "f", true); upad.hold(VirtualPad.LEFT, "t", true); upad.rightStick(0.25f, 0f); upad.hold(VirtualPad.O, "f", false);
+        check(ue3.calls.contains("button 1 0 96 1234") && ue3.calls.contains("button 1 1 96 1234"), "UE3 button down/up with Android key code: " + ue3.calls);
+        check(ue3.calls.contains("axis 1 2 0 -1.0 1234") && ue3.calls.contains("axis 1 2 11 0.25 1234"), "UE3 left stick and right stick axes: " + ue3.calls);
+        try { new Ue3PadSink(new Object()); throw new AssertionError("non-UE3 accepted"); } catch (NoSuchMethodException expected) {}
+        System.out.println("UE3 controller route: native joystick button/axis callbacks, left/right sticks, non-UE3 rejection pass");
         System.out.println("GameMaker controller route: six runner methods wrapped with fallback, idempotence, slot registration, gp_* buttons, left/right stick axes, key forwarding pass");
     }
 }

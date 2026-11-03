@@ -75,13 +75,14 @@ public final class TouchControls extends FrameLayout {
         VirtualPad.Sink detected;
         try{detected=legacy.contains(activity)?new LegacyOuyaPadSink(activity):new OuyaPadSink(activity);}catch(Exception|LinkageError unavailable){
             try{detected=new GameMakerPadSink(activity.getClassLoader(),new AndroidPadSink(activity,false));}catch(Exception|LinkageError notGameMaker){
-            try{detected=new MarmaladePadSink(activity,false);}catch(Exception|LinkageError absent){detected=null;}}
+            try{detected=new Ue3PadSink(activity);}catch(Exception|LinkageError notUnreal){
+            try{detected=new MarmaladePadSink(activity,false);}catch(Exception|LinkageError absent){detected=null;}}}
         }
         nativeSink=detected;
         android.content.SharedPreferences settings=activity.getSharedPreferences("pocketouya_touch_settings_v1",Activity.MODE_PRIVATE);
         int mode=settings.getInt("mode",0);
         if(nativeSink instanceof LegacyOuyaPadSink&&!settings.getBoolean("legacy_json_v1",false)){mode=0;settings.edit().putInt("mode",0).putBoolean("legacy_json_v1",true).apply();}
-        Log.i("PocketOuyaControls","Input route: "+(nativeSink instanceof LegacyOuyaPadSink?"legacy OUYA JSON controller":nativeSink instanceof OuyaPadSink?"OUYA native":nativeSink instanceof GameMakerPadSink?"GameMaker controller":nativeSink instanceof MarmaladePadSink?"Marmalade":"Android fallback")+"; mode="+mode);
+        Log.i("PocketOuyaControls","Input route: "+(nativeSink instanceof LegacyOuyaPadSink?"legacy OUYA JSON controller":nativeSink instanceof OuyaPadSink?"OUYA native":nativeSink instanceof GameMakerPadSink?"GameMaker controller":nativeSink instanceof Ue3PadSink?"Unreal Engine 3 controller":nativeSink instanceof MarmaladePadSink?"Marmalade":"Android fallback")+"; mode="+mode);
         pad=createPad(activity,mode);
         LinearLayout directions=column();
         row(directions,null,button("↑",VirtualPad.UP,0xff555555),null);
@@ -111,7 +112,7 @@ public final class TouchControls extends FrameLayout {
         inputLayout.setMargins(dp(106),dp(8),0,0);addView(input,inputLayout);
         input.setOnClickListener(v->{
             releasePad();
-            String[] options=new String[]{nativeSink instanceof LegacyOuyaPadSink?"Auto (legacy OUYA JSON)":nativeSink instanceof GameMakerPadSink?"Auto (GameMaker controller)":nativeSink instanceof MarmaladePadSink?"Auto (Marmalade keys)":nativeSink==null?"Auto (Android gamepad)":"Auto (OUYA native)","Android gamepad","Keyboard"};
+            String[] options=new String[]{nativeSink instanceof LegacyOuyaPadSink?"Auto (legacy OUYA JSON)":nativeSink instanceof GameMakerPadSink?"Auto (GameMaker controller)":nativeSink instanceof Ue3PadSink?"Auto (Unreal Engine 3 controller)":nativeSink instanceof MarmaladePadSink?"Auto (Marmalade keys)":nativeSink==null?"Auto (Android gamepad)":"Auto (OUYA native)","Android gamepad","Keyboard"};
             new android.app.AlertDialog.Builder(activity).setTitle("Game input mode").setItems(options,(dialog,which)->{
                 releasePad();usable=true;
                 try{pad=createPad(activity,which);}catch(Exception error){usable=false;Log.e("PocketOuyaControls","Input mode unavailable",error);return;}
