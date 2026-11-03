@@ -122,6 +122,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/AirLoaderDiagnosticsRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/NdkDependencyPathRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/LegacySdkCrashRules.java',
+            'src/main/java/io/github/hozdogus/pocketouya/DeviceIdRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/SharedCompatibilityRepairs.java',
             'src/main/java/io/github/hozdogus/pocketouya/ExperimentalUnityRuntimeRepair.java',
             'src/main/java/io/github/hozdogus/pocketouya/UnityCpuStringRule.java',
@@ -140,6 +141,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
     source rootProject.files(
             'tests/PlatformCrashRulesTest.java',
             'tests/LegacyServiceStartTest.java',
+            'tests/DeviceIdRuleTest.java',
             'tests/GeneralCompatibilityTest.java', 'tests/LegacyOuyaInputTest.java', 'tests/AirLoaderDiagnosticsTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
     classpath = configurations.purchaseHostTests
     destinationDirectory = purchaseTestClasses
