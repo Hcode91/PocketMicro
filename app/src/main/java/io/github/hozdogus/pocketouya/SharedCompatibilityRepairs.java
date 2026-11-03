@@ -66,6 +66,9 @@ public final class SharedCompatibilityRepairs {
             ClickteamSurfaceLayoutRule.Result surface=apply?ClickteamSurfaceLayoutRule.repair(diagnosticInput):ClickteamSurfaceLayoutRule.inspect(diagnosticInput);
             if(surface.status!=CompatibilityEvidence.Status.SKIPPED)report.append(surface.status).append(' ').append(ClickteamSurfaceLayoutRule.ID).append(": ").append(surface.reason).append('\n');
             if(apply){plan.replacements.putAll(surface.replacements);diagnosticInput.putAll(surface.replacements);}
+            JavascriptInterfaceRule.Result js=apply?JavascriptInterfaceRule.repair(diagnosticInput):JavascriptInterfaceRule.inspect(diagnosticInput);
+            if(js.status!=CompatibilityEvidence.Status.SKIPPED)report.append(js.status).append(' ').append(JavascriptInterfaceRule.ID).append(": ").append(js.reason).append('\n');
+            if(apply){plan.replacements.putAll(js.replacements);diagnosticInput.putAll(js.replacements);}
             AirLoaderDiagnosticsRule.Result air=apply?AirLoaderDiagnosticsRule.repair(diagnosticInput):AirLoaderDiagnosticsRule.inspect(diagnosticInput);
             if(air.status!=CompatibilityEvidence.Status.SKIPPED)report.append(air.status).append(' ').append(AirLoaderDiagnosticsRule.ID).append(": ").append(air.reason).append('\n');
             if(apply)plan.replacements.putAll(air.replacements);

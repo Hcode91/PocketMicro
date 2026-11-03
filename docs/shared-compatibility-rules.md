@@ -185,3 +185,16 @@ purchase implementation, native transformer or finalizer detector changes.
   would (LayoutParams size, MATCH_PARENT = parent size, at x/y). Detected by the runtime's
   `Runtime/MMFRuntime`, `Runtime/SurfaceView` and `Runtime/MainView$LayoutParams` classes, so it
   applies to any Clickteam game. Seen on Tomatoes Vs Onions; device test pending.
+
+## WebView games: JavaScript bridge under the raised target (2026-11-03)
+
+- **`android.webview-js-interface`.** Since Android 4.2, a WebView only lets page JavaScript call
+  Java methods marked `@JavascriptInterface` once the app targets API 17+. Conversions target
+  API 23, so PhoneGap/Cordova 2.x games lose their bridge (`nativeApiProvider.get(...).exec is
+  not a function`, `deviceready has not fired`) and stay on their first page (Vector 360). For
+  each `addJavascriptInterface(object, name)` call the object's class is found from the
+  instruction that last set that register (new-instance, field, call result, cast, parameter).
+  Dedicated bridge objects (only app classes between them and `Object`) get the runtime
+  annotation on the public instance methods they and their app superclasses declare. Activities,
+  Views and other framework subclasses used as bridges (e.g. Flurry's catalog Activity) are left
+  alone, as are sites whose object type can't be found (reported). Device test pending.
