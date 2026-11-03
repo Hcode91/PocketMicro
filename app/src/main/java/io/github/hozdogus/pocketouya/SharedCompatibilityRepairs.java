@@ -14,12 +14,15 @@ public final class SharedCompatibilityRepairs {
         Plan plan=new Plan();NativeRuntimeRepair.Plan existing=NativeRuntimeRepair.plan(zip);
         if(apply)plan.replacements.putAll(existing.replacements);
         StringBuilder report=new StringBuilder(existing.report).append("\n\nShared compatibility rules\n");
+        UnityEmbeddedRuntimePromotion.Result unity=UnityEmbeddedRuntimePromotion.plan(zip,existing.replacements,apply);
+        if(unity.status!=CompatibilityEvidence.Status.SKIPPED)report.append(unity.status).append(' ').append(UnityEmbeddedRuntimePromotion.ID).append(": ").append(unity.reason).append('\n');
+        if(apply)plan.replacements.putAll(unity.replacements);
         Map<String,byte[]> dex=new LinkedHashMap<>();long nativeBudget=64L*1024*1024,dexBudget=64L*1024*1024;int nativeCount=0;boolean dexSkipped=false;
         Set<String> names=new HashSet<>();Map<String,byte[]> nativeLibs=new LinkedHashMap<>();
         Enumeration<? extends ZipEntry> entries=zip.entries();
         while(entries.hasMoreElements()){
             ZipEntry e=entries.nextElement();String name=e.getName();if(name.length()>2048||names.size()>=50000)throw new IOException("APK exceeds shared-rule entry budget");if(!names.add(name))throw new IOException("Duplicate APK entry; shared repair is ambiguous");
-            if(name.matches("lib/[^/]+/[^/]+\\.so")&&!existing.replacements.containsKey(name)){
+            if(name.matches("lib/[^/]+/[^/]+\\.so")&&!existing.replacements.containsKey(name)&&!unity.replacements.containsKey(name)){
                 long size=e.getSize();if(++nativeCount>128||size<0||size>24L*1024*1024||size>nativeBudget){report.append("SKIPPED ").append(WritableRelocationRule.ID).append(": native inspection budget\n");continue;}
                 nativeBudget-=size;byte[] bytes=ApkRebuilder.readBounded(zip.getInputStream(e),24*1024*1024);
                 NdkDependencyPathRule.Result dependency=apply?NdkDependencyPathRule.repair(bytes):NdkDependencyPathRule.inspect(bytes);
