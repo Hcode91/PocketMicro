@@ -141,7 +141,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/ApkRebuilder.java',
             'src/main/java/io/github/hozdogus/pocketouya/ConversionRecord.java',
             'src/main/java/io/github/hozdogus/pocketouya/ManifestPatcher.java')
-    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java' }
+    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java'; exclude '**/AirPadSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
     source rootProject.files(
             'tests/PlatformCrashRulesTest.java',

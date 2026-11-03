@@ -435,15 +435,35 @@ public class MainActivity extends Activity {
         if(runtimeRepair)details+="\n\nShared startup repairs also cover old implicit service requests (e.g. MOGA, Google Analytics), null-cursor OUYA game-data cleanup and public NDK library build paths. The conversion report identifies matches and remaining unsupported problems.";
         android.widget.CheckBox keep=new android.widget.CheckBox(this);
         keep.setText("Keep the game's original Android version (installs through Shizuku)");
-        keep.setChecked(prefs().getBoolean("keep_target_v1",false));content.addView(keep);
+        keep.setChecked(false);content.addView(keep);
         TextView keepInfo=new TextView(this);
-        keepInfo.setText("Needed for Adobe AIR and other old engines whose libraries rewrite their own code when loading: Android only allows that for apps built for old versions, but Android 14 installs those only through a shell install. Requires Shizuku running during the install; you can turn Developer options off afterwards.\n");
+        keepInfo.setText("Needed for Adobe AIR and other old engines whose libraries rewrite their own code when loading: Android only allows that for apps built for old versions, but Android 14 installs those only through a shell install. Requires Shizuku running during the install; you can turn Developer options off afterwards.\nChecking this game's libraries…\n");
         content.addView(keepInfo);
+        new Thread(()->{
+            String needs=textRelocationLibrary(uri);
+            ui.post(()->{
+                String base="Needed for Adobe AIR and other old engines whose libraries rewrite their own code when loading: Android only allows that for apps built for old versions, but Android 14 installs those only through a shell install. Requires Shizuku running during the install; you can turn Developer options off afterwards.\n";
+                if(needs!=null){keep.setChecked(true);keepInfo.setText(base+"Ticked automatically: "+needs+" rewrites its own code when loading.\n");}
+                else keepInfo.setText(base+"Not needed for this game: no such libraries found.\n");
+            });
+        },"scan-text-relocations").start();
         explanation.setText(common+details);content.addView(explanation);
         android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
         new AlertDialog.Builder(this).setTitle(runtimeRepair?"Startup repairs":"Conversion options").setView(scroll)
-            .setPositiveButton("Inspect and convert",(dialog,which)->{prefs().edit().putBoolean("keep_target_v1",keep.isChecked()).apply();importApk(uri,runtimeRepair,false,keep.isChecked());})
+            .setPositiveButton("Inspect and convert",(dialog,which)->importApk(uri,runtimeRepair,false,keep.isChecked()))
             .setNegativeButton("Cancel",null).show();
+    }
+    /** First ARM native library in the APK that declares text relocations, or null. */
+    private String textRelocationLibrary(Uri uri){
+        try(java.util.zip.ZipInputStream zip=new java.util.zip.ZipInputStream(new java.io.BufferedInputStream(getContentResolver().openInputStream(uri)))){
+            for(java.util.zip.ZipEntry e;(e=zip.getNextEntry())!=null;){
+                String n=e.getName();if(!n.matches("lib/armeabi(-v7a)?/[^/]+\\.so"))continue;
+                java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] buffer=new byte[1<<16];long total=0;
+                for(int r;(r=zip.read(buffer))>0;){total+=r;if(total>32L*1024*1024)break;out.write(buffer,0,r);}
+                if(total<=32L*1024*1024&&NativeStartupChecks.hasTextRelocations(out.toByteArray()))return n.substring(n.lastIndexOf('/')+1);
+            }
+        }catch(Exception ignored){}
+        return null;
     }
     private void installConverted(File signed,String pkg,boolean keepTarget){
         if(keepTarget){
