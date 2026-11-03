@@ -132,6 +132,13 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   convert `fonts.xml` to the old format in the app's files dir; repoint the library's path literal
   (reuse the unused 52-char test path slot `/data/local/tmp/content_shell/android_main_fonts.xml`);
   add the startup hook. Other 2014-engine issues may follow. Owner parked it 2026-11-03.
+- **Soul Fjord Scaleform crash (libgfxunity3d.so).** Crash in RTCommandQueue::PopCommand: the
+  manager's render-thread pointer (SFManagerImpl+0x2c, global manager at the variable after
+  ErrorCode) is null in Display, though an earlier frame used it (first-frame glyph push at +0x38
+  already done). Ruled out: OUYA store (now answered), dangling manager after DestroyManager (all
+  destroy paths clear the global), evaluation message (only on CreateMovie failure). Only the
+  constructor writes +0x2c in the Unity layer. Next options: Android bug report zip, or static
+  study of the game's managed Scaleform calls. Owner parked it 2026-11-03.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 
