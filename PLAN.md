@@ -135,8 +135,8 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
 - **Soul Fjord Scaleform crash (libgfxunity3d.so).** Same crash on every run (3 logs + full
   crash dump from the new Android crash record, 2026-11-03): SIGSEGV at 0x40 in
   pthread_mutex_lock <- RTCommandQueue::PopCommand <- SFUnityRenderThread::ProcessCommands <-
-  SFManagerImpl::Display <- UnityRenderEvent, on UnityMain (Unity renders on its main thread; no
-  race). The manager's render-thread pointer (SFManagerImpl+0x2c) is null; the manager itself
+  SFManagerImpl::Display <- UnityRenderEvent, on UnityMain (this alone does not rule out
+  earlier cross-thread writes or corruption). The manager's render-thread pointer (SFManagerImpl+0x2c) is null; the manager itself
   (0xe7875050, ordinary malloc memory) still has a valid vtable and Init's +0x38 flag set.
   - Trigger: the game's intro video. Unity's SurfaceView is destroyed and detached while the
     video's own SurfaceView plays (~5 s); Unity keeps its GL context (no second "Creating OpenGL
@@ -153,6 +153,13 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   - Not to retry: native trace/logging wrapper, patching libgfxunity3d.so checks, and building
     DEX/Java-code reading tools for this game were all stopped by Claude's safety checks.
   - Owner parked it again 2026-11-03.
+  - **Resumed 2026-11-03:** complete original APK received from the owner's Drive;
+    Java lifecycle traced using existing Android SDK tools. Keeping the view attached
+    alone is insufficient: the same pause path calls GLSurfaceView.onPause, which
+    releases the EGL surface even when preserving the EGL context (AOSP Android 14).
+    No repair added. Full evidence, uncertainties and next experiment requirements:
+    [Soul Fjord video lifecycle](docs/soul-fjord-video-lifecycle.md). Owner will attach
+    the full runtime log/tombstone; prior crash conclusions remain inherited evidence.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 
@@ -1287,3 +1294,15 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   compiled by CI only; device test pending. **Next:** server purchases (owner chose store +
   purchases): products/gamer info for all OUYA SDK games; receipts only where games accept
   plain data (no receipt-encryption bypass).
+
+- **2026-11-03 — Soul Fjord takeover, read-only lifecycle audit:** branch
+  `feature/unity-video-surface` from `f6764c1`, separate from the purchase adapter.
+  Downloaded complete original APK; all ZIP entries pass CRC. Inspected manifest
+  and original DEX with SDK aapt/dexdump. Traced video show/hide, view removal and
+  reattachment, native pause/resume synchronization and the inherited GLSurfaceView
+  pause path. Checked AOSP Android 14: preserving context does not preserve surface.
+  Documented why skipping removeView alone or indiscriminately skipping pause is
+  not a verified fix. No runtime/repair changes, no game payloads committed, no APK
+  build or device test claimed. Owner will attach the full log; exact null-write
+  cause and surface-preservation benefit remain UNKNOWN. See
+  `docs/soul-fjord-video-lifecycle.md` for the evidence and bounded experiment plan.
