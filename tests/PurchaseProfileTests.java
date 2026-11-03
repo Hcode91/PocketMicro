@@ -12,6 +12,7 @@ public final class PurchaseProfileTests {
         io.github.hozdogus.pocketouya.OuyaStoreOfflineRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.OuyaControllerPlayersRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.TvLayoutRuleTest.main(new String[0]);
+        io.github.hozdogus.pocketouya.StoreClientTest.main(new String[0]);
         io.github.hozdogus.pocketouya.ClickteamSurfaceLayoutRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.JavascriptInterfaceRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.CallGuardRulesTest.main(new String[0]);

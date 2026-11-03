@@ -1262,3 +1262,14 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   skipped remain the recorded scope. Abbaye APK fixture and phone boot remain
   UNVERIFIED. Updated evidence/instructions; push source/tests, link queued/running
   APK build without waiting for completion. Controls and parked backend deferred.
+
+- **2026-11-03 — Store (community server), phase 1:** owner asked for stouyapi again as a store.
+  Added STORE: StoreClient (discover pages, details, download link; http/https redirects; size +
+  MD5 check; host-tested with server-shaped data and a fake network), StoreActivity (rows,
+  categories, bundles; editable server, default http://ouya.cweiske.de), StoreGameActivity
+  (details, screenshots, download with progress/cancel, hands the APK in files/store/ to the
+  normal MainActivity assessment/conversion/install). INTERNET permission and cleartext traffic
+  (server is HTTP-only). Formats taken from the owner's pasted server responses. Android UI is
+  compiled by CI only; device test pending. **Next:** server purchases (owner chose store +
+  purchases): products/gamer info for all OUYA SDK games; receipts only where games accept
+  plain data (no receipt-encryption bypass).

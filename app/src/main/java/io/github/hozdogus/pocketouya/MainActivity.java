@@ -41,6 +41,7 @@ import java.util.Set;
 /** The game library: Ouya games on this phone, plus "Add game" to import an APK. */
 public class MainActivity extends Activity {
     static final String ACTION_REFRESH = "io.github.hozdogus.pocketouya.REFRESH";
+    static final String ACTION_IMPORT_STORE = "io.github.hozdogus.pocketouya.IMPORT_STORE_APK";
     private static final String OUYA_GAME = "tv.ouya.intent.category.GAME";
     private static final int PICK_APK = 1;
 
@@ -70,6 +71,26 @@ public class MainActivity extends Activity {
         ConversionRecord.converterVersion=LaunchLogging.appVersion(this);
         setContentView(buildUi());
         registerReceiver(refresh, new IntentFilter(ACTION_REFRESH), Context.RECEIVER_NOT_EXPORTED);
+        handleStoreImport(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleStoreImport(intent);
+    }
+
+    /** A game downloaded by the Store: only files inside PocketOuya's own store folder are accepted. */
+    private void handleStoreImport(Intent intent) {
+        if (intent == null || !ACTION_IMPORT_STORE.equals(intent.getAction())) return;
+        String path = intent.getStringExtra("apk");
+        intent.setAction(null);
+        if (path == null) return;
+        try {
+            File file = new File(path).getCanonicalFile(), dir = StoreGameActivity.downloads(this).getCanonicalFile();
+            if (!file.getPath().startsWith(dir.getPath() + File.separator) || !file.isFile()) return;
+            ui.post(() -> assessImport(Uri.fromFile(file)));
+        } catch (java.io.IOException ignored) {}
     }
 
     @Override
@@ -118,6 +139,7 @@ public class MainActivity extends Activity {
         add.setOnClickListener(v -> pickApk());
         header.addView(add);
         root.addView(header);
+        Button store=new Button(this);store.setText("STORE — OUYA COMMUNITY SERVER");store.setOnClickListener(v->startActivity(new Intent(this,StoreActivity.class)));root.addView(store);
         Button doctor=new Button(this);doctor.setText("APK COMPATIBILITY DOCTOR");doctor.setOnClickListener(v->startActivity(new Intent(this,ApkDoctorActivity.class)));root.addView(doctor);
         Button logs=new Button(this);logs.setText("GLOBAL LOG / EXPORT");logs.setOnClickListener(v->startActivity(new Intent(this,GlobalLogActivity.class)));root.addView(logs);
 
