@@ -51,6 +51,8 @@ public final class SharedCompatibilityRepairs {
             DeviceIdRule.Result ids=apply?DeviceIdRule.repair(diagnosticInput):DeviceIdRule.inspect(diagnosticInput);
             if(ids.status!=CompatibilityEvidence.Status.SKIPPED)report.append(ids.status).append(' ').append(DeviceIdRule.ID).append(": ").append(ids.reason).append('\n');
             if(apply){plan.replacements.putAll(ids.replacements);diagnosticInput.putAll(ids.replacements);}
+            CallGuardRules.Result guards=apply?CallGuardRules.repair(diagnosticInput):CallGuardRules.inspect(diagnosticInput);
+            report.append(guards.report());if(apply){plan.replacements.putAll(guards.replacements);diagnosticInput.putAll(guards.replacements);}
             AirLoaderDiagnosticsRule.Result air=apply?AirLoaderDiagnosticsRule.repair(diagnosticInput):AirLoaderDiagnosticsRule.inspect(diagnosticInput);
             if(air.status!=CompatibilityEvidence.Status.SKIPPED)report.append(air.status).append(' ').append(AirLoaderDiagnosticsRule.ID).append(": ").append(air.reason).append('\n');
             if(apply)plan.replacements.putAll(air.replacements);
