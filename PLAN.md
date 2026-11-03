@@ -123,6 +123,18 @@ QEMU system emulation of an ARMv7 board running a user-supplied Android image. B
 TCG speed, and GLES2 needs either software rendering in the guest (very slow) or host GPU
 passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A and B fail.
 
+## Parked todos
+- **Embedded 2014 Chromium fonts (Worm Copter, `tv.ouya.sdk.WebActivity`).** The bundled
+  `libcontent_shell_content_view.so` (Dec 2014, ~33 MB, stripped) crashes in Blink measuring the
+  space glyph (factory at 0x83782c returns null, caller 0xd4d3a8). Likely cause, unproven: its Skia
+  reads only `/system/etc/system_fonts.xml` and `fallback_fonts.xml`, which Android 5+ replaced
+  with `/system/etc/fonts.xml` (new format), so no fonts load. Possible general fix: at startup,
+  convert `fonts.xml` to the old format in the app's files dir; repoint the library's path literal
+  (reuse the unused 52-char test path slot `/data/local/tmp/content_shell/android_main_fonts.xml`);
+  add the startup hook. Other 2014-engine issues may follow. Owner parked it 2026-11-03.
+- **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
+  "request queue layout not recognised"; support that ODK version so store requests can't hang.
+
 ---
 
 ## Working rules
