@@ -123,6 +123,10 @@ public final class PlatformCrashRulesTest {
   }
   for(String near:new String[]{"receiver","signature","super","collision"})check(LegacySdkCrashRules.repair(Map.of("classes.dex",service("Lcom/bda/controller/Controller;",false,near))).replacements.isEmpty(),"service near-match retained: "+near);
   check(LegacySdkCrashRules.repair(Map.of("classes.dex",service("Lunrelated/Service;",false,""))).supported(),"any game class: implicit bind repaired, not only known SDKs");
+  // Bundled android.support library classes (e.g. GameMaker runner APKs) must not block the rule.
+  check(LegacySdkCrashRules.repair(Map.of("classes.dex",service("Landroid/annotation/Fixture;",false,""))).supported(),"bundled android.annotation stubs are not platform shadows");
+  check(LegacySdkCrashRules.repair(Map.of("classes.dex",service("Landroid/support/v4/app/Fixture;",false,""))).supported(),"android.support classes are game code, not platform shadows");
+  check(!LegacySdkCrashRules.repair(Map.of("classes.dex",service("Landroid/content/Intent;",false,""))).supported(),"game copy of a relied-on platform type still rejected");
   byte[] input=cursorDex(),copy=input.clone();var cursor=LegacySdkCrashRules.repair(Map.of("classes2.dex",input));check(cursor.supported()&&cursor.replacements.size()==1,"cursor rewrite "+cursor.report());byte[] out=cursor.replacements.get("classes2.dex");check(Arrays.equals(input,copy),"cursor source immutable");check(!LegacySdkCrashRules.repair(Map.of("classes2.dex",out)).supported(),"cursor idempotence");
   for(boolean present:new boolean[]{false,true}){var p=new Platform();p.cursorPresent=present;check(execute(method(out,"getGameData"),p,null).equals("existing-data-or-default"),"original data/default return preserved");check(p.closes==(present?1:0),"non-null cursor closes once");}
   var p=new Platform();p.queryFails=true;try{execute(method(out,"getGameData"),p,null);throw new AssertionError("query error swallowed");}catch(RuntimeException expected){check(expected==p.queryError&&p.closes==0,"original query exception retained after null-safe cleanup");}

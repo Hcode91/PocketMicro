@@ -40,6 +40,12 @@ public final class LegacySdkCrashRules {
     }
     private static List<Instruction> code(Method m){List<Instruction> out=new ArrayList<>();if(m.getImplementation()!=null)for(Instruction i:m.getImplementation().getInstructions())out.add(i);return out;}
     private static MethodReference ref(Instruction i){if(!(i instanceof ReferenceInstruction))return null;Object r=((ReferenceInstruction)i).getReference();return r instanceof MethodReference?(MethodReference)r:null;}
+    // Only a game-supplied copy of a platform type this rule relies on is a real conflict. Bundled
+    // libraries and stubs under android/ (android.support.*, android.annotation.*, android.UnusedStub)
+    // are ordinary game code and must not block the rule.
+    private static final Set<String> RELIED_ON=Set.of(INTENT,CONNECTION,COMPONENT,"Landroid/content/pm/PackageManager;","Landroid/content/pm/ResolveInfo;","Landroid/content/pm/ServiceInfo;",
+        "Landroid/content/pm/PackageItemInfo;","Landroid/database/Cursor;","Ljava/util/List;","Ljava/lang/Object;",STRING);
+    private static boolean shadowsPlatform(String type){return FRAMEWORK_CONTEXTS.contains(type)||RELIED_ON.contains(type)||type.startsWith("Ljava/lang/");}
     private static boolean ours(String type){return type.startsWith("Lio/github/hcode91/pocketouya/")||type.startsWith("Lio/github/hozdogus/pocketouya/");}
     private static boolean bind(Instruction i){
         MethodReference r=ref(i);return r!=null&&contextType(r.getDefiningClass())&&r.getName().equals("bindService")&&r.getParameterTypes().equals(BIND_PARAMS)&&r.getReturnType().equals("Z")
@@ -114,7 +120,7 @@ public final class LegacySdkCrashRules {
                 var d=new DexBackedDexFile(null,e.getValue());files.put(e.getKey(),d);
                 for(ClassDef c:d.getClasses()){
                     if(!types.add(c.getType()))throw new IllegalArgumentException("Duplicate class");supers.put(c.getType(),c.getSuperclass());
-                    if(c.getType().startsWith("Landroid/")||c.getType().startsWith("Ljava/"))throw new UnsupportedOperationException("Shadowed platform class");
+                    if(shadowsPlatform(c.getType()))throw new UnsupportedOperationException("Shadowed platform class");
                     for(Method m:c.getMethods())if(m.getImplementation()!=null)for(Instruction i:m.getImplementation().getInstructions())if(i instanceof org.jf.dexlib2.iface.instruction.formats.UnknownInstruction)throw new UnsupportedOperationException("Reserved DEX instruction");
                 }
             }
