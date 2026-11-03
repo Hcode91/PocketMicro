@@ -17,7 +17,8 @@ launches `com.airtightgames.soulfjord.SoulFjord`.
 | Trace Java video entry/exit, game pause/resume and view manager | Completed; findings below |
 | Compare graphics pause semantics with Android 14 AOSP | Completed |
 | Reproduce crash on Android / validate a repair | Not executed; no attached phone |
-| Independently inspect the reported full tombstone and preceding runtime log | Not executed; log not supplied in this folder |
+| Inspect newly supplied global log and crash-buffer stack | Completed; see follow-up below |
+| Independently inspect a full native tombstone | Unavailable: Android attached no dump to the supplied exit record |
 
 APK SHA-256: `c9fdb8d57d79fa0e48c78924e712c74f928c6dd22a280234f3a37d0235507e64`.
 Original DEX SHA-256: `4465b986ca2f1f7b982b3b1542c0d813c303b119d2ecdf2a6931d61d72dd848b`.
@@ -123,6 +124,75 @@ subsequent movies; menu input, gameplay and audio. Compare against the unchanged
 conversion. Host regression tests must cover lifecycle ordering, ambiguous/near-match
 layouts, no-video Unity APKs, repeated conversion and unchanged unrelated DEX/native
 payloads. No tests or repair success are claimed for this proposed experiment.
+
+## Follow-up: crash before any video (23:43 run)
+
+The owner subsequently supplied `PocketOuya-global-game-log (2).txt` and confirmed
+that this run closed **before any video**. This supersedes video handover as a
+necessary-trigger explanation. Do not implement the proposed surface workaround
+on the strength of the previous handoff.
+
+The log identifies PocketOuya 0.1.84 launching a conversion made by 0.1.75 at
+15:30 UTC, with startup repairs and touch enabled and experimental runtime disabled.
+Android reports target API 16, and both Unity/Mono loads succeed. The text-relocation
+message for Unity is explicitly a warning permitting the load, not this crash.
+
+| Event | Time on 2026-11-03 |
+| --- | --- |
+| Process startup log | 23:43:25.743 |
+| Unity game SurfaceView created | 23:43:26.047 |
+| OpenGL ES context created | 23:43:26.050 |
+| Scaleform library loaded | 23:43:26.881 |
+| Store-unavailable callback | 23:43:27.443 |
+| Crash-dump collection begins | 23:43:27.656 |
+| Tombstone timestamp in crash buffer | 23:43:27.671586 |
+
+No game-surface destruction/detachment, MediaPlayer playback, or second video
+surface is recorded before the crash. Absence of a log marker alone would not
+prove no video ran; the owner's observation independently confirms it here.
+The exit-record section says “Reason: Java crash” but contains no dump. The actual
+crash buffer identifies native SIGSEGV on UnityMain, at `pthread_mutex_lock+4`,
+with address/register r0 = `0x40`. Prefer that explicit signal/backtrace over the
+generic exit-record description.
+
+Read-only LLVM disassembly of the supplied original Scaleform library independently
+confirms the arithmetic behind this fault. Exported ELF function symbols have the
+Thumb bit set; the following instruction trace uses Thumb mode from those entries:
+
+- `SFManagerImpl::Display(bool)` loads the render-thread pointer at manager +
+  `0x2c`, then calls `SFUnityRenderThread::ProcessCommands()`.
+- `ProcessCommands()` adds `0x34` to its receiver to obtain its embedded command
+  queue, then calls `RTCommandQueue::PopCommand()`.
+- `PopCommand()` adds `0x0c` to that queue receiver before calling the mutex lock.
+- The crash's preserved queue/mutex registers are `0x34` / `0x40`, consistent
+  with a null render-thread receiver. It is not evidence of a valid queue whose
+  internal mutex merely needs reinitialization.
+
+The original Scaleform library SHA-256 is
+`e2d6063ffd93b4dfdbb523333b64628d922ea5c4c51f005b7a536f6f1cf8d77c`.
+The crash stack's function offsets agree with this artifact. This is corroboration,
+not a byte-for-byte identity check of the installed library.
+
+The normal factory allocates the manager and calls its constructor before publishing
+the pointer. That constructor first clears +`0x2c`, allocates/constructs a
+render-thread object, and finally stores its address in +`0x2c`. A crash-time null
+does not establish that this final store executed successfully or that a particular
+later operation erased it. This session did not recover the manager's memory or
+observe writes to it. Allocation failure, partial/repeated initialization, lifetime
+errors and corruption are investigation possibilities, not verified diagnoses.
+
+The log also reports a missing static `fetchGamerInfo()` Java method and a store
+failure callback. Their presence does not establish the cause of the native queue
+fault. Do not alter purchases, fabricate callbacks, skip rendering or insert a
+blanket null guard to make this report appear successful.
+
+**Next evidence needed:** observe manager construction, publication and the first
+render-thread-pointer read in the failing installed build, or obtain a native dump
+that includes the manager/allocation state. The previous native-instrumentation
+approaches remain deferred per the owner's handoff. Without that evidence, static
+analysis cannot identify the write or initialization failure safely enough for an
+automatic repair. Another ordinary crash-log capture alone may repeat this stack
+without supplying the missing state.
 
 The current result is **UNKNOWN**, not “fixed” or “unfixable”. No surface, native
 library, purchase or input transformation was added in this investigation.

@@ -1306,3 +1306,15 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   build or device test claimed. Owner will attach the full log; exact null-write
   cause and surface-preservation benefit remain UNKNOWN. See
   `docs/soul-fjord-video-lifecycle.md` for the evidence and bounded experiment plan.
+
+- **2026-11-03 — Soul Fjord new log supersedes video-trigger assumption:** owner
+  supplied the 23:43 global log and confirmed closure before any video. Same native
+  Scaleform queue fault occurs within about two seconds, without recorded video
+  playback or game-surface teardown. Full native dump remains unavailable: Android
+  explicitly attached none. LLVM read-only disassembly from ELF Thumb function
+  entries confirms receiver arithmetic null -> queue 0x34 -> mutex 0x40; factory
+  and constructor normally construct and publish the render-thread pointer.
+  Which initialization/lifetime/write failed remains UNKNOWN. Surface workaround
+  is not justified by this run. Documented exact times, conversion provenance,
+  unrelated Java/store errors and missing state in the evidence report. No repair
+  bytes generated; no runtime changes or device success claimed.
