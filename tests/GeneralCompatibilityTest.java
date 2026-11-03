@@ -134,6 +134,19 @@ public final class GeneralCompatibilityTest {
    // Common application preparation path: ordinary and doctor/startup
    // selections all attempt touch hooks without a per-mode touch flag.
    byte[] beforeInstall=Files.readAllBytes(original);
+   ManifestPatcher.Result baseline=ApkRebuilder.prepareDiagnosticBaseline(original.toFile(),converted.toFile());
+   check(baseline.oldTarget==baseline.newTarget&&baseline.compatibilityReport.contains("Diagnostic baseline"));
+   try(ZipFile inputZip=new ZipFile(original.toFile());ZipFile zip=new ZipFile(converted.toFile())){
+    for(ZipEntry entry:Collections.list(inputZip.entries())){
+     String name=entry.getName();if(name.equals("AndroidManifest.xml")||ApkRebuilder.isOldSignature(name)||name.equals(ConversionRecord.ENTRY))continue;
+     check(Arrays.equals(inputZip.getInputStream(entry).readAllBytes(),zip.getInputStream(zip.getEntry(name)).readAllBytes()));
+    }
+    check(zip.getEntry("classes3.dex")==null);
+    String record=new String(zip.getInputStream(zip.getEntry(ConversionRecord.ENTRY)).readAllBytes(),StandardCharsets.UTF_8);
+    check(ConversionRecord.summarize(record).contains("startup repairs=no, touch=no, experimental runtime=no"));
+    check(record.contains("Diagnostic baseline"));
+   }
+   check(Arrays.equals(beforeInstall,Files.readAllBytes(original)));
    for(boolean startup:new boolean[]{false,true})for(int floor:new int[]{23,24}){
     ManifestPatcher.Result prepared=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,startup,false,floor);
     check(prepared.newTarget==floor&&prepared.compatibilityReport.contains("Touch pad: enabled"));

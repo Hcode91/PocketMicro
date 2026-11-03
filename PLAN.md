@@ -1318,3 +1318,17 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   is not justified by this run. Documented exact times, conversion provenance,
   unrelated Java/store errors and missing state in the evidence report. No repair
   bytes generated; no runtime changes or device success claimed.
+
+- **2026-11-03 — Soul Fjord first controlled trial prepared:** owner authorized a
+  fix attempt. Added explicit Diagnostic baseline conversion option, retaining the
+  original Android target and game DEX/native/assets, disabling startup/touch edits
+  only for this selected diagnostic mode, and installing through existing Shizuku
+  path with normal game signing. Normal installs still add touch by default. The
+  report and persistent conversion record label the test; no Scaleform repair or
+  gameplay success is claimed. Regression checks cover payload/source preservation,
+  target retention, no helper injection and record flags; aggregate host suite,
+  compatibility/log/export suite and Android Java compile passed (existing warnings).
+  Actual Soul Fjord baseline: API16, all1715 payload entries unchanged by SHA-256,
+  ZIP CRC passes, conversion record sole added entry. Device result pending; compare
+  original-loader failure, same queue crash or progression before choosing the next
+  change. CI branch enabled; push build without waiting. Instructions in lifecycle doc.

@@ -431,8 +431,11 @@ public class MainActivity extends Activity {
 
     private void chooseImportMode(Uri uri) {
         new AlertDialog.Builder(this).setTitle("Game conversion")
-            .setItems(new String[]{"Android install compatibility + touch", "Startup repairs + touch — native engines / legacy SDKs", "Experimental Unity embedded-runtime repair + touch"},(dialog,which)-> {
-                if(which==2)confirmExperimentalImport(uri);
+            .setItems(new String[]{"Android install compatibility + touch", "Startup repairs + touch — native engines / legacy SDKs", "Experimental Unity embedded-runtime repair + touch", "Diagnostic baseline — original code, Shizuku install"},(dialog,which)-> {
+                if(which==3)new AlertDialog.Builder(this).setTitle("Diagnostic baseline test")
+                    .setMessage("Use the complete original APK. Keeps its Android target and copies game code, libraries and assets unchanged. Adds no repairs or touch pad. Requires Shizuku.\n\nThis replaces the installed conversion if its signing key matches. App data is retained by an update; saved settings may still influence the result. Do not uninstall or clear data for this test.\n\nAfter launching, export the global log so we can compare the crash with the repaired conversion. This is an isolation test, not a confirmed fix.")
+                    .setPositiveButton("Prepare baseline",(d,w)->importApk(uri,false,false,true,true)).setNegativeButton("Cancel",null).show();
+                else if(which==2)confirmExperimentalImport(uri);
                 else confirmImport(uri,which==1);})
             .setNegativeButton("Cancel",null).show();
     }
@@ -515,6 +518,9 @@ public class MainActivity extends Activity {
     }
 
     private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget) {
+        importApk(uri,runtimeRepair,experimental,keepTarget,false);
+    }
+    private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget, boolean baseline) {
         showProgress("Copying the game…");
         new Thread(() -> {
             File dir = new File(getCacheDir(), "import-"+java.util.UUID.randomUUID());
@@ -527,10 +533,10 @@ public class MainActivity extends Activity {
 
                 showProgress("Updating it for this version of Android…");
                 byte[] bridge=null;
-                try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
+                if(!baseline)try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
                     bridge=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT));
+                ManifestPatcher.Result r = baseline?ApkRebuilder.prepareDiagnosticBaseline(original,patched):ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT));
                 original.delete();
 
                 showProgress("Signing…");

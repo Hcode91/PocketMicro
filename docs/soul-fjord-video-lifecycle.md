@@ -196,3 +196,35 @@ without supplying the missing state.
 
 The current result is **UNKNOWN**, not “fixed” or “unfixable”. No surface, native
 library, purchase or input transformation was added in this investigation.
+
+## First device experiment: original-code baseline
+
+The owner authorized trying a fix. Before changing native rendering, the branch now
+offers an explicit isolation test: import the complete original APK, choose **All
+conversion options → Diagnostic baseline — original code, Shizuku install → Prepare
+baseline**, inspect the report, then install with Shizuku running. Ordinary install
+paths retain their automatic touch-pad behavior.
+
+This mode retains the original target, copies DEX/native/assets without edits,
+does not inject the bridge, strips old signatures and signs with PocketOuya's
+existing game key. Normal manifest installation adjustments and a conversion
+record still apply. It cannot reverse changes already present in the selected APK,
+so the original input is required. An in-place update retains saves/settings;
+do not clear data or uninstall for this first comparison. Signature mismatch can
+prevent an update; do not resolve it by deleting saves.
+
+This is an attempt to isolate a cause, not a Scaleform repair. The previous installed
+build includes runtime promotion and multiple SDK changes. If the baseline gets
+past the crash, compare individual conversion changes next. If it produces the
+same Scaleform stack, those changes are not necessary for that failure. If it stops
+earlier in the original loader, it establishes a different blocker and says nothing
+about whether the rendering fault is fixed. Capture the global log in each case.
+
+Executed checks: baseline regression covers unchanged source, retained target,
+unchanged original ZIP payloads, no extra bridge DEX, and diagnostic conversion
+provenance; ordinary default-touch regressions still pass. On the actual complete
+Soul Fjord APK the baseline retained API 16, all 1,715 non-manifest/non-signature
+payload entries matched SHA-256, ZIP CRC passed, and the only added entry was the
+conversion record. Aggregate host tests and compatibility/log/export tests passed.
+Android Java compilation passed with existing annotation warnings. Device execution
+and the full CI APK build are pending; neither success nor a changed crash is claimed.

@@ -21,6 +21,10 @@ public final class ApkRebuilder {
         if(experimental&&runtimeRepair)throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup repairs");
         return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental);
     }
+    /** Explicit diagnostic control; ordinary installs continue to request touch controls. */
+    public static ManifestPatcher.Result prepareDiagnosticBaseline(File in,File out)throws IOException {
+        return rebuild(in,out,null,false,false,ManifestPatcher.KEEP_TARGET,false,true);
+    }
     public static ManifestPatcher.Result rebuild(File in, File out) throws IOException {
         return rebuild(in,out,null,false,false);
     }
@@ -41,10 +45,14 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,false,minimumTarget,true);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental)throws IOException {
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,false);
+    }
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,boolean baseline)throws IOException {
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
             if(manifestEntry==null)throw new IOException("Not an Android app (no AndroidManifest.xml).");
             ManifestPatcher.Result result=ManifestPatcher.patch(readBounded(zip.getInputStream(manifestEntry),4*1024*1024),minimumTarget);
+            if(baseline)result.compatibilityReport="SKIPPED diagnostic.baseline — Diagnostic baseline: original Android target retained; DEX, native libraries and assets copied unchanged. No startup repairs or touch injection requested. Install through Shizuku. This tests whether conversion changes contribute to a failure; it is not a confirmed repair. Use a complete original APK: existing modifications in the input cannot be undone.";
             java.util.Map<String,byte[]> replacements=new java.util.LinkedHashMap<>();
             if(runtimeRepair){
                 SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true);
@@ -63,6 +71,7 @@ public final class ApkRebuilder {
                 }
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);
+            if(baseline&&!nativeWarnings.isEmpty())nativeWarnings+="\nDiagnostic baseline retains target API "+result.newTarget+". The API 23+ text-relocation restriction above applies only if the retained target reaches that level; this test does not raise it.";
             boolean appendBridge=false;int nextDex=2;
             if(touch){
                 if(bridge==null||bridge.length==0)throw new IOException("Converter compatibility bridge is missing");
