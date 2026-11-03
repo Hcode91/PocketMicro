@@ -132,13 +132,27 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   convert `fonts.xml` to the old format in the app's files dir; repoint the library's path literal
   (reuse the unused 52-char test path slot `/data/local/tmp/content_shell/android_main_fonts.xml`);
   add the startup hook. Other 2014-engine issues may follow. Owner parked it 2026-11-03.
-- **Soul Fjord Scaleform crash (libgfxunity3d.so).** Crash in RTCommandQueue::PopCommand: the
-  manager's render-thread pointer (SFManagerImpl+0x2c, global manager at the variable after
-  ErrorCode) is null in Display, though an earlier frame used it (first-frame glyph push at +0x38
-  already done). Ruled out: OUYA store (now answered), dangling manager after DestroyManager (all
-  destroy paths clear the global), evaluation message (only on CreateMovie failure). Only the
-  constructor writes +0x2c in the Unity layer. Next options: Android bug report zip, or static
-  study of the game's managed Scaleform calls. Owner parked it 2026-11-03.
+- **Soul Fjord Scaleform crash (libgfxunity3d.so).** Same crash on every run (3 logs + full
+  crash dump from the new Android crash record, 2026-11-03): SIGSEGV at 0x40 in
+  pthread_mutex_lock <- RTCommandQueue::PopCommand <- SFUnityRenderThread::ProcessCommands <-
+  SFManagerImpl::Display <- UnityRenderEvent, on UnityMain (Unity renders on its main thread; no
+  race). The manager's render-thread pointer (SFManagerImpl+0x2c) is null; the manager itself
+  (0xe7875050, ordinary malloc memory) still has a valid vtable and Init's +0x38 flag set.
+  - Trigger: the game's intro video. Unity's SurfaceView is destroyed and detached while the
+    video's own SurfaceView plays (~5 s); Unity keeps its GL context (no second "Creating OpenGL
+    ES context"). The crash comes ~0.3 s after the video ends and Unity's surface is recreated.
+  - Static facts: only the SFManagerImpl constructor writes +0x2c (destructor releases but does
+    not clear it); SF_DestroyManager / UnitySetGraphicsDevice shutdown clear the global; the
+    game's C# never calls SFManager.Destroy (OnDisable -> SF_Uninit only; finalizer frees the
+    marshalled init buffers). What empties +0x2c is still unproven; the crash dump does not
+    include the manager's memory.
+  - Ruled out: OUYA store (answered), Android API/SDK settings, a dangling manager after the
+    destroy paths, evaluation message, GL extension string handling.
+  - Next idea (not started): keep Unity's GL view attached while the intro video plays (a
+    Java-side change in how the game shows the video), so the surface hand-back never happens.
+  - Not to retry: native trace/logging wrapper, patching libgfxunity3d.so checks, and building
+    DEX/Java-code reading tools for this game were all stopped by Claude's safety checks.
+  - Owner parked it again 2026-11-03.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 
