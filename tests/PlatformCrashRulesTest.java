@@ -6,7 +6,7 @@ import org.jf.dexlib2.iface.*;import org.jf.dexlib2.iface.instruction.*;import o
 
 public final class PlatformCrashRulesTest {
  static void check(boolean b,String why){if(!b)throw new AssertionError(why);}
- static final String CTX="Landroid/content/Context;",INTENT="Landroid/content/Intent;",CONN="Landroid/content/ServiceConnection;",CURSOR="Landroid/database/Cursor;",STRING="Ljava/lang/String;",HELPER="pocketouyaBindLegacyService";
+ static final String CTX="Landroid/content/Context;",INTENT="Landroid/content/Intent;",CONN="Landroid/content/ServiceConnection;",CURSOR="Landroid/database/Cursor;",STRING="Ljava/lang/String;",HELPER="pocketouyaBindLegacyService",START_HELPER="pocketouyaStartLegacyService";
  static byte[] elf(String path,int shift){
   byte[] bytes=new byte[0x900];ByteBuffer b=ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);b.putInt(0,0x464c457f);bytes[4]=1;bytes[5]=1;bytes[6]=1;
   b.putShort(16,(short)3).putShort(18,(short)40).putInt(20,1).putInt(28,52).putShort(40,(short)52).putShort(42,(short)32).putShort(44,(short)3);
@@ -42,32 +42,43 @@ public final class PlatformCrashRulesTest {
  }
  static Method method(byte[] bytes,String name){for(ClassDef c:new DexBackedDexFile(null,bytes).getClasses())for(Method m:c.getMethods())if(m.getName().equals(name))return m;throw new AssertionError(name);}
  static final class IntentModel {String action,pkg,component;Map<String,String> extras=new HashMap<>();IntentModel(String a){action=a;}}
- static final class Platform {Object receivedContext,receivedConnection;int flags,calls,closes;IntentModel received;boolean result,denied,cursorPresent,queryFails;RuntimeException queryError=new RuntimeException("query failed");}
+ static final class ServiceModel {String packageName="fixture.moga.provider",name="fixture.MogaService";}
+ static final class ResolveModel {ServiceModel serviceInfo=new ServiceModel();}
+ static final class Platform {Object receivedContext,receivedConnection,startResult=new Object();int flags,calls,closes,queries;List<ResolveModel> providers=List.of(new ResolveModel());IntentModel received;boolean result,denied,cursorPresent,queryFails;RuntimeException startError,queryError=new RuntimeException("query failed");}
  // Bounded semantics model for the emitted helpers and cleanup paths. No vendor code executes.
  static Object execute(Method m,Platform platform,IntentModel intent){
   Map<Integer,Instruction> code=new HashMap<>();int at=0;for(Instruction i:m.getImplementation().getInstructions()){code.put(at,i);at+=i.getCodeUnits();}
-  Object[] regs=new Object[m.getImplementation().getRegisterCount()];Object ctx=new Object(),connection=new Object();if(m.getName().equals(HELPER)){regs[3]=ctx;regs[4]=intent;regs[5]=connection;regs[6]=77;}
+  Object[] regs=new Object[m.getImplementation().getRegisterCount()];Object ctx=new Object(),connection=new Object();if(m.getName().equals(HELPER)||m.getName().equals(START_HELPER)){regs[3]=ctx;regs[4]=intent;if(m.getName().equals(HELPER)){regs[5]=connection;regs[6]=77;}}
   Object result=null,pending=null;int pc=0;
   for(int budget=0;budget<80;budget++){
    Instruction i=code.get(pc);check(i!=null,"branch/handler lands at instruction boundary");int next=pc+i.getCodeUnits();
    try{switch(i.getOpcode()){
-    case CONST_4:regs[((OneRegisterInstruction)i).getRegisterA()]=null;break;
+    case CONST_4:regs[((OneRegisterInstruction)i).getRegisterA()]=((NarrowLiteralInstruction)i).getNarrowLiteral();break;
     case CONST_STRING:regs[((OneRegisterInstruction)i).getRegisterA()]=((StringReference)((ReferenceInstruction)i).getReference()).getString();break;
-    case NEW_INSTANCE:regs[((OneRegisterInstruction)i).getRegisterA()]=new IntentModel(null);break;
+    case NEW_INSTANCE:regs[((OneRegisterInstruction)i).getRegisterA()]=((TypeReference)((ReferenceInstruction)i).getReference()).getType().equals(INTENT)?new IntentModel(null):new IllegalArgumentException("Ambiguous or invalid MOGA service metadata");break;
+    case CHECK_CAST:check(regs[((OneRegisterInstruction)i).getRegisterA()] instanceof ResolveModel,"registry resolve type");break;
+    case IGET_OBJECT:{var r=(TwoRegisterInstruction)i;var f=(FieldReference)((ReferenceInstruction)i).getReference();Object receiver=regs[r.getRegisterB()];regs[r.getRegisterA()]=f.getName().equals("serviceInfo")?((ResolveModel)receiver).serviceInfo:f.getName().equals("packageName")?((ServiceModel)receiver).packageName:((ServiceModel)receiver).name;break;}
     case MOVE_OBJECT:regs[((TwoRegisterInstruction)i).getRegisterA()]=regs[((TwoRegisterInstruction)i).getRegisterB()];break;
     case MOVE_RESULT:case MOVE_RESULT_OBJECT:regs[((OneRegisterInstruction)i).getRegisterA()]=result;break;
     case MOVE_EXCEPTION:regs[((OneRegisterInstruction)i).getRegisterA()]=pending;pending=null;break;
     case IF_NEZ:case IF_EQZ:{Object value=regs[((OneRegisterInstruction)i).getRegisterA()];boolean zero=value==null||Boolean.FALSE.equals(value)||Integer.valueOf(0).equals(value);if(zero==(i.getOpcode()==Opcode.IF_EQZ))next=pc+((OffsetInstruction)i).getCodeOffset();break;}
-    case GOTO:next=pc+((OffsetInstruction)i).getCodeOffset();break;
-    case RETURN:case RETURN_OBJECT:return regs[((OneRegisterInstruction)i).getRegisterA()];
+    case IF_NE:{var r=(TwoRegisterInstruction)i;if(!Objects.equals(regs[r.getRegisterA()],regs[r.getRegisterB()]))next=pc+((OffsetInstruction)i).getCodeOffset();break;}
+    case GOTO:case GOTO_16:next=pc+((OffsetInstruction)i).getCodeOffset();break;
+    case RETURN:case RETURN_OBJECT:{Object value=regs[((OneRegisterInstruction)i).getRegisterA()];return i.getOpcode()==Opcode.RETURN_OBJECT?(Integer.valueOf(0).equals(value)?null:value):(value instanceof Integer?(int)value!=0:value);}
     case THROW:throw (RuntimeException)regs[((OneRegisterInstruction)i).getRegisterA()];
     case INVOKE_VIRTUAL:case INVOKE_DIRECT:case INVOKE_INTERFACE:case INVOKE_STATIC:{var call=(FiveRegisterInstruction)i;var ref=(MethodReference)((ReferenceInstruction)i).getReference();Object receiver=regs[call.getRegisterC()];
      switch(ref.getName()){
       case "getComponent":result=((IntentModel)receiver).component;break;case "getPackage":result=((IntentModel)receiver).pkg;break;case "getAction":result=((IntentModel)receiver).action;break;
       case "equals":result=receiver.equals(regs[call.getRegisterD()]);break;
-      case "<init>":{var original=(IntentModel)regs[call.getRegisterD()];var copy=(IntentModel)receiver;copy.action=original.action;copy.pkg=original.pkg;copy.component=original.component;copy.extras.putAll(original.extras);break;}
+      case "<init>":{if(receiver instanceof IntentModel){var original=(IntentModel)regs[call.getRegisterD()];var copy=(IntentModel)receiver;copy.action=original.action;copy.pkg=original.pkg;copy.component=original.component;copy.extras.putAll(original.extras);}break;}
       case "setPackage":((IntentModel)receiver).pkg=(String)regs[call.getRegisterD()];result=receiver;break;
+      case "setClassName":((IntentModel)receiver).pkg=(String)regs[call.getRegisterD()];((IntentModel)receiver).component=(String)regs[call.getRegisterE()];result=receiver;break;
+      case "getPackageManager":check(receiver==ctx,"registry Context retained");result=platform;break;
+      case "queryIntentServices":check(receiver==platform&&regs[call.getRegisterD()]==intent&&Integer.valueOf(0).equals(regs[call.getRegisterE()]),"registry query uses original Intent and zero flags");platform.queries++;result=platform.providers;break;
+      case "size":result=((List<?>)receiver).size();break;
+      case "get":result=((List<?>)receiver).get((int)regs[call.getRegisterD()]);break;
       case "bindService":platform.calls++;platform.receivedContext=receiver;platform.received=(IntentModel)regs[call.getRegisterD()];platform.receivedConnection=regs[call.getRegisterE()];platform.flags=(int)regs[call.getRegisterF()];check(receiver==ctx&&platform.receivedConnection==connection&&platform.flags==77,"context/connection/flags retained");if(platform.denied)throw new SecurityException("permission denied");if(platform.received==null)throw new NullPointerException("platform rejected null intent");if(platform.received.pkg==null&&platform.received.component==null)throw new IllegalArgumentException("Service Intent must be explicit");result=platform.result;break;
+      case "startService":platform.calls++;platform.receivedContext=receiver;platform.received=(IntentModel)regs[call.getRegisterD()];check(receiver==ctx,"start context retained");if(platform.denied)throw new SecurityException("permission denied");if(platform.received==null)throw new NullPointerException("platform rejected null intent");if(platform.received.pkg==null&&platform.received.component==null)throw new IllegalArgumentException("Service Intent must be explicit");if(platform.startError!=null)throw platform.startError;result=platform.startResult;break;
       case "query":if(platform.queryFails)throw platform.queryError;result=platform.cursorPresent?new Object():null;break;
       case "moveToFirst":check(receiver!=null,"query null check retained");result=true;break;
       case "close":check(receiver!=null,"null cursor close must be guarded, including incoming branch and exception path");platform.closes++;break;
@@ -104,10 +115,12 @@ public final class PlatformCrashRulesTest {
     try{Object returned=execute(method(out,HELPER),p,intent);check(explicit!=0||recognized,"unknown implicit action should keep original rejection");check(Boolean.valueOf(result).equals(returned),"real bind result retained, including missing provider false");}
     catch(IllegalArgumentException expected){check(explicit==0&&!recognized,"recognized service should be package scoped");}
     check(p.calls==1&&p.received.extras.equals(intent.extras)&&Objects.equals(intent.action,p.received.action),"single platform call, action and extras retained");
-    if(explicit==0&&recognized){check(p.received!=intent&&intent.pkg==null,"original intent immutable");check(p.received.pkg.equals(action.equals(LegacySdkCrashRules.MOGA_ACTION)?"com.bda.controller":"com.google.android.gms"),"correct SDK provider");}else check(p.received==intent,"explicit/unknown original intent identity retained");
+    if(explicit==0&&recognized){check(p.received!=intent&&intent.pkg==null,"original intent immutable");check(p.received.pkg.equals(action.equals(LegacySdkCrashRules.MOGA_ACTION)?"fixture.moga.provider":"com.google.android.gms"),"correct SDK provider");if(action.equals(LegacySdkCrashRules.MOGA_ACTION))check(p.received.component.equals("fixture.MogaService")&&p.queries==1,"MOGA component from real registry contract");}else check(p.received==intent&&p.queries==0,"explicit/unknown original intent identity retained without registry query");
    }
    var p=new Platform();p.denied=true;try{execute(method(out,HELPER),p,new IntentModel(LegacySdkCrashRules.MOGA_ACTION));throw new AssertionError("permission denial swallowed");}catch(SecurityException expected){}
    p=new Platform();try{execute(method(out,HELPER),p,null);throw new AssertionError("null intent accepted");}catch(NullPointerException expected){check(p.calls==1,"null intent passed to original platform call");}
+   for(List<ResolveModel> providers:Arrays.asList(Collections.<ResolveModel>emptyList(),null)){p=new Platform();p.providers=providers;check(Boolean.FALSE.equals(execute(method(out,HELPER),p,new IntentModel(LegacySdkCrashRules.MOGA_ACTION)))&&p.calls==0&&p.queries==1,"no visible MOGA service returns false, never bound");}
+   p=new Platform();p.providers=List.of(new ResolveModel(),new ResolveModel());try{execute(method(out,HELPER),p,new IntentModel(LegacySdkCrashRules.MOGA_ACTION));throw new AssertionError("ambiguous service selected");}catch(IllegalArgumentException expected){check(p.calls==0,"ambiguous registry rejected before platform binding");}
   }
   for(String near:new String[]{"receiver","signature","super","collision"})check(LegacySdkCrashRules.repair(Map.of("classes.dex",service("Lcom/bda/controller/Controller;",false,near))).replacements.isEmpty(),"service near-match retained: "+near);
   check(LegacySdkCrashRules.repair(Map.of("classes.dex",service("Lunrelated/Service;",false,""))).replacements.isEmpty(),"unrelated SDK untouched");

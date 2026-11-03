@@ -12,7 +12,7 @@ import java.util.*;
 
 /** Scan, review, prepare, export/install. No APK code executes during inspection. */
 public final class ApkDoctorActivity extends Activity {
-    private static final String PREPARATION_VERSION="platform-crash-rules-v2";
+    private static final String PREPARATION_VERSION="platform-crash-rules-v3";
     private static final int PICK=71,SAVE_APK=72,SAVE_REPORT=73;
     private TextView text;private Button pick,prepare,export,install,saveReport;
     private File dir;private volatile boolean busy;

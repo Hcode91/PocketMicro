@@ -1202,3 +1202,39 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   and translated-engine failures remain pending necessary binaries/context; no
   guessed flags/count clamps/IDs or new APK-specific fingerprints. No vendor input
   or raw journal committed. Push source/tests/report; link build without waiting.
+
+- **2026-11-03 — Abbaye follow-up: missed startService path and MOGA resolution:**
+  owner's23:44:16 trace explicitly fails at ContextImpl.startService from MOGA
+  Controller.init. Previous pass covered bindService only and missed this API.
+  Extended the same SDK/API-based rule to direct/range startService(Intent),
+  preserving actual ComponentName/null return and caller register/try flow.
+  Separate private start/bind helpers; skip helper bodies during matching.
+  Also corrected the earlier MOGA provider-package assumption: action namespace
+  does not establish a package. Both helpers now query Android's service registry
+  for the original implicit MOGA Intent; one visible valid result supplies its
+  component on a copy. Zero/null query results return unavailable(false/null),
+  multiple/invalid records reject, and platform security/background exceptions
+  propagate. Explicit/unknown/null Intents retain original call. Analytics keeps
+  its known Google provider scope. No service success, IDs, input or data invented.
+  Public MOGA integration source used as API-context evidence, not as proof of the
+  owner's SDK bytecode; no upstream/vendor code included. Old unrecognized helper
+  layouts remain collision/unchanged and require original-APK reconversion.
+  Added literal values to serialized-helper contract checks; changed registry
+  cardinality literal is rejected rather than recognized. Doctor marker v3
+  invalidates older prepared copies. No purchase/input/native/profile changes.
+  New tests: both SDK namespaces/direct+high-range start calls, actual object/null
+  identity, recognized/unknown/null actions, explicit Intent identity/extras,
+  zero/unique/multiple/invalid provider results, security/background errors,
+  receiver/signature/super/foreground/collision near-matches, matching-helper
+  retention/idempotence and start-before-bind ordering. Binding models updated
+  for actual registered components and absent/ambiguous providers. Full host/
+  input/purchase/native/doctor/shared and structural/CPU/assessment/experimental
+  suites pass; generated detector43 cases unchanged TP12/TN31/FP0/FN0. Full
+  Android core compile passes (existing warnings); generated combined high-range
+  start+bind helpers/callers pass D8 minAPI23. Monocle actual fixture remains
+  untargeted; Polarity's3 cursor guards + old cleanup still compose/idempotent.
+  All17 profiles/four frozen native source hashes unchanged. Native fixture replay
+  not repeated for this SDK-only update; previous12 verified/5 unavailable and
+  skipped remain the recorded scope. Abbaye APK fixture and phone boot remain
+  UNVERIFIED. Updated evidence/instructions; push source/tests, link queued/running
+  APK build without waiting for completion. Controls and parked backend deferred.

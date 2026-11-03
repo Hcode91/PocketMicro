@@ -13,34 +13,50 @@ route when supported structure is found. Existing games must be reconverted to
 receive the changes. The doctor invalidates older prepared copies with a new
 preparation marker; the original copy remains available for preparation.
 
-### Package-scoped legacy service binding
+### Explicit legacy service starts and bindings
 
 `android.legacy-sdk.explicit-service` matches the old MOGA and Google Analytics
 SDK namespaces and platform `Context.bindService(Intent, ServiceConnection, int)`
-calls. It replaces eligible virtual calls with a private static helper in that
+and `Context.startService(Intent)` calls. Eligible virtual calls use a private static helper in that
 SDK class. The receiver/argument registers, range form, return value and original
 method body are retained. Super calls, custom receiver descriptors, other
 signatures and colliding helpers are not changed.
 
 At runtime the helper checks two SDK contracts:
 
-| Implicit action | Provider package |
+| Implicit action | Resolution |
 | --- | --- |
-| `com.bda.controller.IControllerService` | `com.bda.controller` |
+| `com.bda.controller.IControllerService` | Unique visible registered service; use its actual package and class |
 | `com.google.android.gms.analytics.service.START` | `com.google.android.gms` |
 
 Only an otherwise implicit Intent for one of these actions is copied and given
-its SDK provider package. Component-explicit, package-explicit, unknown-action
+its resolved component (MOGA) or known provider package (Analytics).
+MOGA's action namespace does not establish a provider package. Zero visible
+matches produce unavailable (`false` for bind, `null` for start); multiple or
+invalid results reject with an explicit error. Registry visibility can limit
+discovery. Component-explicit, package-explicit, unknown-action
 and null inputs are passed to the original platform call. The original Intent,
 extras, binding flags and connection are retained. Android performs the actual
-binding: missing-service `false`, real successes, permission errors and other
-exceptions are not replaced with synthetic outcomes. No physical controller is
+binding or start when a provider is selected: actual Boolean/ComponentName/null
+results, permission errors and background-start restrictions propagate. No physical controller is
 created and no analytics event, store response or purchase is invented.
 
 The log identifies this exception in Abbaye des Morts, Zombie Kill of the Week,
 Zombie Outbreak and YOU DON'T KNOW JACK. Their APKs were not supplied for this
 pass: they are **candidates**, not verified repaired games. Other APKs using these
 supported SDK/API contracts can match without adding a game identifier or hash.
+
+The owner's subsequent Abbaye trace at **23:44:16** explicitly identifies
+`ContextImpl.startService`, called by `Controller.init`. The previous pass covered
+only `bindService` and missed this path. Both calls now match, including direct/
+range forms and an initialization sequence that starts and then binds. Public
+Android service-registry APIs supply the component; a
+[public MOGA integration example](https://github.com/Rakashazi/emu-ex-plus-alpha/blob/1c12fac5ce49badaadff2e2f210dcc30b89f4943/imagine/src/base/android/imagine-v9/src/main/java/com/bda/controller/Controller.java)
+also illustrates component discovery. That example does not establish the exact
+SDK bytecode in the owner's APK, which remains unavailable for direct inspection.
+Reconvert the original APK; unrecognized older injected helper layouts are
+retained with a collision result. Doctor readiness version3 requires preparation
+of cached older copies. Successful Abbaye boot remains unverified.
 
 ### OUYA game-data cleanup
 
@@ -90,7 +106,7 @@ leave another issue visible after installation.
 
 | Game(s) | Observed failure | This pass / next evidence |
 | --- | --- | --- |
-| Abbaye des Morts; Zombie Kill of the Week | Implicit MOGA service bind | New service rule candidate; test original APK conversion. Abbaye's earlier engine `glStencilMask` stop is a separate path. |
+| Abbaye des Morts; Zombie Kill of the Week | Implicit MOGA service start/bind | Both APIs covered by the shared rule; test original APK conversion. Abbaye's earlier engine `glStencilMask` stop is a separate path. |
 | Zombie Outbreak; YOU DON'T KNOW JACK | Implicit Google Analytics service bind | New service rule candidate; test original APK conversion. |
 | X S.E.E.D | Null Cursor cleanup in OUYA game data | New null-close rule candidate; original APK needed to confirm actual match. |
 | Zombie Driver HD | Absolute host NDK EGL dependency | New dependency rule candidate; original APK needed to confirm ELF layout. |
@@ -147,12 +163,15 @@ Generated ELF fixtures cover multiple layouts and Windows/Unix separators, publi
 basenames, idempotence/immutability, unchanged bytes outside dependency indices,
 near-matches, private imports, truncated bounds, aliases, alignment, metadata/BSS
 relocations, unsupported resolvers and packed layouts. SDK fixtures cover direct
-and high-register range calls in both SDK namespaces; recognized/unknown/null
+and high-register range start/bind calls in both SDK namespaces; recognized/unknown/null
 actions, explicit Intents, original Intent identity and extras, real bind results,
 missing provider and permission failures. Cursor fixtures exercise null/non-null
 cleanup, incoming branches and catch-all exception paths, and retained returns
 and purchase methods. Near-matches, collisions, malformed/duplicate/protected DEX,
 combined conversion, asset preservation and assessment routing are checked.
+Start tests also cover actual ComponentName/null identity, background-start
+exceptions, no/unique/multiple/invalid registry matches, matching-helper
+idempotence and start-before-bind ordering. Foreground-service APIs are excluded.
 
 Generated fixtures and bounded semantics models are not ART or phone execution.
 The six newly targeted affected APKs were not supplied and remain unverified.

@@ -5,6 +5,7 @@ public final class PurchaseProfileTests {
         io.github.hozdogus.pocketouya.LegacyOuyaInputTest.main(new String[0]);
         io.github.hozdogus.pocketouya.AirLoaderDiagnosticsTest.main(new String[0]);
         io.github.hozdogus.pocketouya.PlatformCrashRulesTest.main(new String[0]);
+        io.github.hozdogus.pocketouya.LegacyServiceStartTest.main(new String[0]);
         io.github.hozdogus.pocketouya.SharedCompatibilityRulesTest.main(new String[0]);
         io.github.hozdogus.pocketouya.NativeRuntimeRepairTest.main(new String[0]);
         io.github.hozdogus.pocketouya.MarmaladeRuntimeRepairTest.main(new String[0]);

@@ -17,8 +17,9 @@ import org.jf.dexlib2.writer.pool.DexPool;
 public final class LegacySdkCrashRules {
     public static final String SERVICE_ID="android.legacy-sdk.explicit-service",CURSOR_ID="ouya.game-data.null-cursor-close";
     public static final String MOGA_ACTION="com.bda.controller.IControllerService",ANALYTICS_ACTION="com.google.android.gms.analytics.service.START";
-    private static final String HELPER="pocketouyaBindLegacyService",CONTEXT="Landroid/content/Context;",INTENT="Landroid/content/Intent;",CONNECTION="Landroid/content/ServiceConnection;",STRING="Ljava/lang/String;";
+    private static final String HELPER="pocketouyaBindLegacyService",START_HELPER="pocketouyaStartLegacyService",CONTEXT="Landroid/content/Context;",INTENT="Landroid/content/Intent;",CONNECTION="Landroid/content/ServiceConnection;",STRING="Ljava/lang/String;",COMPONENT="Landroid/content/ComponentName;";
     private static final List<String> BIND_PARAMS=List.of(INTENT,CONNECTION,"I"),HELPER_PARAMS=List.of(CONTEXT,INTENT,CONNECTION,"I");
+    private static final List<String> START_PARAMS=List.of(INTENT),START_HELPER_PARAMS=List.of(CONTEXT,INTENT);
     private static final Set<String> RECEIVERS=Set.of(CONTEXT,"Landroid/content/ContextWrapper;","Landroid/app/Activity;","Landroid/app/Application;");
     private static final class Unverified extends RuntimeException {Unverified(String reason){super(reason);}}
     public static final class Finding {
@@ -37,6 +38,10 @@ public final class LegacySdkCrashRules {
         MethodReference r=ref(i);return r!=null&&RECEIVERS.contains(r.getDefiningClass())&&r.getName().equals("bindService")&&r.getParameterTypes().equals(BIND_PARAMS)&&r.getReturnType().equals("Z")
             &&((i.getOpcode()==Opcode.INVOKE_VIRTUAL&&((FiveRegisterInstruction)i).getRegisterCount()==4)||(i.getOpcode()==Opcode.INVOKE_VIRTUAL_RANGE&&((RegisterRangeInstruction)i).getRegisterCount()==4));
     }
+    private static boolean start(Instruction i){
+        MethodReference r=ref(i);return r!=null&&RECEIVERS.contains(r.getDefiningClass())&&r.getName().equals("startService")&&r.getParameterTypes().equals(START_PARAMS)&&r.getReturnType().equals(COMPONENT)
+            &&((i.getOpcode()==Opcode.INVOKE_VIRTUAL&&((FiveRegisterInstruction)i).getRegisterCount()==2)||(i.getOpcode()==Opcode.INVOKE_VIRTUAL_RANGE&&((RegisterRangeInstruction)i).getRegisterCount()==2));
+    }
     private static int cursor(Instruction i){
         MethodReference r=ref(i);if(r==null||!r.getDefiningClass().equals("Landroid/database/Cursor;")||!r.getName().equals("close")||!r.getParameterTypes().isEmpty()||!r.getReturnType().equals("V"))return -1;
         if(i.getOpcode()==Opcode.INVOKE_INTERFACE&&((FiveRegisterInstruction)i).getRegisterCount()==1)return ((FiveRegisterInstruction)i).getRegisterC();
@@ -48,29 +53,46 @@ public final class LegacySdkCrashRules {
         int[] r=new int[5];System.arraycopy(regs,0,r,0,regs.length);b.addInstruction(new BuilderInstruction35c(opcode,regs.length,r[0],r[1],r[2],r[3],r[4],method(owner,name,params,returns)));
     }
     private static void string(MethodImplementationBuilder b,int reg,String text){b.addInstruction(new BuilderInstruction21c(Opcode.CONST_STRING,reg,new ImmutableStringReference(text)));}
-    private static Method helper(String owner){
-        MethodImplementationBuilder b=new MethodImplementationBuilder(7);
+    private static Method helper(String owner,boolean start){
+        MethodImplementationBuilder b=new MethodImplementationBuilder(start?5:7);
         b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,3,b.getLabel("bind")));b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,4,b.getLabel("bind")));
         invoke(b,Opcode.INVOKE_VIRTUAL,INTENT,"getComponent",List.of(),"Landroid/content/ComponentName;",4);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));b.addInstruction(new BuilderInstruction21t(Opcode.IF_NEZ,0,b.getLabel("bind")));
         invoke(b,Opcode.INVOKE_VIRTUAL,INTENT,"getPackage",List.of(),STRING,4);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));b.addInstruction(new BuilderInstruction21t(Opcode.IF_NEZ,0,b.getLabel("bind")));
         invoke(b,Opcode.INVOKE_VIRTUAL,INTENT,"getAction",List.of(),STRING,4);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));
         string(b,1,MOGA_ACTION);invoke(b,Opcode.INVOKE_VIRTUAL,STRING,"equals",List.of("Ljava/lang/Object;"),"Z",1,0);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT,2));b.addInstruction(new BuilderInstruction21t(Opcode.IF_NEZ,2,b.getLabel("moga")));
         string(b,1,ANALYTICS_ACTION);invoke(b,Opcode.INVOKE_VIRTUAL,STRING,"equals",List.of("Ljava/lang/Object;"),"Z",1,0);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT,2));b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,2,b.getLabel("bind")));
-        string(b,1,"com.google.android.gms");b.addInstruction(new BuilderInstruction10t(Opcode.GOTO,b.getLabel("clone")));
-        b.addLabel("moga");string(b,1,"com.bda.controller");
-        b.addLabel("clone");b.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE,0,new ImmutableTypeReference(INTENT)));invoke(b,Opcode.INVOKE_DIRECT,INTENT,"<init>",List.of(INTENT),"V",0,4);
+        string(b,1,"com.google.android.gms");
+        b.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE,0,new ImmutableTypeReference(INTENT)));invoke(b,Opcode.INVOKE_DIRECT,INTENT,"<init>",List.of(INTENT),"V",0,4);
         invoke(b,Opcode.INVOKE_VIRTUAL,INTENT,"setPackage",List.of(STRING),INTENT,0,1);b.addInstruction(new BuilderInstruction12x(Opcode.MOVE_OBJECT,4,0));
-        b.addLabel("bind");invoke(b,Opcode.INVOKE_VIRTUAL,CONTEXT,"bindService",BIND_PARAMS,"Z",3,4,5,6);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT,0));b.addInstruction(new BuilderInstruction11x(Opcode.RETURN,0));
-        return new ImmutableMethod(owner,HELPER,List.of(new ImmutableMethodParameter(CONTEXT,Set.of(),null),new ImmutableMethodParameter(INTENT,Set.of(),null),new ImmutableMethodParameter(CONNECTION,Set.of(),null),new ImmutableMethodParameter("I",Set.of(),null)),"Z",0x100a,Set.of(),Set.of(),b.getMethodImplementation());
+        b.addInstruction(new BuilderInstruction20t(Opcode.GOTO_16,b.getLabel("bind")));
+        b.addLabel("moga");
+        invoke(b,Opcode.INVOKE_VIRTUAL,CONTEXT,"getPackageManager",List.of(),"Landroid/content/pm/PackageManager;",3);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));
+        b.addInstruction(new BuilderInstruction11n(Opcode.CONST_4,1,0));invoke(b,Opcode.INVOKE_VIRTUAL,"Landroid/content/pm/PackageManager;","queryIntentServices",List.of(INTENT,"I"),"Ljava/util/List;",0,4,1);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));
+        b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,0,b.getLabel("unavailable")));invoke(b,Opcode.INVOKE_INTERFACE,"Ljava/util/List;","size",List.of(),"I",0);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT,1));
+        b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,1,b.getLabel("unavailable")));b.addInstruction(new BuilderInstruction11n(Opcode.CONST_4,2,1));b.addInstruction(new BuilderInstruction22t(Opcode.IF_NE,1,2,b.getLabel("invalid")));
+        b.addInstruction(new BuilderInstruction11n(Opcode.CONST_4,1,0));invoke(b,Opcode.INVOKE_INTERFACE,"Ljava/util/List;","get",List.of("I"),"Ljava/lang/Object;",0,1);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));
+        b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,0,b.getLabel("invalid")));b.addInstruction(new BuilderInstruction21c(Opcode.CHECK_CAST,0,new ImmutableTypeReference("Landroid/content/pm/ResolveInfo;")));
+        b.addInstruction(new BuilderInstruction22c(Opcode.IGET_OBJECT,0,0,new ImmutableFieldReference("Landroid/content/pm/ResolveInfo;","serviceInfo","Landroid/content/pm/ServiceInfo;")));b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,0,b.getLabel("invalid")));
+        b.addInstruction(new BuilderInstruction22c(Opcode.IGET_OBJECT,1,0,new ImmutableFieldReference("Landroid/content/pm/PackageItemInfo;","packageName",STRING)));b.addInstruction(new BuilderInstruction22c(Opcode.IGET_OBJECT,2,0,new ImmutableFieldReference("Landroid/content/pm/PackageItemInfo;","name",STRING)));
+        b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,1,b.getLabel("invalid")));b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ,2,b.getLabel("invalid")));
+        b.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE,0,new ImmutableTypeReference(INTENT)));invoke(b,Opcode.INVOKE_DIRECT,INTENT,"<init>",List.of(INTENT),"V",0,4);invoke(b,Opcode.INVOKE_VIRTUAL,INTENT,"setClassName",List.of(STRING,STRING),INTENT,0,1,2);b.addInstruction(new BuilderInstruction12x(Opcode.MOVE_OBJECT,4,0));b.addInstruction(new BuilderInstruction20t(Opcode.GOTO_16,b.getLabel("bind")));
+        b.addLabel("invalid");b.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE,0,new ImmutableTypeReference("Ljava/lang/IllegalArgumentException;")));string(b,1,"Ambiguous or invalid MOGA service metadata");invoke(b,Opcode.INVOKE_DIRECT,"Ljava/lang/IllegalArgumentException;","<init>",List.of(STRING),"V",0,1);b.addInstruction(new BuilderInstruction11x(Opcode.THROW,0));
+        b.addLabel("unavailable");b.addInstruction(new BuilderInstruction11n(Opcode.CONST_4,0,0));b.addInstruction(new BuilderInstruction11x(start?Opcode.RETURN_OBJECT:Opcode.RETURN,0));
+        b.addLabel("bind");
+        if(start){invoke(b,Opcode.INVOKE_VIRTUAL,CONTEXT,"startService",START_PARAMS,COMPONENT,3,4);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));b.addInstruction(new BuilderInstruction11x(Opcode.RETURN_OBJECT,0));}
+        else {invoke(b,Opcode.INVOKE_VIRTUAL,CONTEXT,"bindService",BIND_PARAMS,"Z",3,4,5,6);b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT,0));b.addInstruction(new BuilderInstruction11x(Opcode.RETURN,0));}
+        List<ImmutableMethodParameter> params=new ArrayList<>();for(String type:start?START_HELPER_PARAMS:HELPER_PARAMS)params.add(new ImmutableMethodParameter(type,Set.of(),null));
+        return new ImmutableMethod(owner,start?START_HELPER:HELPER,params,start?COMPONENT:"Z",0x100a,Set.of(),Set.of(),b.getMethodImplementation());
     }
     private static String instructionKey(Instruction i){
         StringBuilder s=new StringBuilder(i.getOpcode().name()).append('/').append(i.getCodeUnits());
         if(i instanceof OneRegisterInstruction)s.append(" a").append(((OneRegisterInstruction)i).getRegisterA());if(i instanceof TwoRegisterInstruction)s.append(" b").append(((TwoRegisterInstruction)i).getRegisterB());
         if(i instanceof FiveRegisterInstruction){var r=(FiveRegisterInstruction)i;int[] args={r.getRegisterC(),r.getRegisterD(),r.getRegisterE(),r.getRegisterF(),r.getRegisterG()};s.append(" args");for(int n=0;n<r.getRegisterCount();n++)s.append('/').append(args[n]);}
-        if(i instanceof OffsetInstruction)s.append(" off").append(((OffsetInstruction)i).getCodeOffset());if(i instanceof ReferenceInstruction)s.append(" ref").append(((ReferenceInstruction)i).getReference());return s.toString();
+        if(i instanceof OffsetInstruction)s.append(" off").append(((OffsetInstruction)i).getCodeOffset());if(i instanceof ReferenceInstruction)s.append(" ref").append(((ReferenceInstruction)i).getReference());
+        if(i instanceof NarrowLiteralInstruction)s.append(" literal").append(((NarrowLiteralInstruction)i).getNarrowLiteral());else if(i instanceof WideLiteralInstruction)s.append(" literal").append(((WideLiteralInstruction)i).getWideLiteral());return s.toString();
     }
-    private static boolean helperValid(Method m,String owner){
-        Method expected=helper(owner);if(!m.getParameterTypes().equals(HELPER_PARAMS)||!m.getReturnType().equals("Z")||m.getAccessFlags()!=0x100a||m.getImplementation()==null||m.getImplementation().getRegisterCount()!=7||!m.getImplementation().getTryBlocks().isEmpty())return false;
+    private static boolean helperValid(Method m,String owner,boolean start){
+        Method expected=helper(owner,start);if(!m.getParameterTypes().equals(start?START_HELPER_PARAMS:HELPER_PARAMS)||!m.getReturnType().equals(start?COMPONENT:"Z")||m.getAccessFlags()!=0x100a||m.getImplementation()==null||m.getImplementation().getRegisterCount()!=(start?5:7)||!m.getImplementation().getTryBlocks().isEmpty())return false;
         List<Instruction> a=code(m),b=code(expected);if(a.size()!=b.size())return false;for(int n=0;n<a.size();n++)if(!instructionKey(a.get(n)).equals(instructionKey(b.get(n))))return false;return true;
     }
     private static boolean guarded(List<Instruction> c,int n,int reg){
@@ -94,31 +116,39 @@ public final class LegacySdkCrashRules {
                 }
             }
             parsed=true;
-            int serviceCount=0,cursorCount=0;boolean already=false;
+            int serviceCount=0,startCount=0,cursorCount=0;boolean already=false;
             for(var file:files.entrySet()){
                 DexPool pool=new DexPool(file.getValue().getOpcodes());boolean changed=false;
                 for(ClassDef c:file.getValue().getClasses()){
                     boolean service=sdk(c.getType()),facade=c.getType().equals("Ltv/ouya/console/api/OuyaFacade;");if(!service&&!facade){pool.internClass(c);continue;}
                     if(AccessFlags.INTERFACE.isSet(c.getAccessFlags())){result.findings.add(new Finding(CompatibilityEvidence.Status.UNKNOWN,SERVICE_ID,"SDK interface layout; class retained"));pool.internClass(c);continue;}
-                    Method existing=null;boolean collision=false;for(Method m:c.getMethods())if(m.getName().equals(HELPER)){if(existing!=null)collision=true;existing=m;}
-                    if(existing!=null&&!helperValid(existing,c.getType()))collision=true;
+                    Method existing=null,existingStart=null;boolean collision=false;for(Method m:c.getMethods()){
+                        if(m.getName().equals(HELPER)){if(existing!=null)collision=true;existing=m;}
+                        if(m.getName().equals(START_HELPER)){if(existingStart!=null)collision=true;existingStart=m;}
+                    }
+                    if(existing!=null&&!helperValid(existing,c.getType(),false)||existingStart!=null&&!helperValid(existingStart,c.getType(),true))collision=true;
                     if(collision){result.findings.add(new Finding(CompatibilityEvidence.Status.UNKNOWN,SERVICE_ID,c.getType()+": helper collision; class retained"));service=false;}
-                    if(existing!=null&&!collision)already=true;
-                    List<Method> methods=new ArrayList<>();boolean classChanged=false,addHelper=false;
+                    if((existing!=null||existingStart!=null)&&!collision)already=true;
+                    List<Method> methods=new ArrayList<>();boolean classChanged=false,addHelper=false,addStart=false;
                     for(Method m:c.getMethods()){
-                        if(m.getName().equals(HELPER)||m.getImplementation()==null){methods.add(m);continue;}
-                        List<Instruction> instructions=code(m);List<Integer> binds=new ArrayList<>(),closes=new ArrayList<>();boolean unsafeCursor=false;
+                        if(m.getName().equals(HELPER)||m.getName().equals(START_HELPER)||m.getImplementation()==null){methods.add(m);continue;}
+                        List<Instruction> instructions=code(m);List<Integer> binds=new ArrayList<>(),starts=new ArrayList<>(),closes=new ArrayList<>();boolean unsafeCursor=false;
                         for(int n=0;n<instructions.size();n++){
                             Instruction i=instructions.get(n);if(service&&bind(i))binds.add(n);
+                            if(service&&start(i))starts.add(n);
                             int reg=facade&&gameData(m)?cursor(i):-1;if(reg>=0){if(guarded(instructions,n,reg))already=true;else if(reg>255||n+1>=instructions.size()||instructions.get(n+1).getOpcode()==Opcode.MOVE_EXCEPTION)unsafeCursor=true;else closes.add(n);}
                         }
                         if(unsafeCursor){closes.clear();result.findings.add(new Finding(CompatibilityEvidence.Status.UNKNOWN,CURSOR_ID,"Unsupported cursor register/continuation; method retained"));}
-                        serviceCount+=binds.size();cursorCount+=closes.size();
-                        if(!apply||binds.isEmpty()&&closes.isEmpty()){methods.add(m);continue;}
+                        serviceCount+=binds.size();startCount+=starts.size();cursorCount+=closes.size();
+                        if(!apply||binds.isEmpty()&&starts.isEmpty()&&closes.isEmpty()){methods.add(m);continue;}
                         MutableMethodImplementation body=new MutableMethodImplementation(m.getImplementation());
                         for(int n:binds){Instruction i=instructions.get(n);var helper=method(c.getType(),HELPER,HELPER_PARAMS,"Z");
                             if(i.getOpcode()==Opcode.INVOKE_VIRTUAL){var r=(FiveRegisterInstruction)i;body.replaceInstruction(n,new BuilderInstruction35c(Opcode.INVOKE_STATIC,4,r.getRegisterC(),r.getRegisterD(),r.getRegisterE(),r.getRegisterF(),0,helper));}
                             else {var r=(RegisterRangeInstruction)i;body.replaceInstruction(n,new BuilderInstruction3rc(Opcode.INVOKE_STATIC_RANGE,r.getStartRegister(),4,helper));}addHelper=existing==null;
+                        }
+                        for(int n:starts){Instruction i=instructions.get(n);var helper=method(c.getType(),START_HELPER,START_HELPER_PARAMS,COMPONENT);
+                            if(i.getOpcode()==Opcode.INVOKE_VIRTUAL){var r=(FiveRegisterInstruction)i;body.replaceInstruction(n,new BuilderInstruction35c(Opcode.INVOKE_STATIC,2,r.getRegisterC(),r.getRegisterD(),0,0,0,helper));}
+                            else {var r=(RegisterRangeInstruction)i;body.replaceInstruction(n,new BuilderInstruction3rc(Opcode.INVOKE_STATIC_RANGE,r.getStartRegister(),2,helper));}addStart=existingStart==null;
                         }
                         for(int k=closes.size()-1;k>=0;k--){
                             int n=closes.get(k);Label next=body.newLabelForIndex(n+1);MethodLocation original=body.getInstructions().get(n).getLocation();
@@ -130,7 +160,7 @@ public final class LegacySdkCrashRules {
                         }
                         methods.add(copy(m,body));classChanged=true;
                     }
-                    if(classChanged){if(addHelper)methods.add(helper(c.getType()));pool.internClass(new ImmutableClassDef(c.getType(),c.getAccessFlags(),c.getSuperclass(),c.getInterfaces(),c.getSourceFile(),c.getAnnotations(),c.getFields(),methods));changed=true;}else pool.internClass(c);
+                    if(classChanged){if(addHelper)methods.add(helper(c.getType(),false));if(addStart)methods.add(helper(c.getType(),true));pool.internClass(new ImmutableClassDef(c.getType(),c.getAccessFlags(),c.getSuperclass(),c.getInterfaces(),c.getSourceFile(),c.getAnnotations(),c.getFields(),methods));changed=true;}else pool.internClass(c);
                 }
                 if(apply&&changed){MemoryDataStore out=new MemoryDataStore();pool.writeTo(out);result.replacements.put(file.getKey(),out.getData());}
             }
@@ -139,9 +169,9 @@ public final class LegacySdkCrashRules {
                 if(checked.supported()||checked.findings.stream().anyMatch(f->f.status==CompatibilityEvidence.Status.MALFORMED||f.status==CompatibilityEvidence.Status.UNSUPPORTED||f.status==CompatibilityEvidence.Status.UNKNOWN))throw new Unverified("Serialized rule postcondition failed");
             }
             var status=apply?CompatibilityEvidence.Status.VERIFIED:CompatibilityEvidence.Status.SUPPORTED;
-            if(serviceCount>0)result.findings.add(new Finding(status,SERVICE_ID,serviceCount+" legacy MOGA/Analytics Context.bindService sites; only the two known implicit SDK actions receive their provider package on an Intent copy. Explicit/unknown actions, flags, connections, bind results and permission errors retain platform behavior. No service success is fabricated; phone startup unverified."));
+            if(serviceCount+startCount>0)result.findings.add(new Finding(status,SERVICE_ID,serviceCount+" bindService and "+startCount+" startService sites in legacy MOGA/Analytics SDKs. Implicit MOGA resolves a unique visible Android service component on an Intent copy; absent provider returns unavailable, ambiguous/invalid matches reject. Analytics scopes its implicit action to Google Play services. Explicit/unknown/null inputs, flags, connections, actual Boolean/ComponentName/null results and platform exceptions are retained. No service success is fabricated; phone startup unverified."));
             if(cursorCount>0)result.findings.add(new Finding(status,CURSOR_ID,cursorCount+" Cursor.close calls in OUYA getGameData(String) guarded only for null. Non-null cleanup, original query/data/exception paths and purchase methods retained; absent provider/data is not fabricated. Phone startup unverified."));
-            if(serviceCount+cursorCount==0&&result.findings.isEmpty())result.findings.add(new Finding(CompatibilityEvidence.Status.SKIPPED,SERVICE_ID,already?"Existing supported SDK guards; no new edits":"No supported SDK call sites"));
+            if(serviceCount+startCount+cursorCount==0&&result.findings.isEmpty())result.findings.add(new Finding(CompatibilityEvidence.Status.SKIPPED,SERVICE_ID,already?"Existing supported SDK guards; no new edits":"No supported SDK call sites"));
         }catch(Exception bad){result.replacements.clear();result.findings.clear();result.findings.add(new Finding(bad instanceof UnsupportedOperationException?CompatibilityEvidence.Status.UNSUPPORTED:bad instanceof Unverified||parsed?CompatibilityEvidence.Status.UNKNOWN:CompatibilityEvidence.Status.MALFORMED,SERVICE_ID,bad.getMessage()+"; original DEX retained"));}
         return result;
     }
