@@ -60,6 +60,9 @@ public final class SharedCompatibilityRepairs {
             if(apply){plan.replacements.putAll(ids.replacements);diagnosticInput.putAll(ids.replacements);}
             CallGuardRules.Result guards=apply?CallGuardRules.repair(diagnosticInput):CallGuardRules.inspect(diagnosticInput);
             report.append(guards.report());if(apply){plan.replacements.putAll(guards.replacements);diagnosticInput.putAll(guards.replacements);}
+            OuyaStoreOfflineRule.Result store=apply?OuyaStoreOfflineRule.repair(diagnosticInput):OuyaStoreOfflineRule.inspect(diagnosticInput);
+            if(store.status!=CompatibilityEvidence.Status.SKIPPED)report.append(store.status).append(' ').append(OuyaStoreOfflineRule.ID).append(": ").append(store.reason).append('\n');
+            if(apply){plan.replacements.putAll(store.replacements);diagnosticInput.putAll(store.replacements);}
             AirLoaderDiagnosticsRule.Result air=apply?AirLoaderDiagnosticsRule.repair(diagnosticInput):AirLoaderDiagnosticsRule.inspect(diagnosticInput);
             if(air.status!=CompatibilityEvidence.Status.SKIPPED)report.append(air.status).append(' ').append(AirLoaderDiagnosticsRule.ID).append(": ").append(air.reason).append('\n');
             if(apply)plan.replacements.putAll(air.replacements);

@@ -128,6 +128,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/StubLibraryWriter.java',
             'src/main/java/io/github/hozdogus/pocketouya/PrivateLibraryStubs.java',
             'src/main/java/io/github/hozdogus/pocketouya/UnityEmbeddedRuntimePromotion.java',
+            'src/main/java/io/github/hozdogus/pocketouya/OuyaStoreOfflineRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/DetectedFinalizerRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/SharedCompatibilityRepairs.java',
             'src/main/java/io/github/hozdogus/pocketouya/ExperimentalUnityRuntimeRepair.java',
