@@ -17,24 +17,18 @@ public final class ApkRebuilder {
     private ApkRebuilder() {}
 
     /** All app install/export preparation paths request controls; low-level APIs remain explicit. */
-    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean offline,boolean runtimeRepair,boolean experimental,int minimumTarget)throws IOException {
-        if(experimental&&(offline||runtimeRepair))throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup/purchase repairs");
-        return rebuild(in,out,bridge,true,offline,runtimeRepair,minimumTarget,experimental);
+    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget)throws IOException {
+        if(experimental&&runtimeRepair)throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup repairs");
+        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental);
     }
     public static ManifestPatcher.Result rebuild(File in, File out) throws IOException {
         return rebuild(in,out,null,false,false);
     }
-    public static ManifestPatcher.Result rebuild(File in, File out, byte[] bridge) throws IOException {
-        return rebuild(in,out,bridge,bridge!=null,bridge!=null);
+    public static ManifestPatcher.Result rebuild(File in, File out, byte[] bridge, boolean touch, boolean runtimeRepair) throws IOException {
+        return rebuild(in,out,bridge,touch,runtimeRepair,ManifestPatcher.MIN_TARGET);
     }
-    public static ManifestPatcher.Result rebuild(File in, File out, byte[] bridge, boolean touch, boolean offline) throws IOException {
-        return rebuild(in,out,bridge,touch,offline,false);
-    }
-    public static ManifestPatcher.Result rebuild(File in, File out, byte[] bridge, boolean touch, boolean offline, boolean runtimeRepair) throws IOException {
-        return rebuild(in,out,bridge,touch,offline,runtimeRepair,ManifestPatcher.MIN_TARGET);
-    }
-    public static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,int minimumTarget)throws IOException {
-        return rebuild(in,out,bridge,touch,offline,runtimeRepair,minimumTarget,false);
+    public static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget)throws IOException {
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,false);
     }
     public static ManifestPatcher.Result rebuildExperimental(File in,File out)throws IOException {
         return rebuildExperimental(in,out,ManifestPatcher.MIN_TARGET);
@@ -42,11 +36,11 @@ public final class ApkRebuilder {
     public static ManifestPatcher.Result rebuildExperimental(File in,File out,int minimumTarget)throws IOException {
         return rebuildExperimental(in,out,null,false,minimumTarget);
     }
-    /** Explicit experiment with optional existing touch bridge; purchases remain off. */
+    /** Explicit experiment with optional existing touch bridge. */
     public static ManifestPatcher.Result rebuildExperimental(File in,File out,byte[] bridge,boolean touch,int minimumTarget)throws IOException {
-        return rebuild(in,out,bridge,touch,false,false,minimumTarget,true);
+        return rebuild(in,out,bridge,touch,false,minimumTarget,true);
     }
-    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean offline,boolean runtimeRepair,int minimumTarget,boolean experimental)throws IOException {
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental)throws IOException {
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
             if(manifestEntry==null)throw new IOException("Not an Android app (no AndroidManifest.xml).");
@@ -70,7 +64,7 @@ public final class ApkRebuilder {
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);
             boolean appendBridge=false;int nextDex=2;
-            if(touch||offline){
+            if(touch){
                 if(bridge==null||bridge.length==0)throw new IOException("Converter compatibility bridge is missing");
                 java.util.Map<String,byte[]> input=new java.util.LinkedHashMap<>();long total=0;
                 Enumeration<? extends ZipEntry> entries=zip.entries();
@@ -85,7 +79,7 @@ public final class ApkRebuilder {
                     nextDex=Math.max(nextDex,number+1);
                 }
                 if(!input.containsKey("classes.dex"))throw new IOException("Missing primary DEX; compatibility cannot be inspected");
-                GameCompatibilityPatcher.Result plan=GameCompatibilityPatcher.patch(input,result.launcherActivities,touch,offline);
+                GameCompatibilityPatcher.Result plan=GameCompatibilityPatcher.patch(input,result.launcherActivities,touch);
                 replacements.putAll(plan.dex);appendBridge=plan.needsBridge();result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+plan.report;
             }
             if(!nativeWarnings.isEmpty())result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+nativeWarnings;
@@ -108,7 +102,7 @@ public final class ApkRebuilder {
                     output.closeEntry();
                 }
                 if(appendBridge){output.putNextEntry(new ZipEntry("classes"+nextDex+".dex"));output.write(bridge);output.closeEntry();}
-                output.putNextEntry(new ZipEntry(ConversionRecord.ENTRY));output.write(ConversionRecord.build(runtimeRepair,touch,offline,experimental,result.compatibilityReport));output.closeEntry();
+                output.putNextEntry(new ZipEntry(ConversionRecord.ENTRY));output.write(ConversionRecord.build(runtimeRepair,touch,experimental,result.compatibilityReport));output.closeEntry();
             }
             return result;
         }catch(NumberFormatException e){throw new IOException("Unsupported DEX filename",e);}

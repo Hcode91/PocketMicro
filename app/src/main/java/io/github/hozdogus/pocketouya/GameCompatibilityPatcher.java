@@ -17,20 +17,12 @@ import org.jf.dexlib2.writer.pool.DexPool;
 /** Best-effort API matching across APKs. No title IDs, receipt invention for unknown protocols, or silent success. */
 public final class GameCompatibilityPatcher {
     private static final String BRIDGE="Lio/github/hcode91/pocketouya/bridge/";
-    private static final String PLUGIN="Ltv/ouya/sdk/OuyaUnityPlugin;";
     private static final Set<String> ACTIVITY_BASES=new HashSet<>(Arrays.asList("Landroid/app/Activity;","Landroid/app/NativeActivity;","Landroid/app/ListActivity;","Landroid/app/TabActivity;","Landroid/app/ActivityGroup;","Landroid/preference/PreferenceActivity;","Landroid/app/ExpandableListActivity;"));
-    private static final Map<String,String> PURCHASES=new LinkedHashMap<>();
-    private static final Set<String> CALLBACKS=new HashSet<>(Arrays.asList("OuyaGameObject","ProductListClearListener","ProductListListener","ProductListCompleteListener","ReceiptListClearListener","ReceiptListListener","ReceiptListCompleteListener","PurchaseSuccessListener","FetchGamerInfoSuccessListener"));
-    static {
-        PURCHASES.put("addGetProduct","(Ljava/lang/String;)V");PURCHASES.put("clearGetProductList","()V");
-        PURCHASES.put("getProductsAsync","()V");PURCHASES.put("getReceiptsAsync","()V");
-        PURCHASES.put("fetchGamerInfo","()V");PURCHASES.put("requestPurchaseAsync","(Ljava/lang/String;)Ljava/lang/String;");
-    }
     public static final class Result {
         public final Map<String,byte[]> dex = new LinkedHashMap<>();
-        public boolean touchEnabled,purchasesEnabled;
+        public boolean touchEnabled;
         public String report;
-        public boolean needsBridge(){return touchEnabled||purchasesEnabled;}
+        public boolean needsBridge(){return touchEnabled;}
     }
     private GameCompatibilityPatcher(){}
     private static String signature(Method m){return "("+String.join("",m.getParameterTypes())+")"+m.getReturnType();}
@@ -108,20 +100,6 @@ public final class GameCompatibilityPatcher {
             &&callback(method(cls,"onKeyDown","(ILandroid/view/KeyEvent;)Z"),owner,input,"onKeyDown")&&callback(method(cls,"onKeyUp","(ILandroid/view/KeyEvent;)Z"),owner,input,"onKeyUp")
             &&callback(method(cls,"onGenericMotionEvent","(Landroid/view/MotionEvent;)Z"),owner,input,"onGenericMotionEvent")&&callback(method(cls,"sendDevices","()V"),owner,"Ljava/util/ArrayList;","onSetDevices");
     }
-    private static boolean purchases(Map<String,ClassDef> classes){
-        ClassDef plugin=classes.get(PLUGIN),unity=classes.get("Lcom/unity3d/player/UnityPlayer;");
-        if(plugin==null||unity==null)return false;
-        boolean activityField=false;for(Field f:unity.getFields())if(f.getName().equals("currentActivity")&&f.getType().equals("Landroid/app/Activity;")&&AccessFlags.PUBLIC.isSet(f.getAccessFlags())&&AccessFlags.STATIC.isSet(f.getAccessFlags()))activityField=true;
-        Method send=method(unity,"UnitySendMessage","(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-        if(!activityField||send==null||!AccessFlags.PUBLIC.isSet(send.getAccessFlags())||!AccessFlags.STATIC.isSet(send.getAccessFlags()))return false;
-        for(Map.Entry<String,String> entry:PURCHASES.entrySet()){
-            Method m=method(plugin,entry.getKey(),entry.getValue());
-            if(m==null||m.getImplementation()==null||!AccessFlags.STATIC.isSet(m.getAccessFlags())||!AccessFlags.PUBLIC.isSet(m.getAccessFlags()))return false;
-        }
-        Set<String> strings=new HashSet<>();
-        for(ClassDef cls:classes.values())if(cls.getType().startsWith("Ltv/ouya/sdk/UnityOuyaFacade"))for(Method m:cls.getMethods())if(m.getImplementation()!=null)for(Instruction i:m.getImplementation().getInstructions())if(i instanceof ReferenceInstruction&&((ReferenceInstruction)i).getReference() instanceof StringReference)strings.add(((StringReference)((ReferenceInstruction)i).getReference()).getString());
-        return strings.containsAll(CALLBACKS);
-    }
     private static boolean marmaladeRoute(ClassDef cls,Map<String,ClassDef> classes){
         String loader="Lcom/ideaworks3d/marmalade/LoaderActivity;";
         Method down=method(classes.get(loader),"onKeyDown","(ILandroid/view/KeyEvent;)Z"),up=method(classes.get(loader),"onKeyUp","(ILandroid/view/KeyEvent;)Z");
@@ -130,7 +108,7 @@ public final class GameCompatibilityPatcher {
         Set<String> seen=new HashSet<>();String type=cls.getType();
         while(type!=null&&seen.add(type)){if(type.equals(loader))return true;ClassDef parent=classes.get(type);if(parent==null)break;type=parent.getSuperclass();}return false;
     }
-    public static Result patch(Map<String,byte[]> input,Set<String> launchers,boolean touch,boolean offline)throws IOException {
+    public static Result patch(Map<String,byte[]> input,Set<String> launchers,boolean touch)throws IOException {
         try {
             Map<String,DexBackedDexFile> files=new LinkedHashMap<>();Map<String,ClassDef> classes=new HashMap<>();
             for(Map.Entry<String,byte[]> entry:input.entrySet()){
@@ -148,16 +126,15 @@ public final class GameCompatibilityPatcher {
                 for(Instruction instruction:m.getImplementation().getInstructions())
                     if(instruction instanceof org.jf.dexlib2.iface.instruction.formats.UnknownInstruction){
                         Result unsupported=new Result();
-                        unsupported.report="Conversion compatibility report\n\nTouch/purchase changes skipped: the original DEX contains unknown or reserved instructions ("+cls.getType()+" "+m.getName()+"). This may be legacy runtime protection or malformed bytecode. Rewriting it cannot be treated as ordinary DEX conversion. All original DEX bytes were preserved; no compatibility helper was added.\n\nNormal manifest/signing conversion does not repair this runtime or guarantee the game can launch on modern Android. A compatible original build or a separate runtime investigation is required.";
+                        unsupported.report="Conversion compatibility report\n\nTouch changes skipped: the original DEX contains unknown or reserved instructions ("+cls.getType()+" "+m.getName()+"). This may be legacy runtime protection or malformed bytecode. Rewriting it cannot be treated as ordinary DEX conversion. All original DEX bytes were preserved; no compatibility helper was added.\n\nNormal manifest/signing conversion does not repair this runtime or guarantee the game can launch on modern Android. A compatible original build or a separate runtime investigation is required.";
                         return unsupported;
                     }
             if(touch)for(String launcher:launchers)if(canHook(classes.get(launcher),classes)){targets.add(launcher);if(nativeRoute(classes.get(launcher),classes))nativeTargets++;else if(marmaladeRoute(classes.get(launcher),classes))marmaladeTargets++;else if(legacyJsonRoute(classes.get(launcher),classes))legacyTargets.add(launcher);}
-            Result result=new Result();result.touchEnabled=!targets.isEmpty();result.purchasesEnabled=offline&&purchases(classes);
+            Result result=new Result();result.touchEnabled=!targets.isEmpty();
             for(Map.Entry<String,DexBackedDexFile> file:files.entrySet()){
                 DexPool pool=new DexPool(file.getValue().getOpcodes());boolean changed=false;
                 for(ClassDef cls:file.getValue().getClasses()) {
                     if(targets.contains(cls.getType())){pool.internClass(hookActivity(cls,legacyTargets.contains(cls.getType())));changed=true;}
-                    else if(result.purchasesEnabled&&cls.getType().equals(PLUGIN)){pool.internClass(hookPurchases(cls));changed=true;}
                     else pool.internClass(cls);
                 }
                 if(changed){MemoryDataStore out=new MemoryDataStore();pool.writeTo(out);result.dex.put(file.getKey(),out.getData());}
@@ -171,8 +148,7 @@ public final class GameCompatibilityPatcher {
                 if(targets.size()>nativeTargets+marmaladeTargets+legacyTargets.size())report.append("Other input uses Android gamepad events, with a Keyboard option in the pad menu. Virtual events may be ignored by games that require a physical controller.\n");
                 if(targets.size()<launchers.size())report.append("Some launch activities could not be patched; controls may not appear on those screens.\n");
             }
-            if(offline)report.append(result.purchasesEnabled?"Offline purchases: matching OUYA Unity SDK detected; local receipt bridge enabled. No payment is made. Game-specific validation may still reject it.\n":"Offline purchases: no matching protocol found. Original purchase checks were left unchanged; no unlock is claimed.\n");
-            report.append("\nThis does not fix incompatible native engines, unavailable services, custom/native DRM or unrelated billing systems. Reconvert original APKs to update embedded compatibility code.");
+            report.append("\nThis does not fix incompatible native engines, unavailable services, custom/native DRM or billing systems. Reconvert original APKs to update embedded compatibility code.");
             result.report=report.toString();return result;
         }catch(IOException e){throw e;}catch(Exception e){throw new IOException("Cannot inspect this game's DEX layout. Try normal conversion.",e);}
     }
@@ -199,17 +175,5 @@ public final class GameCompatibilityPatcher {
         return copy(cls,methods);
     }
     private static Instruction touchCall(String method){return new ImmutableInstruction3rc(Opcode.INVOKE_STATIC_RANGE,0,1,new ImmutableMethodReference(BRIDGE+"TouchControls;",method,Collections.singletonList("Landroid/app/Activity;"),"V"));}
-    private static ClassDef hookPurchases(ClassDef cls){
-        List<Method> methods=new ArrayList<>();
-        for(Method m:cls.getMethods()){
-            if(!signature(m).equals(PURCHASES.get(m.getName()))){methods.add(m);continue;}
-            int count=m.getParameterTypes().size();List<Instruction> code=new ArrayList<>();
-            code.add(new ImmutableInstruction35c(Opcode.INVOKE_STATIC,count,0,0,0,0,0,new ImmutableMethodReference(BRIDGE+"OfflineOuya;",m.getName(),m.getParameterTypes(),m.getReturnType())));
-            boolean returned=!m.getReturnType().equals("V");
-            if(returned){code.add(new ImmutableInstruction11x(Opcode.MOVE_RESULT_OBJECT,0));code.add(new ImmutableInstruction11x(Opcode.RETURN_OBJECT,0));}else code.add(new ImmutableInstruction10x(Opcode.RETURN_VOID));
-            methods.add(new ImmutableMethod(cls.getType(),m.getName(),m.getParameters(),m.getReturnType(),m.getAccessFlags(),m.getAnnotations(),m.getHiddenApiRestrictions(),new ImmutableMethodImplementation(Math.max(count,returned?1:0),code,Collections.emptyList(),Collections.emptyList())));
-        }
-        return copy(cls,methods);
-    }
     private static ClassDef copy(ClassDef cls,List<Method> methods){return new ImmutableClassDef(cls.getType(),cls.getAccessFlags(),cls.getSuperclass(),cls.getInterfaces(),cls.getSourceFile(),cls.getAnnotations(),cls.getFields(),methods);}
 }

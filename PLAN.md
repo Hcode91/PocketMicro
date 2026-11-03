@@ -1,7 +1,12 @@
 # PocketOuya – plan & progress
 
-Goal: play Ouya games on a modern 64-bit-only Android phone (owner's device: Samsung Galaxy S23,
-Snapdragon 8 Gen 2, One UI 6+ → **no 32-bit app support**).
+Goal: play Ouya games on a modern Android phone (owner's device: Samsung Galaxy S23, Snapdragon 8 Gen 2).
+**Correction (2026-11-03):** launch logs show 32-bit (`lib/arm`) games starting on the S23, so the
+earlier "no 32-bit app support" assumption was wrong. Repairing APKs to run directly is the main route;
+the dynarmic engine is a fallback.
+
+**2026-11-03: offline purchase emulation removed** (patcher, bridge, UI, docs, tests). Games' own purchase
+checks are always left unchanged. Older progress entries below mention it historically.
 
 This file is the hand-off between sessions. **Read it first, update the Progress log last, push often.**
 

@@ -33,8 +33,30 @@ public final class GeneralCompatibilityTest {
   List<Method> natives=Arrays.asList(method(SDK,"dispatchKeyEventNative",params("I","I","I"),258,true,null),method(SDK,"dispatchGenericMotionEventNative",params("I","I","F"),258,true,null));
   String unity="Lcom/unity3d/player/UnityPlayer;";
   ClassDef player=new ImmutableClassDef(unity,1,"Landroid/widget/FrameLayout;",Collections.emptyList(),null,Collections.emptySet(),Collections.singletonList(new ImmutableField(unity,"currentActivity","Landroid/app/Activity;",9,null,Collections.emptySet(),Collections.emptySet())),Collections.singletonList(method(unity,"UnitySendMessage",params("Ljava/lang/String;","Ljava/lang/String;","Ljava/lang/String;"),9,false,Collections.singletonList(new ImmutableInstruction10x(Opcode.RETURN_VOID)))));
-  Map<String,byte[]> out=new LinkedHashMap<>();out.put("classes.dex",OuyaPurchasePatcherTest.fixture(missing));
+  Map<String,byte[]> out=new LinkedHashMap<>();out.put("classes.dex",fixture(missing));
   out.put("classes2.dex",dex(cls(LAUNCHER,SDK,Collections.emptyList()),cls(SDK,"Landroid/app/Activity;",natives),facade,player));return out;
+ }
+ // Game DEX that contains the OUYA Unity purchase plugin; conversion must leave it untouched.
+ static byte[] fixture(boolean missing)throws Exception{
+  List<Method> methods=new ArrayList<>();
+  for(String name:new String[]{"addGetProduct","clearGetProductList","getProductsAsync","getReceiptsAsync","fetchGamerInfo","requestPurchaseAsync","untouched"}){
+   if(missing && name.equals("fetchGamerInfo"))continue;
+   List<ImmutableMethodParameter> params=new ArrayList<>();boolean str=name.equals("requestPurchaseAsync"),arg=str||name.equals("addGetProduct");
+   if(arg)params.add(new ImmutableMethodParameter("Ljava/lang/String;",Collections.emptySet(),null));
+   List<Instruction> code=new ArrayList<>();
+   if(str){code.add(new ImmutableInstruction21c(Opcode.CONST_STRING,0,new ImmutableStringReference("original")));code.add(new ImmutableInstruction11x(Opcode.RETURN_OBJECT,0));}
+   else code.add(new ImmutableInstruction10x(Opcode.RETURN_VOID));
+   methods.add(new ImmutableMethod("Ltv/ouya/sdk/OuyaUnityPlugin;",name,params,str?"Ljava/lang/String;":"V",9,Collections.emptySet(),Collections.emptySet(),new ImmutableMethodImplementation(arg?1:0,code,Collections.emptyList(),Collections.emptyList())));
+  }
+  DexPool pool=new DexPool(Opcodes.forApi(23));
+  List<Method> lifecycle=new ArrayList<>();
+  for(String name:new String[]{"onResume","onPause"}) {
+   List<Instruction> instructions=Arrays.asList(new ImmutableInstruction10t(Opcode.GOTO,1),new ImmutableInstruction10x(Opcode.RETURN_VOID));
+   lifecycle.add(new ImmutableMethod("Lcom/juicybeast/KnightmareTower/MainActivity;",name,Collections.emptyList(),"V",1,Collections.emptySet(),Collections.emptySet(),new ImmutableMethodImplementation(1,instructions,Collections.emptyList(),Collections.emptyList())));
+  }
+  pool.internClass(new ImmutableClassDef("Lcom/juicybeast/KnightmareTower/MainActivity;",1,"Landroid/app/Activity;",Collections.emptyList(),null,Collections.emptySet(),Collections.emptyList(),lifecycle));
+  pool.internClass(new ImmutableClassDef("Ltv/ouya/sdk/OuyaUnityPlugin;",1,"Ljava/lang/Object;",Collections.emptyList(),null,Collections.emptySet(),Collections.emptyList(),methods));
+  MemoryDataStore out=new MemoryDataStore();pool.writeTo(out);return out.getData();
  }
  static int bridgeCalls(byte[] bytes,String typePrefix){int n=0;for(ClassDef c:new DexBackedDexFile(null,bytes).getClasses())for(Method m:c.getMethods())if(m.getImplementation()!=null)for(Instruction i:m.getImplementation().getInstructions())if(i instanceof ReferenceInstruction&&((ReferenceInstruction)i).getReference() instanceof MethodReference&&((MethodReference)((ReferenceInstruction)i).getReference()).getDefiningClass().startsWith(typePrefix))n++;return n;}
  static void lifecycle(byte[] bytes){
@@ -69,67 +91,65 @@ public final class GeneralCompatibilityTest {
  public static void main(String[] args)throws Exception{
   Set<String> launch=Collections.singleton(LAUNCHER);
   ManifestPatcher.Result parsed=ManifestPatcher.patch(manifest(false));check(parsed.packageName.equals("org.example"));check(parsed.launcherActivities.equals(launch));check(parsed.newTarget==23);check(ManifestPatcher.patch(manifest(true)).launcherActivities.equals(launch));
-  Map<String,byte[]> source=input(false,true);GameCompatibilityPatcher.Result both=GameCompatibilityPatcher.patch(source,launch,true,true);
-  check(both.touchEnabled&&both.purchasesEnabled&&both.dex.size()==2);check(both.report.contains("1 use the OUYA native"));
-  lifecycle(both.dex.get("classes2.dex"));check(bridgeCalls(both.dex.get("classes.dex"),"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==6);
-  GameCompatibilityPatcher.Result onlyTouch=GameCompatibilityPatcher.patch(source,launch,true,false);check(onlyTouch.touchEnabled&&!onlyTouch.purchasesEnabled&&!onlyTouch.dex.containsKey("classes.dex"));
-  GameCompatibilityPatcher.Result onlyPurchase=GameCompatibilityPatcher.patch(source,launch,false,true);check(!onlyPurchase.touchEnabled&&onlyPurchase.purchasesEnabled&&onlyPurchase.dex.size()==1);
-  for(boolean missing:new boolean[]{true,false}){GameCompatibilityPatcher.Result unsupported=GameCompatibilityPatcher.patch(input(missing,missing),launch,true,true);check(unsupported.touchEnabled&&!unsupported.purchasesEnabled);check(unsupported.report.contains("Original purchase checks were left unchanged"));}
-  GameCompatibilityPatcher.Result noLauncher=GameCompatibilityPatcher.patch(source,Collections.singleton("Lmissing/Activity;"),true,false);check(!noLauncher.needsBridge()&&noLauncher.dex.isEmpty());
+  Map<String,byte[]> source=input(false,true);GameCompatibilityPatcher.Result touch=GameCompatibilityPatcher.patch(source,launch,true);
+  check(touch.touchEnabled&&touch.dex.size()==1&&!touch.dex.containsKey("classes.dex"));check(touch.report.contains("1 use the OUYA native")&&!touch.report.toLowerCase().contains("purchase"));
+  lifecycle(touch.dex.get("classes2.dex"));
+  GameCompatibilityPatcher.Result off=GameCompatibilityPatcher.patch(source,launch,false);check(!off.touchEnabled&&off.dex.isEmpty());
+  GameCompatibilityPatcher.Result noLauncher=GameCompatibilityPatcher.patch(source,Collections.singleton("Lmissing/Activity;"),true);check(!noLauncher.needsBridge()&&noLauncher.dex.isEmpty());
   Map<String,byte[]> fallback=new LinkedHashMap<>();fallback.put("classes.dex",dex(cls(LAUNCHER,"Landroid/app/Activity;",Collections.emptyList())));
-  GameCompatibilityPatcher.Result generic=GameCompatibilityPatcher.patch(fallback,launch,true,true);check(generic.touchEnabled&&!generic.purchasesEnabled&&generic.report.contains("Android gamepad events"));
-  Map<String,byte[]> already=new LinkedHashMap<>(source);already.put("classes3.dex",dex(cls("Lio/github/hcode91/pocketouya/bridge/OfflineOuya;","Ljava/lang/Object;",Collections.emptyList())));
-  try{GameCompatibilityPatcher.patch(already,launch,true,true);throw new AssertionError("accepted reinjection");}catch(IOException expected){}
+  GameCompatibilityPatcher.Result generic=GameCompatibilityPatcher.patch(fallback,launch,true);check(generic.touchEnabled&&generic.report.contains("Android gamepad events"));
+  Map<String,byte[]> already=new LinkedHashMap<>(source);already.put("classes3.dex",dex(cls("Lio/github/hcode91/pocketouya/bridge/TouchControls;","Ljava/lang/Object;",Collections.emptyList())));
+  try{GameCompatibilityPatcher.patch(already,launch,true);throw new AssertionError("accepted reinjection");}catch(IOException expected){}
   ClassDef finalBase=cls("Lorg/example/Base;","Landroid/app/Activity;",Collections.singletonList(method("Lorg/example/Base;","onResume",params(),17,false,Collections.singletonList(new ImmutableInstruction10x(Opcode.RETURN_VOID)))));
   Map<String,byte[]> finals=new LinkedHashMap<>();finals.put("classes.dex",dex(finalBase,cls(LAUNCHER,"Lorg/example/Base;",Collections.emptyList())));
-  check(!GameCompatibilityPatcher.patch(finals,launch,true,false).touchEnabled);
+  check(!GameCompatibilityPatcher.patch(finals,launch,true).touchEnabled);
   byte[] packed=dex(cls("Lorg/example/LegacyWrapper;","Ljava/lang/Object;",Collections.singletonList(method("Lorg/example/LegacyWrapper;","probe",params(),9,false,Collections.singletonList(new ImmutableInstruction10x(Opcode.RETURN_VOID))))));
   // Reserved opcode in the input, not an instruction rewritten by the fixture writer.
   for(ClassDef c:new DexBackedDexFile(null,packed).getClasses())for(Method m:c.getMethods())for(Instruction i:m.getImplementation().getInstructions())packed[((org.jf.dexlib2.dexbacked.instruction.DexBackedInstruction)i).instructionStart]=0x3e;
   Map<String,byte[]> protectedSource=new LinkedHashMap<>(source);protectedSource.put("classes3.dex",packed);
-  GameCompatibilityPatcher.Result protectedResult=GameCompatibilityPatcher.patch(protectedSource,launch,true,true);
+  GameCompatibilityPatcher.Result protectedResult=GameCompatibilityPatcher.patch(protectedSource,launch,true);
   check(!protectedResult.needsBridge()&&protectedResult.dex.isEmpty()&&protectedResult.report.contains("reserved instructions"));
   String loader="Lcom/ideaworks3d/marmalade/LoaderActivity;",keyboard="Lcom/ideaworks3d/marmalade/LoaderKeyboard;";
   List<Method> callbacks=new ArrayList<>();for(String name:new String[]{"onKeyDown","onKeyUp"})callbacks.add(new ImmutableMethod(loader,name,params("I","Landroid/view/KeyEvent;"),"Z",1,Collections.emptySet(),Collections.emptySet(),new ImmutableMethodImplementation(3,Arrays.asList(new ImmutableInstruction11n(Opcode.CONST_4,0,0),new ImmutableInstruction11x(Opcode.RETURN,0)),Collections.emptyList(),Collections.emptyList())));
   Method nativeKey=new ImmutableMethod(keyboard,"onKeyEventNative",params("I","I","I"),"Z",258,Collections.emptySet(),Collections.emptySet(),null);
   Map<String,byte[]> marmalade=new LinkedHashMap<>();marmalade.put("classes.dex",dex(cls(LAUNCHER,loader,Collections.emptyList()),cls(loader,"Landroid/app/Activity;",callbacks),cls(keyboard,"Ljava/lang/Object;",Collections.singletonList(nativeKey))));
-  GameCompatibilityPatcher.Result directKeys=GameCompatibilityPatcher.patch(marmalade,launch,true,false);
+  GameCompatibilityPatcher.Result directKeys=GameCompatibilityPatcher.patch(marmalade,launch,true);
   check(directKeys.touchEnabled&&directKeys.report.contains("direct Marmalade Activity key callbacks")&&!directKeys.report.contains("Other input uses Android"));
   marmalade.put("classes.dex",dex(cls(LAUNCHER,loader,Collections.emptyList()),cls(loader,"Landroid/app/Activity;",callbacks)));
-  check(GameCompatibilityPatcher.patch(marmalade,launch,true,false).report.contains("Other input uses Android"));
+  check(GameCompatibilityPatcher.patch(marmalade,launch,true).report.contains("Other input uses Android"));
   Path temp=Files.createTempDirectory("general-converter-");
   try{
    Path original=temp.resolve("original.apk"),converted=temp.resolve("converted.apk");
    try(ZipOutputStream out=new ZipOutputStream(Files.newOutputStream(original))){out.putNextEntry(new ZipEntry("AndroidManifest.xml"));out.write(manifest(false));out.closeEntry();for(Map.Entry<String,byte[]> e:source.entrySet()){out.putNextEntry(new ZipEntry(e.getKey()));out.write(e.getValue());out.closeEntry();}out.putNextEntry(new ZipEntry("assets/test"));out.write(new byte[]{4,5,6});out.closeEntry();}
    byte[] helper=dex(cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;","Ljava/lang/Object;",Collections.emptyList()));
-   ManifestPatcher.Result result=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,true);check(result.compatibilityReport.contains("enabled"));
+   ManifestPatcher.Result result=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,false);check(result.compatibilityReport.contains("enabled"));
    try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")!=null);check(Arrays.equals(helper,ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes3.dex")))));check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));}
-   ManifestPatcher.Result combined=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,true,true);
-   check(combined.compatibilityReport.contains("Native runtime repair")&&combined.compatibilityReport.contains("Offline purchases: matching OUYA Unity SDK"));
+   ManifestPatcher.Result combined=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,true);
+   check(combined.compatibilityReport.contains("Native runtime repair")&&!combined.compatibilityReport.contains("Offline purchases"));
    try(ZipFile zip=new ZipFile(converted.toFile())){
     check(zip.getEntry("classes3.dex")!=null);
-    check(bridgeCalls(ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex"))),"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==6);
+    check(Arrays.equals(source.get("classes.dex"),ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex")))));
     check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));
    }
-   // Common application preparation path: ordinary, purchase and doctor/startup
+   // Common application preparation path: ordinary and doctor/startup
    // selections all attempt touch hooks without a per-mode touch flag.
    byte[] beforeInstall=Files.readAllBytes(original);
-   for(boolean offline:new boolean[]{false,true})for(boolean startup:new boolean[]{false,true})for(int floor:new int[]{23,24}){
-    ManifestPatcher.Result prepared=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,offline,startup,false,floor);
+   for(boolean startup:new boolean[]{false,true})for(int floor:new int[]{23,24}){
+    ManifestPatcher.Result prepared=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,startup,false,floor);
     check(prepared.newTarget==floor&&prepared.compatibilityReport.contains("Touch pad: enabled"));
     try(ZipFile zip=new ZipFile(converted.toFile())){
      byte[] game=zip.getInputStream(zip.getEntry("classes2.dex")).readAllBytes();lifecycle(game);check(bridgeCalls(game,"Lio/github/hcode91/pocketouya/bridge/TouchControls;")>0);
      check(Arrays.equals(helper,zip.getInputStream(zip.getEntry("classes3.dex")).readAllBytes()));
      byte[] purchase=zip.getInputStream(zip.getEntry("classes.dex")).readAllBytes();
-     if(offline)check(bridgeCalls(purchase,"Lio/github/hcode91/pocketouya/bridge/OfflineOuya;")==6);else check(Arrays.equals(source.get("classes.dex"),purchase));
+     check(Arrays.equals(source.get("classes.dex"),purchase));
      check(Arrays.equals(new byte[]{4,5,6},zip.getInputStream(zip.getEntry("assets/test")).readAllBytes()));
     }
     check(Arrays.equals(beforeInstall,Files.readAllBytes(original)));
    }
-   try{ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),null,false,false,false,23);throw new AssertionError("Missing automatic touch bridge accepted");}catch(IOException expected){check(expected.getMessage().contains("bridge"));}
+   try{ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),null,false,false,23);throw new AssertionError("Missing automatic touch bridge accepted");}catch(IOException expected){check(expected.getMessage().contains("bridge"));}
    ApkRebuilder.rebuild(original.toFile(),converted.toFile());try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")==null);check(Arrays.equals(source.get("classes.dex"),ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex")))));}
    ModernApkDoctorTest.apk(original,manifest(false),protectedSource);byte[] protectedOriginal=Files.readAllBytes(original);
-   ManifestPatcher.Result skipped=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,false,false,false,23);
+   ManifestPatcher.Result skipped=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,false,false,23);
    check(skipped.compatibilityReport.contains("reserved instructions"));check(Arrays.equals(protectedOriginal,Files.readAllBytes(original)));
    try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes4.dex")==null);for(var entry:protectedSource.entrySet())check(Arrays.equals(entry.getValue(),zip.getInputStream(zip.getEntry(entry.getKey())).readAllBytes()));}
   }finally{try(var paths=Files.list(temp)){for(Path p:paths.toArray(Path[]::new))Files.delete(p);}Files.delete(temp);}

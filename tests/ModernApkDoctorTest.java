@@ -15,7 +15,7 @@ public final class ModernApkDoctorTest {
    check(report.contains("doctor also attempts on-screen controls")&&report.contains("No purchase hooks are added by the doctor."));
    check(report.contains("SUPPORTED FIX")&&report.contains("target to API 24")&&report.contains("No lib/ libraries"));
    check(Arrays.equals(original,Files.readAllBytes(in)));check(ManifestPatcher.patch(manifest).newTarget==23);
-   var converted=ApkRebuilder.rebuild(in.toFile(),out.toFile(),null,false,false,true,24);check(converted.newTarget==24);
+   var converted=ApkRebuilder.rebuild(in.toFile(),out.toFile(),null,false,true,24);check(converted.newTarget==24);
    try(ZipFile z=new ZipFile(out.toFile())){check(ManifestPatcher.patch(z.getInputStream(z.getEntry("AndroidManifest.xml")).readAllBytes(),24).newTarget==24);check(Arrays.equals(z.getInputStream(z.getEntry("assets/preserve")).readAllBytes(),new byte[]{2,3}));}
    byte[] nativeLib=NativeRuntimeRepairTest.fixture(false);
    apk(in,manifest,Map.of("lib/armeabi-v7a/libunknown.so",nativeLib));

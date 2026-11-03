@@ -119,7 +119,7 @@ public final class AirLoaderDiagnosticsTest {
         ModernApkDoctorTest.apk(apk,GeneralCompatibilityTest.manifest(false),Map.of("classes.dex",fixture(0,""),"assets/keep",asset));
         var assessment=ApkRepairAssessment.inspect(apk.toFile(),34,new String[]{"armeabi-v7a"});
         check(assessment.suggested==ApkRepairAssessment.Route.STANDARD&&assessment.report.contains(AirLoaderDiagnosticsRule.ID),"diagnostic support alone must not recommend a native repair");
-        var converted=dir.resolve("diagnostic.apk");var conversion=ApkRebuilder.rebuild(apk.toFile(),converted.toFile(),null,false,false,true);
+        var converted=dir.resolve("diagnostic.apk");var conversion=ApkRebuilder.rebuild(apk.toFile(),converted.toFile(),null,false,true);
         check(conversion.compatibilityReport.contains(AirLoaderDiagnosticsRule.ID),"conversion reports diagnostic scope");
         try(var z=new ZipFile(converted.toFile())){
             check(AirLoaderDiagnosticsRule.inspect(Map.of("classes.dex",z.getInputStream(z.getEntry("classes.dex")).readAllBytes())).status==CompatibilityEvidence.Status.SKIPPED,"converted APK has verified diagnostic hook");

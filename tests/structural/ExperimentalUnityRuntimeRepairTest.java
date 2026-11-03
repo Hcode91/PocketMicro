@@ -27,7 +27,7 @@ public final class ExperimentalUnityRuntimeRepairTest {
     touch.put("classes2.dex",GeneralCompatibilityTest.dex(classes.toArray(org.jf.dexlib2.iface.ClassDef[]::new)));
     files.putAll(touch);archive(in,files);byte[] touchOriginal=Files.readAllBytes(in);
     byte[] helper=GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;","Ljava/lang/Object;",List.of()));
-    var combined=ApkRebuilder.prepareForInstall(in.toFile(),out.toFile(),helper,false,false,true,23);
+    var combined=ApkRebuilder.prepareForInstall(in.toFile(),out.toFile(),helper,false,true,23);
     check(combined.compatibilityReport.contains("1 use the OUYA native"));
     check(Arrays.equals(touchOriginal,Files.readAllBytes(in)));
     try(ZipFile z=new ZipFile(out.toFile())){

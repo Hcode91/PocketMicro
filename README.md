@@ -18,7 +18,7 @@ refuse to install apps built for anything older than Android 6. PocketOuya fixes
 - Ouya's game code is 32-bit ARM. Phones whose chips can still run 32-bit apps (e.g. Snapdragon 8 Gen 2)
   run them; some newer 64-bit-only phones can't.
 - Games that rely on the Ouya store/account services may not start yet – PocketOuya doesn't
-  provide general OUYA services. Experimental touch and offline purchase options are available during conversion (see below).
+  provide general OUYA services. Experimental touch controls are available during conversion (see below). PocketOuya does not unlock paid content.
 - If you have the original (un-patched) game installed, uninstall it first – the signatures differ.
 
 ## APK compatibility doctor
@@ -26,11 +26,11 @@ refuse to install apps built for anything older than Android 6. PocketOuya fixes
 Use **APK COMPATIBILITY DOCTOR** to scan an original APK against this phone,
 review known fixes and unresolved issues, prepare a separately signed copy, and
 export the APK/report or explicitly install it. The first version handles SDK
-target conversion and fingerprinted native repairs. It does not add touch or
-purchase hooks. It cannot guarantee a launch or repair every Android/API/CPU
+target conversion and fingerprinted native repairs. It does not add touch
+controls. It cannot guarantee a launch or repair every Android/API/CPU
 incompatibility. See [workflow and limitations](docs/apk-doctor.md).
 
-## Touch controls and offline purchases (experimental)
+## Touch controls (experimental)
 
 Conversion can now inspect games by their activity and SDK layout, across multiple
 DEX files. It no longer requires Knightmare Tower's package name or DEX fingerprint.
@@ -41,11 +41,10 @@ startup incompatibilities; see [its investigation](docs/final-fantasy-iii-compat
 1. Install the `feature/ouya-purchase-compatibility` branch's **PocketOuya-apk**
    artifact from [GitHub Actions](../../actions/workflows/android.yml).
 2. Choose **Add game** and select the **original complete APK**, with its assets.
-3. Select **Touch controls — OUYA / Android input**, **Offline purchases — OUYA Unity SDK**, or both. For a
+3. Select **Touch controls — OUYA / Android input**. For a
    supported legacy runtime, choose **Startup repairs + touch — Unity / Marmalade / AIR / Frima**.
    Normal conversion and repair without controls remain available.
-4. Read the conversion report. It identifies which features could be added;
-   unsupported purchase protocols keep their original checks.
+4. Read the conversion report. It identifies which features could be added.
 5. Install the conversion and use ordinary **Play**. **Engine test** is separate
    and does not receive this injected pad or run Unity games.
 
@@ -88,52 +87,17 @@ still reject virtual input. No universal controller compatibility is claimed.
 These controls need no system overlay, accessibility service, root or global
 input-injection permission. They operate inside the converted game's process.
 
-### Offline purchase compatibility
+### Purchases
 
-Open **OFFLINE PURCHASE OPTIONS** to enable the global default for future game
-conversions. Every conversion then starts with **Try offline purchases** checked,
-including startup repair and touch modes. Uncheck it to override the default for
-one conversion. Explicit offline conversion modes also preselect it. The setting
-starts off and persists across PocketOuya restarts.
+Offline purchase emulation has been removed. Games' own purchase checks are
+always left unchanged, and PocketOuya does not unlock paid content.
 
-Existing games need reconversion from their original complete APKs. This setting
-does not alter installed game processes, remove all game networking, or add
-support for a previously unsupported billing API. The report distinguishes
-enabled local receipt support from original purchase checks left unchanged.
-Startup repair, touch and offline receipt attempts can now run in one conversion;
-their results are reported separately. See [setup and limitations](docs/global-offline-purchases.md).
-
-The converter recognizes the OUYA Unity SDK's six Java purchase entry points,
-Unity activity/message interface and expected callback markers. A matching
-layout enables local product, gamer, purchase and receipt callbacks. Use the
-game's own unlock/purchase button; this does not pre-unlock every product.
-A matching API layout is a compatibility heuristic, not proof that the game will
-accept the responses. Other OUYA SDK variants and custom/native billing or DRM
-need separate investigation. **Final Fantasy III's purchase protocol has not
-been matched to a supported bridge; its legacy wrapper and nonstandard DEX
-prevent a verified modern-Android launch. No unlock is claimed for it.**
-
-This local mode makes no payment and does not restore historical OUYA purchases.
-It uses zero-price product responses, a local identity derived from the game's
-package and private preference-backed durable receipt state. Clearing game data
-or uninstalling removes that state; consumable quantities are not emulated.
-Product IDs come from runtime SDK requests rather than guessed title-specific
-SKUs. Original game code can still make its own network requests.
-
-Our bridge replaces only matching SDK methods and adds our own DEX. It does not
-hook Cipher, disable Android security checks, alter other apps or include game
-code/assets. See [the original Knightmare investigation](docs/knightmare-tower-compatibility.md)
-for the verified protocol. Its exact-fingerprint conversion gate is historical;
-the current converter uses capability detection described above.
+### Validation and diagnostics
 
 Validation: `bash scripts/test-compatibility.sh` and
-`gradle :app:testPurchaseProfile`, plus Android Java/bridge compilation in CI.
-Synthetic tests cover multiple DEX files, activity aliases and inherited
-lifecycle methods, unsupported SDKs, feature isolation, receipt persistence and
-per-game storage isolation. The owner's partial Knightmare archive is used only
-outside Git to verify rewriting and resource/native-library preservation.
-Running-game compatibility beyond the confirmed Knightmare controls needs phone
-testing with complete APKs.
+`gradle :app:testPurchaseProfile` (host test suite; the task name is historical),
+plus Android Java/bridge compilation in CI. Synthetic tests cover multiple DEX
+files, activity aliases and inherited lifecycle methods.
 
 Conversion also reports detected native text-relocation libraries, which Android
 rejects when loaded at target API 23+. Optional compatibility hooks are skipped
@@ -178,10 +142,8 @@ This does not add GameMaker engine support to Unity, Marmalade or AIR games.
 
 | Menu option | Purpose and current scope |
 | --- | --- |
-| Android install compatibility | Updates old manifest targets and signs the APK; no engine repair or touch injection. The offline checkbox is independent. |
+| Android install compatibility | Updates old manifest targets and signs the APK; no engine repair or touch injection. |
 | Touch controls — OUYA / Android input | Embedded pad: OUYA Unity native input, Marmalade key callbacks, or Android gamepad/keyboard fallback. |
-| Offline purchases — OUYA Unity SDK | Local receipts for the detected supported Java Unity SDK; other protocols remain unchanged. |
-| Touch + OUYA Unity offline purchases | Combines the preceding input and receipt options. |
 | Startup repairs — Unity / Marmalade / AIR / Frima | Exact-library fixes: Unity 4.3.4f1 NativeActivity main/Mono/player loading, Unity 4.1.1f4 embedded-runtime promotion/loading (Abbigale), Unity/Mono 4.1.5f1 loading, Vector 1.0.7 Marmalade loading/JNI surface release, inspected Adobe AIR code literals and Frima Space Shooter 1.1.3 initializer. |
 | Startup repairs + touch — Unity / Marmalade / AIR / Frima | Same startup fixes plus the embedded pad. |
 
@@ -208,7 +170,7 @@ The report lists repaired files, already-repaired files and unsupported candidat
 Unknown versions, missing payloads and unsupported ABIs stay unchanged. A partial
 repair can leave another startup blocker; this is not a universal text-relocation
 fix. Startup repair without touch adds no controls. Choose **Startup repairs + touch — Unity / Marmalade / AIR / Frima** to also embed the pad; its DEX compatibility
-is reported separately. Both modes now offer an independent offline purchase checkbox, preselected by the global default. Leave it off to preserve purchase checks. Use normal Play and
+is reported separately. Use normal Play and
 capture a fresh crash if it fails. Vector 1.0.7 launch and touch input were confirmed on the owner's phone;
 Abbigale launch was also confirmed for its inspected runtime pair. Other game/build combinations remain unverified.
 See [Unity NativeActivity evidence](docs/unity-nativeactivity-runtime-repair.md), [catalog behavior](docs/native-runtime-repair.md) and

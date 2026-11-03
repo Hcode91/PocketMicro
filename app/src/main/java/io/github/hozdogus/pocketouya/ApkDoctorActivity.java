@@ -59,7 +59,7 @@ public final class ApkDoctorActivity extends Activity {
             writeText(file("report.txt"),before);
             try{
                 byte[] bridge;try(InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)){bridge=ApkRebuilder.readAll(input);}
-                ManifestPatcher.Result r=ApkRebuilder.prepareForInstall(file("original.apk"),file("patched.apk"),bridge,false,true,false,ModernApkDoctor.minimumTarget(Build.VERSION.SDK_INT));
+                ManifestPatcher.Result r=ApkRebuilder.prepareForInstall(file("original.apk"),file("patched.apk"),bridge,true,false,ModernApkDoctor.minimumTarget(Build.VERSION.SDK_INT));
                 GameSigner.sign(this,file("patched.apk"),file("signed.apk"));
                 if(!new com.android.apksig.ApkVerifier.Builder(file("signed.apk")).build().verify().isVerified())throw new IOException("Converted APK signature verification failed");
                 String after=ModernApkDoctor.inspect(file("signed.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);

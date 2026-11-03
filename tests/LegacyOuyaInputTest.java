@@ -49,11 +49,11 @@ public final class LegacyOuyaInputTest {
     }
     public static void main(String[]args)throws Exception {
         for(String owner:List.of("Lother/studio/LegacyGame;","Lunseen/project/MainActivity;")){
-            byte[] before=fixture(owner,false,false,false);var result=GameCompatibilityPatcher.patch(Map.of("classes.dex",before),Set.of(owner),true,false);
-            check(result.report.contains("1 use the legacy OUYA JSON")&&result.touchEnabled&&!result.purchasesEnabled);
+            byte[] before=fixture(owner,false,false,false);var result=GameCompatibilityPatcher.patch(Map.of("classes.dex",before),Set.of(owner),true);
+            check(result.report.contains("1 use the legacy OUYA JSON")&&result.touchEnabled);
             Set<String> calls=new HashSet<>();for(ClassDef c:new DexBackedDexFile(null,result.dex.get("classes.dex")).getClasses())for(Method m:c.getMethods())if(m.getImplementation()!=null)for(Instruction i:m.getImplementation().getInstructions())if(i instanceof ReferenceInstruction&&((ReferenceInstruction)i).getReference() instanceof org.jf.dexlib2.iface.reference.MethodReference){var r=(org.jf.dexlib2.iface.reference.MethodReference)((ReferenceInstruction)i).getReference();if(r.getDefiningClass().endsWith("/TouchControls;"))calls.add(r.getName());}
             check(calls.containsAll(Set.of("watchLegacy","installLegacy","release")));
-            for(int bad=0;bad<3;bad++){byte[] near=fixture(owner,bad==0,bad==1,bad==2);var rejected=GameCompatibilityPatcher.patch(Map.of("classes.dex",near),Set.of(owner),true,false);check(!rejected.report.contains("1 use the legacy OUYA JSON"));}
+            for(int bad=0;bad<3;bad++){byte[] near=fixture(owner,bad==0,bad==1,bad==2);var rejected=GameCompatibilityPatcher.patch(Map.of("classes.dex",near),Set.of(owner),true);check(!rejected.report.contains("1 use the legacy OUYA JSON"));}
         }
         com.unity3d.player.UnityPlayer.messages.clear();ActivityFixture activity=new ActivityFixture();LegacyOuyaPadSink sink=new LegacyOuyaPadSink(activity);VirtualPad pad=new VirtualPad(sink);Object owner=new Object();pad.hold(VirtualPad.O,owner,true);
         var messages=com.unity3d.player.UnityPlayer.messages;check(messages.size()==2&&messages.get(0)[0].equals("onSetDevices")&&messages.get(1)[0].equals("onKeyDown"));

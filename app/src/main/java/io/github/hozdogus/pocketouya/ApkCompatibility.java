@@ -68,13 +68,11 @@ public final class ApkCompatibility {
             out.append("\nUnity runtime: ").append(mono?"Mono (managed C# assemblies)":"native runtime; inspect APK contents").append('\n');
             out.append("Managed assemblies (up to 128): ").append(assemblies.isEmpty()?"not found":String.join(", ",assemblies)).append('\n');
             out.append("Unity requires a separate execution/Java bridge; the current GameMaker engine cannot execute libunity.so.\n");
-            if(mono)out.append("To investigate game-side purchase checks, inspect assets/bin/Data/Managed/Assembly-CSharp.dll and the other DLLs in that folder.\n");
         }
         out.append("\nOUYA purchase markers in DEX: ").append(markers.isEmpty()?"none found":String.join(", ",markers)).append('\n');
         if(partial)out.append("DEX scan limited to 64 MiB; absence of a marker is inconclusive.\n");
         out.append("\nEngine detection is structural, not a guarantee of compatibility. DEX markers are hints, not proof that those APIs execute. The engine does not execute the game's Java OUYA SDK.\n");
-        if(!runnable)out.append("This APK cannot use the current GameMaker-only Engine test. Purchase hooks cannot fix that engine mismatch.\n");
-        out.append("\nThe plaintext-purchases Xposed module applies to separately installed Android game processes. It neither runs in this native engine nor supplies store receipts.\n");
+        if(!runnable)out.append("This APK cannot use the current GameMaker-only Engine test.\n");
         return new ApkCompatibility(runnable,out.toString());
     }
 }

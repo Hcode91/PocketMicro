@@ -113,8 +113,7 @@ dependencies {
 }
 def purchaseTestClasses = layout.buildDirectory.dir('purchase-tests/classes')
 def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCompile) {
-    source files('src/main/java/io/github/hozdogus/pocketouya/OuyaPurchasePatcher.java',
-            'src/main/java/io/github/hozdogus/pocketouya/GameCompatibilityPatcher.java',
+    source files('src/main/java/io/github/hozdogus/pocketouya/GameCompatibilityPatcher.java',
             'src/main/java/io/github/hozdogus/pocketouya/ModernApkDoctor.java',
             'src/main/java/io/github/hozdogus/pocketouya/ApkRepairAssessment.java',
             'src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java',
@@ -138,10 +137,10 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/ManifestPatcher.java')
     source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
-    source rootProject.files('tests/OuyaPurchasePatcherTest.java', 'tests/OfflineCatalogTest.java',
+    source rootProject.files(
             'tests/PlatformCrashRulesTest.java',
             'tests/LegacyServiceStartTest.java',
-            'tests/OfflineOuyaTest.java', 'tests/GeneralCompatibilityTest.java', 'tests/LegacyOuyaInputTest.java', 'tests/AirLoaderDiagnosticsTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
+            'tests/GeneralCompatibilityTest.java', 'tests/LegacyOuyaInputTest.java', 'tests/AirLoaderDiagnosticsTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
     classpath = configurations.purchaseHostTests
     destinationDirectory = purchaseTestClasses
     sourceCompatibility = '17'

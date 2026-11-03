@@ -19,14 +19,14 @@ final class ConversionRecord {
 
     private ConversionRecord() {}
 
-    static byte[] build(boolean startupRepairs, boolean touch, boolean offline, boolean experimental, String report) {
+    static byte[] build(boolean startupRepairs, boolean touch, boolean experimental, String report) {
         StringBuilder s = new StringBuilder();
         s.append("PocketOuya ").append(converterVersion).append('\n');
         SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm 'UTC'", Locale.ROOT);
         date.setTimeZone(TimeZone.getTimeZone("UTC"));
         s.append("Converted: ").append(date.format(new Date())).append('\n');
         s.append("Options: startup repairs=").append(yes(startupRepairs)).append(", touch=").append(yes(touch))
-                .append(", offline purchases=").append(yes(offline)).append(", experimental runtime=").append(yes(experimental)).append("\n\n");
+                .append(", experimental runtime=").append(yes(experimental)).append("\n\n");
         String r = report == null ? "" : report;
         if (r.length() > MAX_REPORT) r = r.substring(0, MAX_REPORT) + "\n[report truncated]";
         s.append(r).append('\n');

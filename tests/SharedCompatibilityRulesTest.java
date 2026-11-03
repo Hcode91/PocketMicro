@@ -86,14 +86,14 @@ public final class SharedCompatibilityRulesTest {
    Path in=dir.resolve("input.apk"),out=dir.resolve("out.apk");byte[] payload={4,2};
    ModernApkDoctorTest.apk(in,GeneralCompatibilityTest.manifest(false),Map.of("lib/armeabi-v7a/libUnseenName.so",elf(0),"classes.dex",dex(1,false),"assets/preserve",payload));
    byte[] original=Files.readAllBytes(in);String preview=ModernApkDoctor.inspect(in.toFile(),34,new String[]{"armeabi-v7a"});check(preview.contains(WritableRelocationRule.ID)&&preview.contains(OuyaServiceCleanupRule.ID),"both rule IDs in preview");check(Arrays.equals(original,Files.readAllBytes(in)),"preview preserves original APK");
-   ApkRebuilder.rebuild(in.toFile(),out.toFile(),null,false,false,true);try(ZipFile z=new ZipFile(out.toFile())){
+   ApkRebuilder.rebuild(in.toFile(),out.toFile(),null,false,true);try(ZipFile z=new ZipFile(out.toFile())){
     check(!NativeStartupChecks.hasTextRelocations(z.getInputStream(z.getEntry("lib/armeabi-v7a/libUnseenName.so")).readAllBytes()),"native rule integrated for unseen filename");
     check(unbindCalls(z.getInputStream(z.getEntry("classes.dex")).readAllBytes(),false)==0,"DEX rule integrated without helper");
     check(z.getEntry("classes2.dex")==null&&Arrays.equals(payload,z.getInputStream(z.getEntry("assets/preserve")).readAllBytes()),"no helper injection; assets preserved");
    }
    ApkRebuilder.rebuild(in.toFile(),out.toFile());try(ZipFile z=new ZipFile(out.toFile())){check(Arrays.equals(elf(0),z.getInputStream(z.getEntry("lib/armeabi-v7a/libUnseenName.so")).readAllBytes()),"normal conversion remains isolated");}
    byte[] helper=GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;","Ljava/lang/Object;",List.of()));
-   ApkRebuilder.rebuild(in.toFile(),out.toFile(),helper,true,false,true);try(ZipFile z=new ZipFile(out.toFile())){check(unbindCalls(z.getInputStream(z.getEntry("classes.dex")).readAllBytes(),false)==0,"subsequent touch analysis preserves cleanup guard");}
+   ApkRebuilder.rebuild(in.toFile(),out.toFile(),helper,true,true);try(ZipFile z=new ZipFile(out.toFile())){check(unbindCalls(z.getInputStream(z.getEntry("classes.dex")).readAllBytes(),false)==0,"subsequent touch analysis preserves cleanup guard");}
   }finally{try(var paths=Files.list(dir)){for(Path p:paths.toArray(Path[]::new))Files.delete(p);}Files.delete(dir);}
   System.out.println("Shared rules: relocated layouts/unseen filenames, null/non-null cleanup, immutable inspection, code-write/unknown/packed/truncated rejection, ZIP preservation and option isolation pass");
  }
