@@ -257,3 +257,15 @@ purchase implementation, native transformer or finalizer detector changes.
   and phone buttons never take a slot. With the provider present the SDK runs unchanged; the
   SDK's own button/axis mapping is used. Applies to 11 of the 14 uploaded test APKs (Worm
   Copter's older SDK layout and two games without the OUYA controller API are unchanged).
+
+## OUYA TV layouts on phones (2026-11-03)
+
+- **`ouya.tv-layouts`.** Android reports the OUYA's TV as a large landscape screen, and some games
+  keep their real screens only in `-large-land` resources. A phone is a normal-size screen, gets
+  the default resources, and crashes when a view the game expects is missing (Word Shaker:
+  `findViewById` returns null for an ImageView that only exists in `layout-large-land/main.xml`).
+  In `resources.arsc`, each resource group configured "large + landscape" has its screen-size bits
+  cleared, so landscape phones use the OUYA's resources. Groups are left alone when the game
+  already has a plain landscape version (or two large groups would merge). Only those bits change;
+  files, IDs and the table size are unchanged. Of the 15 uploaded test APKs only Word Shaker has
+  TV-only resources (layout and drawable groups).

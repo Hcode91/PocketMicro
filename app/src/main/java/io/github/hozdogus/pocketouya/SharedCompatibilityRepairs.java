@@ -46,6 +46,12 @@ public final class SharedCompatibilityRepairs {
         PrivateLibraryStubs.Result stubs=PrivateLibraryStubs.plan(nativeLibs,apply);
         if(stubs.status!=CompatibilityEvidence.Status.SKIPPED)report.append(stubs.status).append(' ').append(PrivateLibraryStubs.ID).append(": ").append(stubs.reason).append('\n');
         if(apply)for(var add:stubs.additions.entrySet())if(!names.contains(add.getKey()))plan.replacements.put(add.getKey(),add.getValue());
+        ZipEntry table=zip.getEntry("resources.arsc");
+        if(table!=null&&table.getSize()>=0&&table.getSize()<=32L*1024*1024){
+            TvLayoutRule.Result tv=apply?TvLayoutRule.repair(ApkRebuilder.readBounded(zip.getInputStream(table),32*1024*1024)):TvLayoutRule.inspect(ApkRebuilder.readBounded(zip.getInputStream(table),32*1024*1024));
+            if(tv.status!=CompatibilityEvidence.Status.SKIPPED)report.append(tv.status).append(' ').append(TvLayoutRule.ID).append(": ").append(tv.reason).append('\n');
+            if(apply&&tv.replacement!=null)plan.replacements.put("resources.arsc",tv.replacement);
+        }
         if(dexSkipped)report.append("SKIPPED ").append(OuyaServiceCleanupRule.ID).append(": DEX budget; all original DEX preserved\n");
         else{
             OuyaServiceCleanupRule.Result result=apply?OuyaServiceCleanupRule.repair(dex):OuyaServiceCleanupRule.inspect(dex);
