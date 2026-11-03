@@ -155,3 +155,20 @@ purchase implementation, native transformer or finalizer detector changes.
   Marmalade / Frima libraries such as Wrecking Balls Arena's `libmain.so`.
 - **Conversion record.** Converted APKs carry `assets/pocketouya-conversion.txt` (PocketOuya
   version, options, rule results); launch log entries show it.
+
+## Old engines: removed private libraries and original-version install (2026-11-03)
+
+- **`android.removed-private-libs`.** When a game library DT_NEEDs a private Android library
+  (libstagefright, libui, libutils, libcutils, libgui, ...) that the APK does not bundle, the
+  conversion adds a generated placeholder (`StubLibraryWriter`) exporting every `android::`
+  symbol the game imports. Android binds all imports at load time, so removed symbols such as
+  `OMXClient`, the old `GraphicBuffer` and `MetaData` otherwise stop the engine loading.
+  Placeholder functions return their first argument (constructors return `this`, status checks
+  fail), so engines take fallback paths such as no hardware video. Checked on
+  A Zombie Stole My Toaster (Adobe AIR 2013): 35/35 libCore android symbols resolve through the
+  placeholders' hash tables and an ARM lld link succeeds.
+- **Keep original Android version (Shizuku install).** Conversion option that leaves the game's
+  target SDK unchanged and installs through PocketOuya's Shizuku service with
+  `pm install --bypass-low-target-sdk-block` (Android 14+). Apps built for pre-Android 6 may
+  load libraries with text relocations (AIR libCore, old Unity/Marmalade), so no native code
+  patching is needed for those. Shizuku is needed only during install.

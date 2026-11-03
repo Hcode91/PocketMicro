@@ -420,7 +420,7 @@ public class MainActivity extends Activity {
         TextView info=new TextView(this);info.setText("Use the complete original APK. This attempts the ARM-only embedded-runtime repair tested locally with Monocle Man: replace a structurally matched proxy pair with its real runtimes and repair Unity's ARM finalizer. Other APKs with the same supported structure can match.\n\nLocal checks do not prove whole-program safety or phone startup. Unsupported layouts and Thumb-dependent repairs remain unchanged. The report explains the result before installation. Assets are preserved. A matching Unity CPU-description getter receives a null-string fallback.\n\nEvery conversion attempts to add the existing OUYA pad to matching game activities. Input compatibility is reported separately; some games may ignore fallback events. Offline purchase hooks are off for this experiment. Existing saves may matter when replacing an installed game.\n\nOrdinary startup repairs and the APK doctor do not select this experiment.");content.addView(info);
         android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
         new AlertDialog.Builder(this).setTitle("Experimental Unity runtime repair").setView(scroll)
-            .setPositiveButton("Inspect and prepare test",(dialog,which)->importApk(uri,false,true))
+            .setPositiveButton("Inspect and prepare test",(dialog,which)->importApk(uri,false,true,false))
             .setNegativeButton("Cancel",null).show();
     }
 
@@ -433,11 +433,33 @@ public class MainActivity extends Activity {
         else details="Every conversion attempts to add the on-screen OUYA pad using native Unity/Marmalade input when available, otherwise Android gamepad/keyboard events. Games requiring a physical controller may ignore the fallback.\n\n"+"No native startup repair selected. The conversion report identifies supported input routes.";
         if(runtimeRepair)details+="\n\nAdobe AIR diagnostics: matching loaders also log their original hidden library-loading error. This adds information, not native compatibility. After a failed launch, export the full global game log; the crash-only report may contain just the later nativeSurfaceCreated error.";
         if(runtimeRepair)details+="\n\nShared startup repairs also cover old implicit service requests (e.g. MOGA, Google Analytics), null-cursor OUYA game-data cleanup and public NDK library build paths. The conversion report identifies matches and remaining unsupported problems.";
+        android.widget.CheckBox keep=new android.widget.CheckBox(this);
+        keep.setText("Keep the game's original Android version (installs through Shizuku)");
+        keep.setChecked(prefs().getBoolean("keep_target_v1",false));content.addView(keep);
+        TextView keepInfo=new TextView(this);
+        keepInfo.setText("Needed for Adobe AIR and other old engines whose libraries rewrite their own code when loading: Android only allows that for apps built for old versions, but Android 14 installs those only through a shell install. Requires Shizuku running during the install; you can turn Developer options off afterwards.\n");
+        content.addView(keepInfo);
         explanation.setText(common+details);content.addView(explanation);
         android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
         new AlertDialog.Builder(this).setTitle(runtimeRepair?"Startup repairs":"Conversion options").setView(scroll)
-            .setPositiveButton("Inspect and convert",(dialog,which)->importApk(uri,runtimeRepair,false))
+            .setPositiveButton("Inspect and convert",(dialog,which)->{prefs().edit().putBoolean("keep_target_v1",keep.isChecked()).apply();importApk(uri,runtimeRepair,false,keep.isChecked());})
             .setNegativeButton("Cancel",null).show();
+    }
+    private void installConverted(File signed,String pkg,boolean keepTarget){
+        if(keepTarget){
+            Set<String> imported=new HashSet<>(prefs().getStringSet("imported",new HashSet<>()));
+            imported.add(pkg);prefs().edit().putStringSet("imported",imported).apply();
+            showProgress("Installing through Shizuku…");
+            ShizukuInstaller.install(this,signed,(ok,message)->{
+                hideProgress();signed.delete();signed.getParentFile().delete();
+                ui.post(()->{
+                    if(ok){Toast.makeText(this,"Installed with its original Android version",Toast.LENGTH_LONG).show();sendBroadcast(new Intent(ACTION_REFRESH).setPackage(getPackageName()));}
+                    else new AlertDialog.Builder(this).setTitle("Shizuku install failed").setMessage(message+"\n\nIf the game was installed before with a different signature, uninstall it first.").setPositiveButton("OK",null).show();
+                });
+            });
+            return;
+        }
+        installConverted(signed,pkg);
     }
     private void installConverted(File signed,String pkg){
         new Thread(()->{
@@ -450,7 +472,7 @@ public class MainActivity extends Activity {
         },"install-conversion").start();
     }
 
-    private void importApk(Uri uri, boolean runtimeRepair, boolean experimental) {
+    private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget) {
         showProgress("Copying the game…");
         new Thread(() -> {
             File dir = new File(getCacheDir(), "import-"+java.util.UUID.randomUUID());
@@ -466,7 +488,7 @@ public class MainActivity extends Activity {
                 try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
                     bridge=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT));
+                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT));
                 original.delete();
 
                 showProgress("Signing…");
@@ -476,9 +498,9 @@ public class MainActivity extends Activity {
                 hideProgress();
                 if(!r.compatibilityReport.isEmpty())ui.post(()->new AlertDialog.Builder(this)
                     .setTitle("Conversion compatibility report").setMessage(r.compatibilityReport)
-                    .setPositiveButton("Install",(dialog,which)->installConverted(signed,r.packageName))
+                    .setPositiveButton("Install",(dialog,which)->installConverted(signed,r.packageName,keepTarget))
                     .setNegativeButton("Cancel",(dialog,which)->{signed.delete();dir.delete();}).setOnCancelListener(dialog->{signed.delete();dir.delete();}).show());
-                else installConverted(signed,r.packageName);
+                else installConverted(signed,r.packageName,keepTarget);
             } catch (Throwable t) {
                 signed.delete();
                 hideProgress();

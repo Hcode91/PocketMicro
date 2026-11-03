@@ -6,10 +6,10 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/** Optional Shizuku user service. Fixed crash-buffer capture, never arbitrary commands. */
+/** Optional Shizuku user service. Fixed operations only (crash-buffer capture, install one APK streamed by PocketOuya), never arbitrary commands. */
 public final class CrashLogService extends Binder {
     static final String DESCRIPTOR="io.github.hozdogus.pocketouya.CRASH_CAPTURE";
-    static final int START=1,STOP=2,READ=3,DESTROY=16777115;
+    static final int START=1,STOP=2,READ=3,INSTALL=4,DESTROY=16777115;
     private final int owner;
     private final Object lock=new Object();
     private String pkg="",failure="";
@@ -26,6 +26,7 @@ public final class CrashLogService extends Binder {
         data.enforceInterface(DESCRIPTOR);
         if(code==START){start(data.readString());reply.writeNoException();return true;}
         if(code==STOP){stop();reply.writeNoException();return true;}
+        if(code==INSTALL){ParcelFileDescriptor apk=data.readFileDescriptor();long size=data.readLong();String out=install(apk,size);reply.writeNoException();reply.writeString(out);return true;}
         if(code==READ){
             String snapshot,target,error;boolean active;
             synchronized(lock){snapshot=raw.toString();target=pkg;error=failure;active=running;}
@@ -58,4 +59,24 @@ public final class CrashLogService extends Binder {
         },"game-crash-capture").start();
     }
     private void stop(){synchronized(lock){running=false;if(process!=null)process.destroy();}}
+    /** pm install of one APK streamed from PocketOuya. Keeps the game's original target SDK
+     *  (Android 14+ otherwise refuses very old targets), which lets old engines load. */
+    static List<String> installCommand(long size,int sdk){
+        List<String> cmd=new ArrayList<>(Arrays.asList("/system/bin/pm","install","-r"));
+        if(sdk>=34)cmd.add("--bypass-low-target-sdk-block");
+        cmd.add("-S");cmd.add(Long.toString(size));return cmd;
+    }
+    private String install(ParcelFileDescriptor apk,long size){
+        if(apk==null||size<=0||size>(4L<<30))return "FAILED: invalid APK";
+        java.lang.Process child=null;
+        try(InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(apk)){
+            child=new ProcessBuilder(installCommand(size,Build.VERSION.SDK_INT)).redirectErrorStream(true).start();
+            try(OutputStream out=child.getOutputStream()){byte[] buffer=new byte[1<<16];long left=size;for(int n;left>0&&(n=in.read(buffer,0,(int)Math.min(buffer.length,left)))>0;){out.write(buffer,0,n);left-=n;}}
+            StringBuilder text=new StringBuilder();
+            try(BufferedReader reader=new BufferedReader(new InputStreamReader(child.getInputStream(),java.nio.charset.StandardCharsets.UTF_8))){for(String line;(line=reader.readLine())!=null&&text.length()<8192;)text.append(line).append('\n');}
+            if(!child.waitFor(5,java.util.concurrent.TimeUnit.MINUTES)){child.destroy();return "FAILED: pm install timed out";}
+            return (child.exitValue()==0?"":"FAILED (exit "+child.exitValue()+"): ")+text.toString().trim();
+        }catch(Exception error){return "FAILED: "+error;}
+        finally{if(child!=null)child.destroy();}
+    }
 }

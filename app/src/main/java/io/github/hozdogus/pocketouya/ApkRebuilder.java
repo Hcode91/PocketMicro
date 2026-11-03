@@ -102,6 +102,13 @@ public final class ApkRebuilder {
                     output.closeEntry();
                 }
                 if(appendBridge){output.putNextEntry(new ZipEntry("classes"+nextDex+".dex"));output.write(bridge);output.closeEntry();}
+                // New files from repairs (e.g. placeholder native libraries), stored uncompressed like native libs.
+                for(java.util.Map.Entry<String,byte[]> added:replacements.entrySet()){
+                    if(zip.getEntry(added.getKey())!=null||!added.getKey().matches("lib/[^/]+/[^/]+\\.so"))continue;
+                    ZipEntry target=new ZipEntry(added.getKey());target.setMethod(ZipEntry.STORED);CRC32 crc=new CRC32();crc.update(added.getValue());
+                    target.setSize(added.getValue().length);target.setCompressedSize(added.getValue().length);target.setCrc(crc.getValue());
+                    output.putNextEntry(target);output.write(added.getValue());output.closeEntry();
+                }
                 output.putNextEntry(new ZipEntry(ConversionRecord.ENTRY));output.write(ConversionRecord.build(runtimeRepair,touch,experimental,result.compatibilityReport));output.closeEntry();
             }
             return result;

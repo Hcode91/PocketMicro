@@ -15,7 +15,7 @@ public final class SharedCompatibilityRepairs {
         if(apply)plan.replacements.putAll(existing.replacements);
         StringBuilder report=new StringBuilder(existing.report).append("\n\nShared compatibility rules\n");
         Map<String,byte[]> dex=new LinkedHashMap<>();long nativeBudget=64L*1024*1024,dexBudget=64L*1024*1024;int nativeCount=0;boolean dexSkipped=false;
-        Set<String> names=new HashSet<>();
+        Set<String> names=new HashSet<>();Map<String,byte[]> nativeLibs=new LinkedHashMap<>();
         Enumeration<? extends ZipEntry> entries=zip.entries();
         while(entries.hasMoreElements()){
             ZipEntry e=entries.nextElement();String name=e.getName();if(name.length()>2048||names.size()>=50000)throw new IOException("APK exceeds shared-rule entry budget");if(!names.add(name))throw new IOException("Duplicate APK entry; shared repair is ambiguous");
@@ -33,12 +33,16 @@ public final class SharedCompatibilityRepairs {
                     if(fin.status!=CompatibilityEvidence.Status.SKIPPED)report.append(fin.status).append(' ').append(DetectedFinalizerRule.ID).append(" [").append(name).append("]: ").append(fin.reason).append('\n');
                     byte[] repaired=fin.replacement();if(repaired!=null)plan.replacements.put(name,repaired);
                 }
+                byte[] finalBytes=plan.replacements.get(name);nativeLibs.put(name,finalBytes!=null?finalBytes:bytes);
             }
             if(name.matches("classes(?:[2-9]|[1-9][0-9]+)?\\.dex")){
                 long size=e.getSize();if(dex.size()>=64||size<0||size>32L*1024*1024||size>dexBudget){dexSkipped=true;continue;}
                 dexBudget-=size;dex.put(name,ApkRebuilder.readBounded(zip.getInputStream(e),32*1024*1024));
             }
         }
+        PrivateLibraryStubs.Result stubs=PrivateLibraryStubs.plan(nativeLibs,apply);
+        if(stubs.status!=CompatibilityEvidence.Status.SKIPPED)report.append(stubs.status).append(' ').append(PrivateLibraryStubs.ID).append(": ").append(stubs.reason).append('\n');
+        if(apply)for(var add:stubs.additions.entrySet())if(!names.contains(add.getKey()))plan.replacements.put(add.getKey(),add.getValue());
         if(dexSkipped)report.append("SKIPPED ").append(OuyaServiceCleanupRule.ID).append(": DEX budget; all original DEX preserved\n");
         else{
             OuyaServiceCleanupRule.Result result=apply?OuyaServiceCleanupRule.repair(dex):OuyaServiceCleanupRule.inspect(dex);

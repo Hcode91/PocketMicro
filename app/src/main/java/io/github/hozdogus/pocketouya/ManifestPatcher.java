@@ -14,6 +14,7 @@ import java.util.List;
 public final class ManifestPatcher {
     /** Android 14 refuses to install apps that target anything below this. */
     public static final int MIN_TARGET = 23;
+    public static final int KEEP_TARGET = 0;
 
     private static final int RES_STRING_POOL = 0x0001;
     private static final int RES_XML_RESOURCE_MAP = 0x0180;
@@ -39,7 +40,8 @@ public final class ManifestPatcher {
     public static Result patch(byte[] axml) { return patch(axml,MIN_TARGET); }
 
     public static Result patch(byte[] axml,int minimumTarget) {
-        if(minimumTarget<23||minimumTarget>24)throw new IllegalArgumentException("Unsupported target policy");
+        // 0 = keep the game's original target (installed via Shizuku with the low-target bypass).
+        if(minimumTarget!=KEEP_TARGET&&(minimumTarget<23||minimumTarget>24))throw new IllegalArgumentException("Unsupported target policy");
         byte[] data = axml.clone();
         ByteBuffer b = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
         List<String> strings = new ArrayList<>();
