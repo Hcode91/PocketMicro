@@ -63,6 +63,9 @@ public final class SharedCompatibilityRepairs {
             OuyaStoreOfflineRule.Result store=apply?OuyaStoreOfflineRule.repair(diagnosticInput):OuyaStoreOfflineRule.inspect(diagnosticInput);
             if(store.status!=CompatibilityEvidence.Status.SKIPPED)report.append(store.status).append(' ').append(OuyaStoreOfflineRule.ID).append(": ").append(store.reason).append('\n');
             if(apply){plan.replacements.putAll(store.replacements);diagnosticInput.putAll(store.replacements);}
+            OuyaGameDataLocalRule.Result saves=apply?OuyaGameDataLocalRule.repair(diagnosticInput):OuyaGameDataLocalRule.inspect(diagnosticInput);
+            if(saves.status!=CompatibilityEvidence.Status.SKIPPED)report.append(saves.status).append(' ').append(OuyaGameDataLocalRule.ID).append(": ").append(saves.reason).append('\n');
+            if(apply){plan.replacements.putAll(saves.replacements);diagnosticInput.putAll(saves.replacements);}
             ClickteamSurfaceLayoutRule.Result surface=apply?ClickteamSurfaceLayoutRule.repair(diagnosticInput):ClickteamSurfaceLayoutRule.inspect(diagnosticInput);
             if(surface.status!=CompatibilityEvidence.Status.SKIPPED)report.append(surface.status).append(' ').append(ClickteamSurfaceLayoutRule.ID).append(": ").append(surface.reason).append('\n');
             if(apply){plan.replacements.putAll(surface.replacements);diagnosticInput.putAll(surface.replacements);}

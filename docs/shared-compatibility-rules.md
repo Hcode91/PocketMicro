@@ -198,3 +198,14 @@ purchase implementation, native transformer or finalizer detector changes.
   annotation on the public instance methods they and their app superclasses declare. Activities,
   Views and other framework subclasses used as bridges (e.g. Flurry's catalog Activity) are left
   alone, as are sites whose object type can't be found (reported). Device test pending.
+
+## OUYA saves without the OUYA system (2026-11-03)
+
+- **`ouya.game-data.local-store`.** `OuyaFacade.getGameData`/`putGameData` store a game's saves
+  (high scores, options) in the OUYA system's `tv.ouya.userdata` content provider. On a phone it
+  does not exist: the query returns null and the SDK crashes on `cursor.moveToNext()` /
+  `getCount()` (X S.E.E.D loading hiscores). Both methods get a short prefix: if
+  `acquireContentProviderClient("tv.ouya.userdata")` returns null, values are read from / written
+  to the game's own private SharedPreferences file `pocketouya_ouya_gamedata` (same key/value
+  strings, kept across launches); otherwise the original SDK code runs. Saves made this way stay
+  on the phone with the game. Purchases and receipts are not involved.
