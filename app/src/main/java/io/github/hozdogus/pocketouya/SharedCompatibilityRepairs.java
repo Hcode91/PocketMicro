@@ -9,8 +9,12 @@ public final class SharedCompatibilityRepairs {
     public static final class Plan {
         public final Map<String,byte[]> replacements=new LinkedHashMap<>();
         public String report;
+        /** Repaired AndroidManifest.xml, or null when no manifest rule changed it. */
+        public byte[] manifest;
     }
-    public static Plan plan(ZipFile zip,boolean apply)throws IOException {
+    public static Plan plan(ZipFile zip,boolean apply)throws IOException {return plan(zip,apply,null);}
+    /** @param manifest the manifest to build on (e.g. already target-patched); null reads it from the APK. */
+    public static Plan plan(ZipFile zip,boolean apply,byte[] manifest)throws IOException {
         Plan plan=new Plan();NativeRuntimeRepair.Plan existing=NativeRuntimeRepair.plan(zip);
         if(apply)plan.replacements.putAll(existing.replacements);
         StringBuilder report=new StringBuilder(existing.report).append("\n\nShared compatibility rules\n");
@@ -51,6 +55,15 @@ public final class SharedCompatibilityRepairs {
             TvLayoutRule.Result tv=apply?TvLayoutRule.repair(ApkRebuilder.readBounded(zip.getInputStream(table),32*1024*1024)):TvLayoutRule.inspect(ApkRebuilder.readBounded(zip.getInputStream(table),32*1024*1024));
             if(tv.status!=CompatibilityEvidence.Status.SKIPPED)report.append(tv.status).append(' ').append(TvLayoutRule.ID).append(": ").append(tv.reason).append('\n');
             if(apply&&tv.replacement!=null)plan.replacements.put("resources.arsc",tv.replacement);
+            if(tv.status==CompatibilityEvidence.Status.VERIFIED||tv.status==CompatibilityEvidence.Status.SUPPORTED){
+                ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
+                byte[] source=manifest!=null?manifest:manifestEntry==null?null:ApkRebuilder.readBounded(zip.getInputStream(manifestEntry),4*1024*1024);
+                if(source!=null){
+                    TvLandscapeRule.Result land=apply?TvLandscapeRule.repair(source):TvLandscapeRule.inspect(source);
+                    if(land.status!=CompatibilityEvidence.Status.SKIPPED)report.append(land.status).append(' ').append(TvLandscapeRule.ID).append(": ").append(land.reason).append('\n');
+                    if(apply&&land.manifest!=null)plan.manifest=land.manifest;
+                }
+            }
         }
         if(dexSkipped)report.append("SKIPPED ").append(OuyaServiceCleanupRule.ID).append(": DEX budget; all original DEX preserved\n");
         else{

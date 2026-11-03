@@ -47,8 +47,9 @@ public final class ApkRebuilder {
             ManifestPatcher.Result result=ManifestPatcher.patch(readBounded(zip.getInputStream(manifestEntry),4*1024*1024),minimumTarget);
             java.util.Map<String,byte[]> replacements=new java.util.LinkedHashMap<>();
             if(runtimeRepair){
-                SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true);
+                SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true,result.manifest);
                 replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
+                if(repair.manifest!=null)result.manifest=repair.manifest;
             }
             if(experimental){
                 ExperimentalUnityRuntimeRepair.Plan repair=ExperimentalUnityRuntimeRepair.plan(zip);

@@ -269,3 +269,12 @@ purchase implementation, native transformer or finalizer detector changes.
   already has a plain landscape version (or two large groups would merge). Only those bits change;
   files, IDs and the table size are unchanged. Of the 15 uploaded test APKs only Word Shaker has
   TV-only resources (layout and drawable groups).
+- **`ouya.tv-layouts.landscape`.** Runs only when `ouya.tv-layouts` changed resources. Those
+  resources now need a landscape screen, but Word Shaker declares no orientation (the OUYA was
+  always a landscape TV), so on a phone held upright it still opened in portrait, got the default
+  layout and crashed the same way (`WordShakerOuyaActivity.j` -> `ImageView.setImageResource` on
+  null; the log's Config line showed `port`). In the binary `AndroidManifest.xml`, every
+  `<activity>` without its own `android:screenOrientation` gets `sensorLandscape`, inserted in
+  resource-ID order; activities that already declare an orientation keep it. If the attribute name
+  is not yet in the string pool it is added at the end of the resource-mapped prefix and every later
+  string reference is shifted by one. Malformed or styled string pools leave the manifest unchanged.
