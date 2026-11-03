@@ -63,6 +63,9 @@ public final class SharedCompatibilityRepairs {
             OuyaStoreOfflineRule.Result store=apply?OuyaStoreOfflineRule.repair(diagnosticInput):OuyaStoreOfflineRule.inspect(diagnosticInput);
             if(store.status!=CompatibilityEvidence.Status.SKIPPED)report.append(store.status).append(' ').append(OuyaStoreOfflineRule.ID).append(": ").append(store.reason).append('\n');
             if(apply){plan.replacements.putAll(store.replacements);diagnosticInput.putAll(store.replacements);}
+            ClickteamSurfaceLayoutRule.Result surface=apply?ClickteamSurfaceLayoutRule.repair(diagnosticInput):ClickteamSurfaceLayoutRule.inspect(diagnosticInput);
+            if(surface.status!=CompatibilityEvidence.Status.SKIPPED)report.append(surface.status).append(' ').append(ClickteamSurfaceLayoutRule.ID).append(": ").append(surface.reason).append('\n');
+            if(apply){plan.replacements.putAll(surface.replacements);diagnosticInput.putAll(surface.replacements);}
             AirLoaderDiagnosticsRule.Result air=apply?AirLoaderDiagnosticsRule.repair(diagnosticInput):AirLoaderDiagnosticsRule.inspect(diagnosticInput);
             if(air.status!=CompatibilityEvidence.Status.SKIPPED)report.append(air.status).append(' ').append(AirLoaderDiagnosticsRule.ID).append(": ").append(air.reason).append('\n');
             if(apply)plan.replacements.putAll(air.replacements);

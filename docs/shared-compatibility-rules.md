@@ -172,3 +172,16 @@ purchase implementation, native transformer or finalizer detector changes.
   `pm install --bypass-low-target-sdk-block` (Android 14+). Apps built for pre-Android 6 may
   load libraries with text relocations (AIR libCore, old Unity/Marmalade), so no native code
   patching is needed for those. Shizuku is needed only during install.
+
+## Clickteam Fusion: game surface created mid-layout (2026-11-03)
+
+- **`clickteam.surface-layout`.** The Clickteam Fusion (MMF) Android runtime creates its game
+  `SurfaceView` from `MainView.onSizeChanged`, while the window is still laying out, then calls
+  `setLayoutParams` on it. Android 4.x re-ran layout for that request; Android 4.3+ drops it, so
+  the view is never measured or placed (`SurfaceView updateSurface: has no frame`), no GL surface
+  is created and the game stays on a blank screen. Each `Runtime.SurfaceView.setLayoutParams`
+  call is routed through a helper that makes the same call and, only when the view has never
+  been placed and its parent already has a size, measures and places it as `MainView.onLayout`
+  would (LayoutParams size, MATCH_PARENT = parent size, at x/y). Detected by the runtime's
+  `Runtime/MMFRuntime`, `Runtime/SurfaceView` and `Runtime/MainView$LayoutParams` classes, so it
+  applies to any Clickteam game. Seen on Tomatoes Vs Onions; device test pending.
