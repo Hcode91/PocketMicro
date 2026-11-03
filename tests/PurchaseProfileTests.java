@@ -8,6 +8,7 @@ public final class PurchaseProfileTests {
         io.github.hozdogus.pocketouya.DeviceIdRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.OuyaGameDataLocalRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.GlUniformCountRuleTest.main(new String[0]);
+        io.github.hozdogus.pocketouya.OuyaAccountAndEngineRulesTest.main(new String[0]);
         io.github.hozdogus.pocketouya.ClickteamSurfaceLayoutRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.JavascriptInterfaceRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.CallGuardRulesTest.main(new String[0]);

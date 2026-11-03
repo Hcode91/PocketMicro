@@ -219,3 +219,17 @@ purchase implementation, native transformer or finalizer detector changes.
   first frame (XY Cannon passes `MAX_RIP * 4` to `glUniform4fv`). Each call goes through a helper
   in the calling class that lowers `count` to the whole vectors/matrices the array holds after
   `offset`; fitting counts, null arrays and bad offsets are passed through unchanged.
+
+## OUYA account lookups and AndEngine base64 maps (2026-11-03)
+
+- **`ouya.account-placeholder`.** OUYA games call
+  `AccountManager.getAccountsByType("tv.ouya.account.v1")` and take element 0 (Zombie Driver HD
+  keys its cached receipts by that account in its store-failure path). Phones have no OUYA
+  account, so the array is empty and the game crashes. In games that mention that account type,
+  each lookup goes through a helper that returns the real result, or, when it is empty and the
+  OUYA type was asked for, one local placeholder `Account("OUYA", "tv.ouya.account.v1")`. It is not
+  registered with Android and has no receipts; it only keys data the game stores itself.
+- **`andengine.base64-unsigned-read`.** AndEngine's `Base64InputStream.read()` returns signed
+  bytes. Android 5+ `GZIPInputStream` rejects values outside -1..255, so gzip+base64 TMX maps fail
+  to load and the game crashes drawing a textureless layer (Zombie Outbreak). The decoded byte is
+  masked with `0xFF`; the end-of-stream `-1` is unchanged.

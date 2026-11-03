@@ -66,6 +66,12 @@ public final class SharedCompatibilityRepairs {
             OuyaGameDataLocalRule.Result saves=apply?OuyaGameDataLocalRule.repair(diagnosticInput):OuyaGameDataLocalRule.inspect(diagnosticInput);
             if(saves.status!=CompatibilityEvidence.Status.SKIPPED)report.append(saves.status).append(' ').append(OuyaGameDataLocalRule.ID).append(": ").append(saves.reason).append('\n');
             if(apply){plan.replacements.putAll(saves.replacements);diagnosticInput.putAll(saves.replacements);}
+            OuyaAccountRule.Result account=apply?OuyaAccountRule.repair(diagnosticInput):OuyaAccountRule.inspect(diagnosticInput);
+            if(account.status!=CompatibilityEvidence.Status.SKIPPED)report.append(account.status).append(' ').append(OuyaAccountRule.ID).append(": ").append(account.reason).append('\n');
+            if(apply){plan.replacements.putAll(account.replacements);diagnosticInput.putAll(account.replacements);}
+            AndEngineBase64Rule.Result base64=apply?AndEngineBase64Rule.repair(diagnosticInput):AndEngineBase64Rule.inspect(diagnosticInput);
+            if(base64.status!=CompatibilityEvidence.Status.SKIPPED)report.append(base64.status).append(' ').append(AndEngineBase64Rule.ID).append(": ").append(base64.reason).append('\n');
+            if(apply){plan.replacements.putAll(base64.replacements);diagnosticInput.putAll(base64.replacements);}
             GlUniformCountRule.Result uniforms=apply?GlUniformCountRule.repair(diagnosticInput):GlUniformCountRule.inspect(diagnosticInput);
             if(uniforms.status!=CompatibilityEvidence.Status.SKIPPED)report.append(uniforms.status).append(' ').append(GlUniformCountRule.ID).append(": ").append(uniforms.reason).append('\n');
             if(apply){plan.replacements.putAll(uniforms.replacements);diagnosticInput.putAll(uniforms.replacements);}
