@@ -94,3 +94,23 @@ visible. Service shutdown uses the latest delivered start ID so a delayed reader
 cannot leave an idle service behind after a newer Stop request. These changes
 compile and preserve the file/export tests; fast-return recovery still needs an
 on-device repeat. They cannot recover output already evicted from Android's buffer.
+
+
+## Full crash dumps (Android crash record)
+
+When a launched game's session ends, the Shizuku reader also asks Android how
+the game's process exited (`ActivityManager.getHistoricalProcessExitReasons`
+for that package; the shell identity Shizuku runs as holds the DUMP permission
+this needs). Only crashes, native crashes and ANRs at or after the launch time
+are considered. For a native crash Android attaches the full crash dump (the
+tombstone record). It is streamed back through a pipe, decoded by
+`TombstoneText` and appended to the global log as **Android crash record**:
+signal, cause, registers, backtraces of every thread, memory near the crashing
+thread's registers and the memory map. The record's log buffers and open-file
+list are deliberately not included. ANR traces are kept as text; a dump that
+cannot be decoded is kept as base64 so it is not lost. Android writes the dump a
+moment after the crash, so a missing dump is retried for a few seconds.
+
+This works for already-installed games without reconverting them, but needs
+Shizuku like the rest of game-output capture. `TombstoneTextTest` covers the
+decoder with a hand-built record; the Shizuku call itself needs a phone run.

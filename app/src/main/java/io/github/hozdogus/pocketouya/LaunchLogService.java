@@ -4,6 +4,7 @@ import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.*;
+import java.io.InputStream;
 import java.util.concurrent.*;
 import rikka.shizuku.Shizuku;
 
@@ -65,6 +66,45 @@ public final class LaunchLogService extends Service {
         LaunchLogging.append(this,s.game,"Capture status",status);
         if(!active&&!s.inactiveLogged){s.inactiveLogged=true;LaunchLogging.append(this,s.game,"Capture ended","Reader stopped. No later output is captured in this session.");ui.post(()->{if(current==s)finalizeSession(s.startId);});}
     }
+    /**
+     * After the game ends, asks Android (through the Shizuku reader) how its
+     * process exited. A native crash comes with the full crash dump, which is
+     * decoded to text and added to the global log. Android writes that dump a
+     * moment after the crash, so a missing dump is retried briefly.
+     */
+    private void exitRecord(Session s){
+        if(s.binder==null||s.localCapture||s.target.equals(getPackageName())||Build.VERSION.SDK_INT<30)return;
+        String last=null;
+        for(int attempt=0;attempt<4;attempt++){
+            if(attempt>0)SystemClock.sleep(1500);
+            Parcel reply=null;ParcelFileDescriptor pipe=null;
+            try{
+                reply=call(s.binder,GameLogReader.EXIT_TRACE,s);
+                if(reply.readInt()==0){last=reply.readString();continue;}
+                int reason=reply.readInt();long time=reply.readLong();String process=reply.readString(),description=reply.readString();
+                if(reply.readInt()!=0)pipe=ParcelFileDescriptor.CREATOR.createFromParcel(reply);
+                reply.recycle();reply=null;
+                byte[] trace=null;
+                if(pipe!=null){try(InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(pipe)){pipe=null;trace=readCapped(in,GameLogReader.MAX_TRACE);}}
+                if(reason==ApplicationExitInfo.REASON_CRASH_NATIVE&&(trace==null||trace.length==0)&&attempt<3){last="Android recorded a native crash but its crash dump is not ready yet.";continue;}
+                StringBuilder text=new StringBuilder();
+                text.append("Process: ").append(process).append("\nReason: ").append(reasonName(reason)).append("\nTime: ").append(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z",java.util.Locale.US).format(new java.util.Date(time))).append("\nDescription: ").append(description).append("\n\n");
+                text.append(TombstoneText.logText(trace));
+                LaunchLogging.append(this,s.game,"Android crash record",text.toString());
+                return;
+            }catch(Exception error){note(s,error);return;}
+            finally{if(reply!=null)reply.recycle();if(pipe!=null)try{pipe.close();}catch(java.io.IOException ignored){}}
+        }
+        if(last!=null)LaunchLogging.append(this,s.game,"Android crash record",last);
+    }
+    private static String reasonName(int reason){
+        switch(reason){case ApplicationExitInfo.REASON_CRASH_NATIVE:return "native crash";case ApplicationExitInfo.REASON_CRASH:return "Java crash";case ApplicationExitInfo.REASON_ANR:return "not responding (ANR)";default:return "code "+reason;}
+    }
+    private static byte[] readCapped(InputStream in,long max)throws java.io.IOException{
+        java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();byte[] buffer=new byte[65536];long left=max;
+        for(int n;left>0&&(n=in.read(buffer,0,(int)Math.min(buffer.length,left)))!=-1;){out.write(buffer,0,n);left-=n;}
+        return out.toByteArray();
+    }
     private void note(Session s,Exception error){if(s!=null)LaunchLogging.append(this,s.game,"Capture error",error.toString());}
     private void end(int startId){
         Session s=current;
@@ -82,6 +122,7 @@ public final class LaunchLogService extends Service {
     private void finalizeSession(int startId){
         Session ended=current;current=null;ui.removeCallbacks(poll);
         worker.execute(()->{if(ended!=null&&ended.binder!=null)try{drain(ended);Parcel reply=call(ended.binder,GameLogReader.STOP,null);reply.recycle();drain(ended);}catch(Exception error){note(ended,error);}
+            if(ended!=null)exitRecord(ended);
             ui.post(()->{if(current==null&&stopSelfResult(latestStartId))stopForeground(STOP_FOREGROUND_REMOVE);});
         });
     }
