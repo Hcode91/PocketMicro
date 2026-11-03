@@ -20,13 +20,16 @@ import org.jf.dexlib2.writer.pool.DexPool;
  * OuyaFacade.runRequest is replaced with the same logic plus one step: when a request would be
  * queued and the OUYA store package ("tv.ouya") is not installed, the request's listener gets
  * onFailure(OuyaErrorCodes.SERVER_OFFLINE = 3005, "OUYA store unavailable", Bundle) instead, the
- * SDK's own failure path. Nothing is purchased or unlocked; where the store exists, behaviour is
+ * SDK's own failure path. Like the real store's replies, the failure is posted to the main thread
+ * and arrives after the request call returns (games show Toasts or touch state they set up right
+ * after requesting). Nothing is purchased or unlocked; where the store exists, behaviour is
  * unchanged.
  */
 public final class OuyaStoreOfflineRule {
     public static final String ID = "ouya.store-offline.answer-requests";
     static final String FACADE = "Ltv/ouya/console/api/OuyaFacade;", REQUEST = "Ltv/ouya/console/api/RequestRunnable;",
-            LISTENER = "Ltv/ouya/console/api/OuyaResponseListener;", RUNNABLE = "Ljava/lang/Runnable;", HELPER = "pocketouyaStoreOffline";
+            LISTENER = "Ltv/ouya/console/api/OuyaResponseListener;", RUNNABLE = "Ljava/lang/Runnable;", HELPER = "pocketouyaStoreOffline",
+            FAILURE = "Ltv/ouya/console/api/PocketouyaStoreOfflineFailure;";
     static final int SERVER_OFFLINE = 3005;
 
     public static final class Result {
@@ -102,11 +105,14 @@ public final class OuyaStoreOfflineRule {
         b.addInstruction(new BuilderInstruction21c(Opcode.CHECK_CAST, 5, new ImmutableTypeReference(REQUEST)));
         b.addInstruction(new BuilderInstruction22c(Opcode.IGET_OBJECT, 0, 5, new ImmutableFieldReference(REQUEST, "listener", LISTENER)));
         b.addInstruction(new BuilderInstruction21t(Opcode.IF_EQZ, 0, b.getLabel("keep")));
-        b.addInstruction(new BuilderInstruction21s(Opcode.CONST_16, 1, SERVER_OFFLINE));
-        b.addInstruction(new BuilderInstruction21c(Opcode.CONST_STRING, 2, new ImmutableStringReference("OUYA store unavailable")));
-        b.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE, 3, new ImmutableTypeReference("Landroid/os/Bundle;")));
-        b.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_DIRECT, 1, 3, 0, 0, 0, 0, m("Landroid/os/Bundle;", "<init>", List.of(), "V")));
-        b.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_INTERFACE, 4, 0, 1, 2, 3, 0, m(LISTENER, "onFailure", List.of("I", "Ljava/lang/String;", "Landroid/os/Bundle;"), "V")));
+        String handler = "Landroid/os/Handler;", looper = "Landroid/os/Looper;";
+        b.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE, 1, new ImmutableTypeReference(handler)));
+        b.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_STATIC, 0, 0, 0, 0, 0, 0, m(looper, "getMainLooper", List.of(), looper)));
+        b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT, 2));
+        b.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_DIRECT, 2, 1, 2, 0, 0, 0, m(handler, "<init>", List.of(looper), "V")));
+        b.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE, 2, new ImmutableTypeReference(FAILURE)));
+        b.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_DIRECT, 2, 2, 0, 0, 0, 0, m(FAILURE, "<init>", List.of(LISTENER), "V")));
+        b.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_VIRTUAL, 2, 1, 2, 0, 0, 0, m(handler, "post", List.of(RUNNABLE), "Z")));
         b.addInstruction(new BuilderInstruction11n(Opcode.CONST_4, 0, 1));
         b.addInstruction(new BuilderInstruction11x(Opcode.RETURN, 0));
         b.addLabel("keep");
@@ -117,6 +123,27 @@ public final class OuyaStoreOfflineRule {
                 "Z", 0x100a, Set.of(), Set.of(), b.getMethodImplementation());
     }
 
+    /** final class PocketouyaStoreOfflineFailure implements Runnable { listener; run() { listener.onFailure(3005, "OUYA store unavailable", new Bundle()); } } */
+    static ClassDef failureClass() {
+        Field f = new ImmutableField(FAILURE, "listener", LISTENER, AccessFlags.PRIVATE.getValue() | AccessFlags.FINAL.getValue(), null, Set.of(), Set.of());
+        MethodImplementationBuilder init = new MethodImplementationBuilder(2);
+        init.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_DIRECT, 1, 0, 0, 0, 0, 0, m("Ljava/lang/Object;", "<init>", List.of(), "V")));
+        init.addInstruction(new BuilderInstruction22c(Opcode.IPUT_OBJECT, 1, 0, new ImmutableFieldReference(FAILURE, "listener", LISTENER)));
+        init.addInstruction(new BuilderInstruction10x(Opcode.RETURN_VOID));
+        MethodImplementationBuilder run = new MethodImplementationBuilder(5);
+        run.addInstruction(new BuilderInstruction22c(Opcode.IGET_OBJECT, 0, 4, new ImmutableFieldReference(FAILURE, "listener", LISTENER)));
+        run.addInstruction(new BuilderInstruction21s(Opcode.CONST_16, 1, SERVER_OFFLINE));
+        run.addInstruction(new BuilderInstruction21c(Opcode.CONST_STRING, 2, new ImmutableStringReference("OUYA store unavailable")));
+        run.addInstruction(new BuilderInstruction21c(Opcode.NEW_INSTANCE, 3, new ImmutableTypeReference("Landroid/os/Bundle;")));
+        run.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_DIRECT, 1, 3, 0, 0, 0, 0, m("Landroid/os/Bundle;", "<init>", List.of(), "V")));
+        run.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_INTERFACE, 4, 0, 1, 2, 3, 0, m(LISTENER, "onFailure", List.of("I", "Ljava/lang/String;", "Landroid/os/Bundle;"), "V")));
+        run.addInstruction(new BuilderInstruction10x(Opcode.RETURN_VOID));
+        List<Method> methods = List.of(
+                new ImmutableMethod(FAILURE, "<init>", List.of(new ImmutableMethodParameter(LISTENER, Set.of(), null)), "V", AccessFlags.CONSTRUCTOR.getValue(), Set.of(), Set.of(), init.getMethodImplementation()),
+                new ImmutableMethod(FAILURE, "run", List.of(), "V", AccessFlags.PUBLIC.getValue(), Set.of(), Set.of(), run.getMethodImplementation()));
+        return new ImmutableClassDef(FAILURE, AccessFlags.FINAL.getValue() | AccessFlags.SYNTHETIC.getValue(), "Ljava/lang/Object;", List.of(RUNNABLE), null, Set.of(), List.of(f), methods);
+    }
+
     private static Result run(Map<String, byte[]> input, boolean apply) {
         Result r = new Result();
         try {
@@ -124,6 +151,9 @@ public final class OuyaStoreOfflineRule {
             for (var e : input.entrySet()) { var d = new DexBackedDexFile(null, e.getValue()); files.put(e.getKey(), d); for (ClassDef c : d.getClasses()) classes.put(c.getType(), c); }
             ClassDef facade = classes.get(FACADE);
             if (facade == null) return r;
+            if (classes.containsKey(FAILURE) && method(facade, HELPER, FACADE + RUNNABLE, "Z") == null) {
+                r.status = CompatibilityEvidence.Status.UNSUPPORTED; r.reason = "helper class name already in use; unchanged"; return r;
+            }
             if (!matches(facade, classes.get(REQUEST))) {
                 if (method(facade, HELPER, FACADE + RUNNABLE, "Z") != null) { r.reason = "already answers offline store requests"; return r; }
                 r.status = CompatibilityEvidence.Status.UNSUPPORTED; r.reason = "OuyaFacade request queue layout not recognised; unchanged"; return r;
@@ -139,10 +169,11 @@ public final class OuyaStoreOfflineRule {
                     methods.add(helper());
                     pool.internClass(new ImmutableClassDef(c.getType(), c.getAccessFlags(), c.getSuperclass(), c.getInterfaces(), c.getSourceFile(), c.getAnnotations(), c.getFields(), methods));
                 }
+                pool.internClass(failureClass());
                 MemoryDataStore out = new MemoryDataStore(); pool.writeTo(out); r.replacements.put(file.getKey(), out.getData());
             }
             r.status = apply ? CompatibilityEvidence.Status.VERIFIED : CompatibilityEvidence.Status.SUPPORTED;
-            r.reason = "OUYA store requests that would wait forever for the missing store service now get the SDK's SERVER_OFFLINE (3005) failure when the OUYA store is not installed. Nothing is purchased or unlocked.";
+            r.reason = "OUYA store requests that would wait forever for the missing store service now get the SDK's SERVER_OFFLINE (3005) failure (posted to the main thread, as the real store replied) when the OUYA store is not installed. Nothing is purchased or unlocked.";
         } catch (Exception e) {
             r.replacements.clear(); r.status = CompatibilityEvidence.Status.UNKNOWN; r.reason = e + "; original DEX retained";
         }

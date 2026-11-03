@@ -233,3 +233,13 @@ purchase implementation, native transformer or finalizer detector changes.
   bytes. Android 5+ `GZIPInputStream` rejects values outside -1..255, so gzip+base64 TMX maps fail
   to load and the game crashes drawing a textureless layer (Zombie Outbreak). The decoded byte is
   masked with `0xFF`; the end-of-stream `-1` is unchanged.
+
+## Store-offline answers arrive on the main thread (2026-11-03)
+
+- **`ouya.store-offline.answer-requests` (updated).** The SERVER_OFFLINE (3005) failure was
+  delivered synchronously on the requesting thread. Games expect the real store's behaviour: a
+  reply on the main thread after the request returns. Zombies and Trains! requests products from
+  Unity's GL thread and shows a Toast in `onFailure` ("Can't toast on a thread that has not called
+  Looper.prepare()"). The helper now posts a small added `PocketouyaStoreOfflineFailure` Runnable
+  (same package as OuyaFacade) to `new Handler(Looper.getMainLooper())`; its `run()` calls
+  `listener.onFailure(3005, "OUYA store unavailable", new Bundle())`.

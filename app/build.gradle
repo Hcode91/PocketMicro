@@ -158,6 +158,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'tests/OuyaGameDataLocalRuleTest.java',
             'tests/GlUniformCountRuleTest.java',
             'tests/OuyaAccountAndEngineRulesTest.java',
+            'tests/OuyaStoreOfflineRuleTest.java',
             'tests/ClickteamSurfaceLayoutRuleTest.java',
             'tests/JavascriptInterfaceRuleTest.java',
             'tests/CallGuardRulesTest.java',
