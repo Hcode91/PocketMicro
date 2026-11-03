@@ -243,3 +243,17 @@ purchase implementation, native transformer or finalizer detector changes.
   Looper.prepare()"). The helper now posts a small added `PocketouyaStoreOfflineFailure` Runnable
   (same package as OuyaFacade) to `new Handler(Looper.getMainLooper())`; its `run()` calls
   `listener.onFailure(3005, "OUYA store unavailable", new Bundle())`.
+
+## OUYA controller player numbers without the OUYA system (2026-11-03)
+
+- **`ouya.controller-player-numbers`.** The OUYA SDK's `OuyaController` asks the OUYA system's
+  `tv.ouya.controllerdata` provider which player each input device is. On a phone that provider
+  is missing, so every controller (Bluetooth pads and PocketOuya's touch pad, device id -1) is
+  player -1: `getControllerByPlayer()` stays null, games ignore input (Zombies and Trains! "controller
+  state for player -1") or crash on the missing controller (Zombie Driver HD `OnPadButtonEvent`).
+  When the provider is unreachable, `getPlayerNumFromDeviceId`/`getDeviceIdFromPlayerNum` answer
+  from an added `PocketouyaPlayers` table: the first gamepad/joystick devices (by InputDevice
+  source) or PocketOuya's virtual pad to send input become players 1-4; keyboards, touchscreens
+  and phone buttons never take a slot. With the provider present the SDK runs unchanged; the
+  SDK's own button/axis mapping is used. Applies to 11 of the 14 uploaded test APKs (Worm
+  Copter's older SDK layout and two games without the OUYA controller API are unchanged).

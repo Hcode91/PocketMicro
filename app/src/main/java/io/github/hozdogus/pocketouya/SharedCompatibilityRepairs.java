@@ -66,6 +66,9 @@ public final class SharedCompatibilityRepairs {
             OuyaGameDataLocalRule.Result saves=apply?OuyaGameDataLocalRule.repair(diagnosticInput):OuyaGameDataLocalRule.inspect(diagnosticInput);
             if(saves.status!=CompatibilityEvidence.Status.SKIPPED)report.append(saves.status).append(' ').append(OuyaGameDataLocalRule.ID).append(": ").append(saves.reason).append('\n');
             if(apply){plan.replacements.putAll(saves.replacements);diagnosticInput.putAll(saves.replacements);}
+            OuyaControllerPlayersRule.Result players=apply?OuyaControllerPlayersRule.repair(diagnosticInput):OuyaControllerPlayersRule.inspect(diagnosticInput);
+            if(players.status!=CompatibilityEvidence.Status.SKIPPED)report.append(players.status).append(' ').append(OuyaControllerPlayersRule.ID).append(": ").append(players.reason).append('\n');
+            if(apply){plan.replacements.putAll(players.replacements);diagnosticInput.putAll(players.replacements);}
             OuyaAccountRule.Result account=apply?OuyaAccountRule.repair(diagnosticInput):OuyaAccountRule.inspect(diagnosticInput);
             if(account.status!=CompatibilityEvidence.Status.SKIPPED)report.append(account.status).append(' ').append(OuyaAccountRule.ID).append(": ").append(account.reason).append('\n');
             if(apply){plan.replacements.putAll(account.replacements);diagnosticInput.putAll(account.replacements);}
