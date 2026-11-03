@@ -131,10 +131,12 @@ public final class GameCompatibilityPatcher {
                     }
             if(touch)for(String launcher:launchers)if(canHook(classes.get(launcher),classes)){targets.add(launcher);if(nativeRoute(classes.get(launcher),classes))nativeTargets++;else if(marmaladeRoute(classes.get(launcher),classes))marmaladeTargets++;else if(legacyJsonRoute(classes.get(launcher),classes))legacyTargets.add(launcher);}
             Result result=new Result();result.touchEnabled=!targets.isEmpty();
+            boolean gameMaker=result.touchEnabled&&GameMakerPadPatcher.matches(classes.get(GameMakerPadPatcher.RUNNER));
             for(Map.Entry<String,DexBackedDexFile> file:files.entrySet()){
                 DexPool pool=new DexPool(file.getValue().getOpcodes());boolean changed=false;
                 for(ClassDef cls:file.getValue().getClasses()) {
                     if(targets.contains(cls.getType())){pool.internClass(hookActivity(cls,legacyTargets.contains(cls.getType())));changed=true;}
+                    else if(gameMaker&&cls.getType().equals(GameMakerPadPatcher.RUNNER)){pool.internClass(GameMakerPadPatcher.rewrite(cls));changed=true;}
                     else pool.internClass(cls);
                 }
                 if(changed){MemoryDataStore out=new MemoryDataStore();pool.writeTo(out);result.dex.put(file.getKey(),out.getData());}
@@ -142,10 +144,11 @@ public final class GameCompatibilityPatcher {
             StringBuilder report=new StringBuilder("Conversion compatibility report\n\n");
             if(touch){
                 if(result.touchEnabled)report.append("Touch pad: enabled for ").append(targets.size()).append(" launch activity/activities. ").append(nativeTargets).append(" use the OUYA native input route.\n");
+                if(gameMaker)report.append("GameMaker runner: the touch pad appears as a connected controller (sticks and buttons), alongside real controllers.\n");
                 else report.append("Touch pad: unsupported launcher/activity layout; no touch hooks added.\n");
                 if(marmaladeTargets>0)report.append(marmaladeTargets).append(" use direct Marmalade Activity key callbacks (including game overrides). Directions are digital keys; no physical controller or analog device is emulated.\n");
                 if(!legacyTargets.isEmpty())report.append(legacyTargets.size()).append(" use the legacy OUYA JSON controller route: in-process player-1 device announcement, key callbacks and left/right stick axes. No physical Android device is created; phone input response remains unverified.\n");
-                if(targets.size()>nativeTargets+marmaladeTargets+legacyTargets.size())report.append("Other input uses Android gamepad events, with a Keyboard option in the pad menu. Virtual events may be ignored by games that require a physical controller.\n");
+                if(!gameMaker&&targets.size()>nativeTargets+marmaladeTargets+legacyTargets.size())report.append("Other input uses Android gamepad events, with a Keyboard option in the pad menu. Virtual events may be ignored by games that require a physical controller.\n");
                 if(targets.size()<launchers.size())report.append("Some launch activities could not be patched; controls may not appear on those screens.\n");
             }
             report.append("\nThis does not fix incompatible native engines, unavailable services, custom/native DRM or billing systems. Reconvert original APKs to update embedded compatibility code.");

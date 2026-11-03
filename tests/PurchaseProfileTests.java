@@ -7,6 +7,7 @@ public final class PurchaseProfileTests {
         io.github.hozdogus.pocketouya.LegacyServiceStartTest.main(new String[0]);
         io.github.hozdogus.pocketouya.DeviceIdRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.CallGuardRulesTest.main(new String[0]);
+        io.github.hozdogus.pocketouya.GameMakerPadTest.main(new String[0]);
         io.github.hozdogus.pocketouya.SharedCompatibilityRulesTest.main(new String[0]);
         io.github.hozdogus.pocketouya.NativeRuntimeRepairTest.main(new String[0]);
         io.github.hozdogus.pocketouya.MarmaladeRuntimeRepairTest.main(new String[0]);
