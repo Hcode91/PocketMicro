@@ -34,7 +34,7 @@ public final class AirPadSink implements VirtualPad.Sink {
         managerType.getDeclaredField("sAndroidInputManager"); managerType.getDeclaredField("mInternalReference"); managerType.getDeclaredField("mListening");
         managerType.getDeclaredMethod("OnDeviceAdded", long.class, deviceType, String.class);
         deviceType.getDeclaredField("mInputControls"); deviceType.getDeclaredField("mNumControls");
-        deviceType.getConstructor(InputDevice.class);
+        deviceType.getDeclaredConstructor(InputDevice.class);
     }
 
     private static Object field(Object target, Class<?> type, String name) throws ReflectiveOperationException {
@@ -56,7 +56,8 @@ public final class AirPadSink implements VirtualPad.Sink {
             InputDevice base = InputDevice.getDevice(KeyCharacterMap.VIRTUAL_KEYBOARD);
             if (base == null) for (int id : InputDevice.getDeviceIds()) { base = InputDevice.getDevice(id); if (base != null) break; }
             if (base == null) return false;
-            Object created = deviceType.getConstructor(InputDevice.class).newInstance(base);
+            Constructor<?> make = deviceType.getDeclaredConstructor(InputDevice.class); make.setAccessible(true);   // AIR's classes are package-private
+            Object created = make.newInstance(base);
             List<Object> controls = (List<Object>) field(created, deviceType, "mInputControls");
             Object axisKind = null;
             for (Object constant : typeEnum.getEnumConstants()) if ("AXIS".equals(((Enum<?>) constant).name())) axisKind = constant;
@@ -98,7 +99,7 @@ public final class AirPadSink implements VirtualPad.Sink {
     }
 
     private void invoke(String name, Class<?> type, Object event) {
-        try { deviceType.getMethod(name, type).invoke(device, event); }
+        try { Method m = deviceType.getDeclaredMethod(name, type); m.setAccessible(true); m.invoke(device, event); }
         catch (ReflectiveOperationException | LinkageError e) { throw new IllegalStateException("AIR GameInput call failed", e); }
     }
 }
