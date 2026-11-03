@@ -209,3 +209,13 @@ purchase implementation, native transformer or finalizer detector changes.
   to the game's own private SharedPreferences file `pocketouya_ouya_gamedata` (same key/value
   strings, kept across launches); otherwise the original SDK code runs. Saves made this way stay
   on the phone with the game. Purchases and receipts are not involved.
+
+## GLES uniform array counts (2026-11-03)
+
+- **`android.gles-uniform-count`.** `GLES20`/`GLES30` `glUniform{1-4}{f,i}v` and
+  `glUniformMatrix{2-4}fv` array forms take a count of vectors/matrices. Android 4.x only checked
+  the array against `count`, so games passing the number of floats worked; Android 5+ checks
+  `count * size` and throws `IllegalArgumentException: length - offset < count*4 < needed` on the
+  first frame (XY Cannon passes `MAX_RIP * 4` to `glUniform4fv`). Each call goes through a helper
+  in the calling class that lowers `count` to the whole vectors/matrices the array holds after
+  `offset`; fitting counts, null arrays and bad offsets are passed through unchanged.
