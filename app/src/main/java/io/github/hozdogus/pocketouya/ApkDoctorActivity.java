@@ -17,7 +17,7 @@ public final class ApkDoctorActivity extends Activity {
     private TextView text;private Button pick,prepare,export,install,saveReport;
     private File dir;private volatile boolean busy;
     @Override public void onCreate(Bundle state){
-        super.onCreate(state);
+        super.onCreate(state);ConversionRecord.converterVersion=LaunchLogging.appVersion(this);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(20,16,20,12);
         pick=button(root,"SELECT APK AND SCAN",()->startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"),PICK));
         prepare=button(root,"PREPARE SUPPORTED FIXES",this::prepare);

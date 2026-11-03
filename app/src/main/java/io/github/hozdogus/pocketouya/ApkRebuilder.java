@@ -94,7 +94,7 @@ public final class ApkRebuilder {
                 Enumeration<? extends ZipEntry> entries=zip.entries();
                 while(entries.hasMoreElements()){
                     ZipEntry entry=entries.nextElement();String name=entry.getName();
-                    if(isOldSignature(name)||entry.isDirectory())continue;
+                    if(isOldSignature(name)||entry.isDirectory()||name.equals(ConversionRecord.ENTRY))continue;
                     byte[] replacement=name.equals("AndroidManifest.xml")?result.manifest:replacements.get(name);
                     ZipEntry target=new ZipEntry(name);target.setTime(entry.getTime());
                     if(entry.getMethod()==ZipEntry.STORED){
@@ -108,6 +108,7 @@ public final class ApkRebuilder {
                     output.closeEntry();
                 }
                 if(appendBridge){output.putNextEntry(new ZipEntry("classes"+nextDex+".dex"));output.write(bridge);output.closeEntry();}
+                output.putNextEntry(new ZipEntry(ConversionRecord.ENTRY));output.write(ConversionRecord.build(runtimeRepair,touch,offline,experimental,result.compatibilityReport));output.closeEntry();
             }
             return result;
         }catch(NumberFormatException e){throw new IOException("Unsupported DEX filename",e);}

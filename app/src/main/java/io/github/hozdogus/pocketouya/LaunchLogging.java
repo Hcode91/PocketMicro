@@ -15,9 +15,18 @@ final class LaunchLogging {
     static void begin(Context context,String game,String pkg,String target,String mode){
         finish(context);
         long since=System.currentTimeMillis();state(context).edit().putBoolean("active",true).putString("game",game).putString("package",pkg).putString("target",target).putString("mode",mode).putLong("since",since).commit();
-        append(context,game,"Launch","Package: "+pkg+"\nMode: "+mode+"\nLaunch requested. This does not confirm successful gameplay.");
+        append(context,game,"Launch","Package: "+pkg+"\nMode: "+mode+"\nPocketOuya: "+appVersion(context)+"\n"+gameRecord(context,pkg)+"\nLaunch requested. This does not confirm successful gameplay.");
         try{context.startForegroundService(new Intent(context,LaunchLogService.class).putExtra("game",game).putExtra("target",target).putExtra("since",since));}
         catch(RuntimeException error){append(context,game,"Capture unavailable",error.toString());}
+    }
+    static String appVersion(Context context){
+        try{return context.getPackageManager().getPackageInfo(context.getPackageName(),0).versionName;}catch(Exception e){return "unknown";}
+    }
+    /** Which PocketOuya build converted this game and which fixes it applied (from the APK's record). */
+    static String gameRecord(Context context,String pkg){
+        if(pkg==null||pkg.equals(context.getPackageName()))return "Conversion record: PocketOuya engine (no conversion)";
+        try{return ConversionRecord.summary(new File(context.getPackageManager().getApplicationInfo(pkg,0).sourceDir));}
+        catch(Exception e){return "Conversion record: game not visible to PocketOuya ("+e.getClass().getSimpleName()+")";}
     }
     static void finish(Context context){
         SharedPreferences p=state(context);if(!p.getBoolean("active",false))return;
