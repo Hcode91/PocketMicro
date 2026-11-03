@@ -78,6 +78,23 @@ public final class ArmFinalizerDetector {
         long tag(long tag){Long v=dynamic.get(tag);require(v!=null,UNKNOWN,"TAG_MISSING","Required dynamic tag missing: "+tag);return v;}
         long offset(long va,int n){for(Segment s:loads)if(va>=s.address&&va+n<=s.address+s.file)return s.offset+va-s.address;throw new Rejection(MALFORMED,"VIRTUAL_RANGE","Address is not file-backed: "+Long.toHexString(va));}
         long word(long va){return u32(offset(va,4));}
+        /** Direct calls to {@code t} in executable loads: [0] Thumb-mode evidence (Thumb BL, ARM BLX imm),
+         *  [1] ARM-mode evidence (ARM BL/B-with-link, Thumb BLX imm). Interworking calls fix the callee's mode. */
+        int[] callEvidence(long t){
+            int thumb=0,arm=0;
+            for(Segment s:loads){if((s.flags&1)==0)continue;long end=s.offset+s.file;
+                for(long at=s.offset;at+4<=end;at+=2){long va=s.address+(at-s.offset);
+                    if((at&3)==0){long w=u32(at);long imm=((w&0xffffffL)<<40)>>38;
+                        if((w&0x0f000000L)==0x0b000000L&&(w>>>28)!=0xf&&va+8+imm==t)arm++;
+                        if((w&0xfe000000L)==0xfa000000L&&va+8+imm+(((w>>>24)&1)<<1)==t)thumb++;}
+                    int h1=u16(at),h2=u16(at+2);if((h1&0xf800)!=0xf000||(h2&0xc000)!=0xc000)continue;
+                    long sgn=(h1>>>10)&1,j1=(h2>>>13)&1,j2=(h2>>>11)&1,i1=1-(j1^sgn),i2=1-(j2^sgn);
+                    long off=(sgn<<24)|(i1<<23)|(i2<<22)|((long)(h1&0x3ff)<<12)|((long)(h2&0x7ff)<<1);off=(off<<39)>>39;
+                    if((h2&0x1000)!=0){if(va+4+off==t)thumb++;}
+                    else if((h2&1)==0&&((va+4)&~3L)+off==t)arm++;
+                }}
+            return new int[]{thumb,arm};
+        }
         boolean memory(long va,int n,int flags){for(Segment s:loads)if(va>=s.address&&va+n<=s.address+s.memory&&(s.flags&flags)==flags)return true;return false;}
         String string(Section s,long index){require(index<s.size,MALFORMED,"STRING_INDEX","Invalid string index");long at=s.offset+index,end=at;while(end<s.offset+s.size&&end-at<=2048&&u8(end)!=0)end++;require(end<s.offset+s.size&&end-at<=2048,MALFORMED,"STRING_END","Unterminated/oversized string");byte[] value=new byte[(int)(end-at)];for(int i=0;i<value.length;i++)value[i]=b.get((int)at+i);return new String(value,java.nio.charset.StandardCharsets.UTF_8);}
         String symbol(long index){require(index>0&&index<symbolCount,MALFORMED,"RELOC_SYMBOL","Invalid relocation symbol");return string(sections.get((int)dynsym.link),u32(dynsym.offset+16*index));}
@@ -120,7 +137,10 @@ public final class ArmFinalizerDetector {
                 evidence.add(new CompatibilityEvidence.Finding(VERIFIED,"THUNK_SHAPE","bytes/relocation/unwind only","Eight Thumb-shaped halfwords, two data loads, matching target and symbol-bound PLT; instruction mode still requires independent evidence",t));
                 boolean typed=false;for(Symbol s:e.symbols)if(e.definedCode(s)&&(s.info&15)==2&&s.value==(t|1)&&s.size>=16&&s.size<=24)typed=true;
                 boolean mapped=e.mode(t)=='t'&&e.mode(t+14)=='t'&&e.mode(t+16)=='d'&&e.mode(t+23)=='d';
-                require(typed||mapped,UNKNOWN,"THUMB_MODE_UNPROVEN","No Thumb STT_FUNC entry or consistent $t/$d mapping; exidx alone does not prove instruction mode");
+                int[] calls=typed||mapped?new int[]{0,0}:e.callEvidence(t);boolean called=calls[0]>0&&calls[1]==0;
+                if(called)evidence.add(new CompatibilityEvidence.Finding(VERIFIED,"THUMB_CALLERS","direct call sites",calls[0]+" Thumb BL / ARM BLX call(s) target the thunk and none call it in ARM mode",t));
+                require(calls[1]==0,UNKNOWN,"THUMB_MODE_CONFLICT","ARM-mode call sites target the thunk");
+                require(typed||mapped||called,UNKNOWN,"THUMB_MODE_UNPROVEN","No Thumb STT_FUNC entry, consistent $t/$d mapping or Thumb-mode call site; exidx alone does not prove instruction mode");
                 require(e.mode(t)!='a'&&e.mode(t)!='d'&&e.mode(t+16)!='a'&&e.mode(t+16)!='t',UNKNOWN,"THUMB_MODE_CONFLICT","Mapping contradicts Thumb entry");consumed.add(r.address);
             }
             require(consumed.size()==bad.size(),UNSUPPORTED,"COVERAGE","Not every non-writable relocation covered");

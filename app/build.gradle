@@ -123,6 +123,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/NdkDependencyPathRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/LegacySdkCrashRules.java',
             'src/main/java/io/github/hozdogus/pocketouya/DeviceIdRule.java',
+            'src/main/java/io/github/hozdogus/pocketouya/DetectedFinalizerRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/SharedCompatibilityRepairs.java',
             'src/main/java/io/github/hozdogus/pocketouya/ExperimentalUnityRuntimeRepair.java',
             'src/main/java/io/github/hozdogus/pocketouya/UnityCpuStringRule.java',

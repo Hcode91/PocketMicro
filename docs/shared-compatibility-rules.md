@@ -134,3 +134,24 @@ It does not establish the precise cause of the current blank/loading screen.
 Startup service binding, missing native plugin resolution and gameplay remain
 unresolved; managed assemblies and a fresh runtime log are still needed. No
 purchase implementation, native transformer or finalizer detector changes.
+
+## 2026-11-03 additions (general rules, no per-game fingerprints)
+
+- **`android.legacy-sdk.explicit-service` widened.** No longer limited to the MOGA and
+  Google Analytics packages: any `Context.bindService`/`startService` call in game or SDK
+  code (receiver resolved through the DEX class hierarchy) goes through a helper. An
+  implicit Intent is resolved via PackageManager; exactly one match is called explicitly,
+  none or several return "unavailable" (false/null) instead of the Android 5+ crash.
+  Bundled `android.support.*`/`android.annotation.*` classes no longer block the rule
+  (they did before, which is why GameMaker games such as Abbaye des Morts kept crashing).
+- **`android.legacy-device-id`.** TelephonyManager device ID/IMEI/MEID/SIM/subscriber/number
+  reads are wrapped; only a refused read (Android 10+ SecurityException) returns
+  `000000000000000` (device IDs) or null (SIM/subscriber/number). Wraithborne (UE3).
+- **`elf.arm32.detected-finalizer`.** For native libraries not in the fingerprint catalogue,
+  the read-only `ArmFinalizerDetector` supplies the finalizer/target/thunk/PLT addresses and
+  the unchanged catalogue routine `ArmRuntimePicRepair.repairLayout` performs the repair,
+  re-checking every instruction byte. The detector also accepts Thumb mode proven by direct
+  call sites (Thumb `BL` / ARM `BLX` to the thunk, and no ARM-mode `BL`). Target: Unity /
+  Marmalade / Frima libraries such as Wrecking Balls Arena's `libmain.so`.
+- **Conversion record.** Converted APKs carry `assets/pocketouya-conversion.txt` (PocketOuya
+  version, options, rule results); launch log entries show it.

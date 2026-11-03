@@ -28,6 +28,11 @@ public final class SharedCompatibilityRepairs {
                 WritableRelocationRule.Result result=apply?WritableRelocationRule.repair(bytes):WritableRelocationRule.inspect(bytes);
                 if(result.status!=CompatibilityEvidence.Status.SKIPPED)report.append(result.status).append(' ').append(WritableRelocationRule.ID).append(" [").append(name).append("]: ").append(result.reason).append('\n');
                 byte[] changed=result.replacement();if(changed!=null)plan.replacements.put(name,changed);
+                if(changed==null&&(name.startsWith("lib/armeabi-v7a/")||name.startsWith("lib/armeabi/"))){
+                    DetectedFinalizerRule.Result fin=apply?DetectedFinalizerRule.repair(bytes):DetectedFinalizerRule.inspect(bytes);
+                    if(fin.status!=CompatibilityEvidence.Status.SKIPPED)report.append(fin.status).append(' ').append(DetectedFinalizerRule.ID).append(" [").append(name).append("]: ").append(fin.reason).append('\n');
+                    byte[] repaired=fin.replacement();if(repaired!=null)plan.replacements.put(name,repaired);
+                }
             }
             if(name.matches("classes(?:[2-9]|[1-9][0-9]+)?\\.dex")){
                 long size=e.getSize();if(dex.size()>=64||size<0||size>32L*1024*1024||size>dexBudget){dexSkipped=true;continue;}

@@ -39,6 +39,7 @@ public final class ArmFinalizerDetectorTest {
   ExperimentalUnityRuntimeRepairTest.main(new String[0]);
   UnityCpuStringRuleTest.main(new String[0]);
   ApkRepairAssessmentTest.main(new String[0]);
+  DetectedFinalizerRuleTest.main(new String[0]);
   JSONObject result=new JSONObject().put("suite","generated structural layouts").put("true_positive",tp).put("true_negative",tn).put("false_positive",fp).put("false_negative",fn).put("cases",cases);
   if(args.length>0)Files.writeString(Path.of(args[0]),result.toString(2));System.out.println(result.toString());
  }
