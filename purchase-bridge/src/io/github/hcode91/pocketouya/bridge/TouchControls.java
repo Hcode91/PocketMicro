@@ -94,7 +94,7 @@ public final class TouchControls extends FrameLayout {
         int stickSize=size(116),cluster=3*size(44),inner=size(12)+stickSize+size(8),lifted=size(10)+cluster;
         boolean analog=!(nativeSink instanceof MarmaladePadSink);
         leftStick=new Stick(activity,"LS",true);
-        addStick(leftStick,Gravity.BOTTOM|Gravity.LEFT,size(12),lifted);
+        addStick(leftStick,Gravity.BOTTOM|Gravity.LEFT,size(12),lifted-size(40));
         LinearLayout directions=column();
         row(directions,null,button("↑",VirtualPad.UP,0xff555555),null);
         row(directions,button("←",VirtualPad.LEFT,0xff555555),null,button("→",VirtualPad.RIGHT,0xff555555));
@@ -104,7 +104,7 @@ public final class TouchControls extends FrameLayout {
         row(faces,null,button("Y",VirtualPad.Y,0xffa98413),null);
         row(faces,button("U",VirtualPad.U,0xff1479ad),null,button("A",VirtualPad.A,0xffa73b36));
         row(faces,null,button("O",VirtualPad.O,0xff318b42),null);
-        addPanel(faces,Gravity.BOTTOM|Gravity.RIGHT,size(12),lifted-size(12));
+        addPanel(faces,Gravity.BOTTOM|Gravity.RIGHT,size(12),lifted-size(40));
         if(analog){rightStick=new Stick(activity,"RS",false);addStick(rightStick,Gravity.BOTTOM|Gravity.RIGHT,inner,size(10));}
         int shoulderTop=dp(56);
         LinearLayout leftShoulder=new LinearLayout(activity);leftShoulder.setMotionEventSplittingEnabled(true);
@@ -173,13 +173,16 @@ public final class TouchControls extends FrameLayout {
     }
     private void addPanel(View panel,int gravity,int horizontal,int bottomOrTop){
         FrameLayout.LayoutParams layout=new FrameLayout.LayoutParams(-2,-2,gravity);
-        layout.setMargins(horizontal,bottomOrTop,horizontal,bottomOrTop);
+        // Gap only on the anchored edge: a gap on both edges can exceed a short screen and clip the panel.
+        boolean top=(gravity&Gravity.VERTICAL_GRAVITY_MASK)==Gravity.TOP;
+        layout.setMargins(horizontal,top?bottomOrTop:0,horizontal,top?0:bottomOrTop);
         panels.add(panel);addView(panel,layout);
     }
     private Button button(String text,final int key,int color){
         Button button=new Button(getContext());button.setText(text);button.setTextColor(Color.WHITE);
         button.setFocusable(false);button.setFocusableInTouchMode(false);
         button.setAllCaps(false);button.setTextSize(12);button.setPadding(0,0,0,0);
+        button.setMinHeight(0);button.setMinimumHeight(0);button.setMinWidth(0);button.setMinimumWidth(0);
         button.setContentDescription("OUYA "+text.replace('\n',' '));
         GradientDrawable bg=new GradientDrawable();bg.setColor(color);bg.setCornerRadius(dp(14));bg.setStroke(dp(1),0xffcccccc);
         button.setBackground(bg);button.setAlpha(0.8f);
