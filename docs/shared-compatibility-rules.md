@@ -278,3 +278,14 @@ purchase implementation, native transformer or finalizer detector changes.
   resource-ID order; activities that already declare an orientation keep it. If the attribute name
   is not yet in the string pool it is added at the end of the resource-mapped prefix and every later
   string reference is shifted by one. Malformed or styled string pools leave the manifest unchanged.
+- **`ouya.tv-layouts.screen-size`.** Also runs only when `ouya.tv-layouts` changed resources. The
+  landscape manifest alone was not enough for Word Shaker: AFKLib `b.e()` returns true only for a
+  large/xlarge `Configuration.screenLayout`, and when it is false `WordShakerActivity.onCreate`
+  calls `setRequestedOrientation(PORTRAIT)`, so the activity started in landscape, was recreated in
+  portrait with the phone layout and crashed the same way (log: first `Config` `land`, second
+  `port`). After every game-code `iget Configuration.screenLayout` the size bits are set to LARGE
+  (`and-int/lit8 -16`, `or-int/lit8 3`), which is what the OUYA reported, so the game's own size
+  checks agree with the TV resources it now gets. Other screenLayout bits and PocketOuya's own
+  classes are unchanged; already-forced reads are recognised, so a second pass changes nothing.
+  The converter run on the Word Shaker APK applies all three parts (2 resource groups,
+  10 activities, 2 screenLayout reads); gameplay on a phone is not yet confirmed.

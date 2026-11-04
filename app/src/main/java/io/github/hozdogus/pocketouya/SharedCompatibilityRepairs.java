@@ -50,12 +50,13 @@ public final class SharedCompatibilityRepairs {
         PrivateLibraryStubs.Result stubs=PrivateLibraryStubs.plan(nativeLibs,apply);
         if(stubs.status!=CompatibilityEvidence.Status.SKIPPED)report.append(stubs.status).append(' ').append(PrivateLibraryStubs.ID).append(": ").append(stubs.reason).append('\n');
         if(apply)for(var add:stubs.additions.entrySet())if(!names.contains(add.getKey()))plan.replacements.put(add.getKey(),add.getValue());
-        ZipEntry table=zip.getEntry("resources.arsc");
+        ZipEntry table=zip.getEntry("resources.arsc");boolean tvLayouts=false;
         if(table!=null&&table.getSize()>=0&&table.getSize()<=32L*1024*1024){
             TvLayoutRule.Result tv=apply?TvLayoutRule.repair(ApkRebuilder.readBounded(zip.getInputStream(table),32*1024*1024)):TvLayoutRule.inspect(ApkRebuilder.readBounded(zip.getInputStream(table),32*1024*1024));
             if(tv.status!=CompatibilityEvidence.Status.SKIPPED)report.append(tv.status).append(' ').append(TvLayoutRule.ID).append(": ").append(tv.reason).append('\n');
             if(apply&&tv.replacement!=null)plan.replacements.put("resources.arsc",tv.replacement);
-            if(tv.status==CompatibilityEvidence.Status.VERIFIED||tv.status==CompatibilityEvidence.Status.SUPPORTED){
+            tvLayouts=tv.status==CompatibilityEvidence.Status.VERIFIED||tv.status==CompatibilityEvidence.Status.SUPPORTED;
+            if(tvLayouts){
                 ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
                 byte[] source=manifest!=null?manifest:manifestEntry==null?null:ApkRebuilder.readBounded(zip.getInputStream(manifestEntry),4*1024*1024);
                 if(source!=null){
@@ -103,6 +104,11 @@ public final class SharedCompatibilityRepairs {
             JavascriptInterfaceRule.Result js=apply?JavascriptInterfaceRule.repair(diagnosticInput):JavascriptInterfaceRule.inspect(diagnosticInput);
             if(js.status!=CompatibilityEvidence.Status.SKIPPED)report.append(js.status).append(' ').append(JavascriptInterfaceRule.ID).append(": ").append(js.reason).append('\n');
             if(apply){plan.replacements.putAll(js.replacements);diagnosticInput.putAll(js.replacements);}
+            if(tvLayouts){
+                TvScreenSizeRule.Result size=apply?TvScreenSizeRule.repair(diagnosticInput):TvScreenSizeRule.inspect(diagnosticInput);
+                if(size.status!=CompatibilityEvidence.Status.SKIPPED)report.append(size.status).append(' ').append(TvScreenSizeRule.ID).append(": ").append(size.reason).append('\n');
+                if(apply){plan.replacements.putAll(size.replacements);diagnosticInput.putAll(size.replacements);}
+            }
             AirLoaderDiagnosticsRule.Result air=apply?AirLoaderDiagnosticsRule.repair(diagnosticInput):AirLoaderDiagnosticsRule.inspect(diagnosticInput);
             if(air.status!=CompatibilityEvidence.Status.SKIPPED)report.append(air.status).append(' ').append(AirLoaderDiagnosticsRule.ID).append(": ").append(air.reason).append('\n');
             if(apply)plan.replacements.putAll(air.replacements);
