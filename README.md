@@ -2,6 +2,10 @@
 
 Play Ouya games on a modern Android phone.
 
+> PocketOuya is an independent fan project. It is not affiliated with, endorsed by or connected
+> to OUYA, Razer or any game publisher. Use it only with game files you are entitled to use.
+> PocketOuya never unlocks paid content: games' own purchase checks are always left unchanged.
+
 The Ouya ran Android 4.1, so its games are ordinary Android apps – but Android 14 and newer
 refuse to install apps built for anything older than Android 6. PocketOuya fixes that:
 
@@ -32,3 +36,4 @@ Copyright (C) 2026 Hcode91
 
 Third-party components keep their own licences: Shizuku API (Apache-2.0), dexlib2/smali
 (BSD-3-Clause), apksig (Apache-2.0), Guava (Apache-2.0), dynarmic (0BSD) and Boost (BSL-1.0).
+OUYA is a trademark of its respective owner.
