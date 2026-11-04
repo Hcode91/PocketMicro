@@ -30,6 +30,46 @@ final class ShizukuInstaller {
         } catch (RuntimeException e) { return "Shizuku unavailable: " + e.getMessage(); }
     }
 
+    /** Copies a picked OBB into the game's Android/obb folder through the Shizuku service. */
+    static void copyObb(android.content.Context context, android.net.Uri source, String pkg, String name, Callback callback) {
+        String problem = readiness();
+        if (problem != null) { callback.done(false, problem); return; }
+        try { ObbImport.target(pkg, name); } catch (IllegalArgumentException e) { callback.done(false, e.getMessage()); return; }
+        int version = 1;
+        try { version = (int) context.getPackageManager().getPackageInfo(context.getPackageName(), 0).getLongVersionCode(); } catch (PackageManager.NameNotFoundException ignored) {}
+        Shizuku.UserServiceArgs args = new Shizuku.UserServiceArgs(new ComponentName(context, CrashLogService.class))
+                .daemon(false).tag("game_obb").processNameSuffix("game_obb").version(version).debuggable(false);
+        ServiceConnection[] holder = new ServiceConnection[1];
+        holder[0] = new ServiceConnection() {
+            boolean used;
+            @Override public void onServiceConnected(ComponentName component, IBinder binder) {
+                if (used) return; used = true;
+                new Thread(() -> {
+                    String result;
+                    Parcel data = Parcel.obtain(), reply = Parcel.obtain();
+                    try (ParcelFileDescriptor fd = context.getContentResolver().openFileDescriptor(source, "r")) {
+                        if (fd == null) throw new java.io.IOException("Cannot open the chosen file");
+                        data.writeInterfaceToken(CrashLogService.DESCRIPTOR);
+                        data.writeString(pkg);
+                        data.writeString(name);
+                        data.writeFileDescriptor(fd.getFileDescriptor());
+                        data.writeLong(fd.getStatSize());
+                        if (!binder.transact(CrashLogService.OBB, data, reply, 0)) throw new RemoteException("OBB copy unsupported");
+                        reply.readException();
+                        result = reply.readString();
+                    } catch (Exception e) { result = "FAILED: " + e; }
+                    finally { data.recycle(); reply.recycle(); }
+                    try { Shizuku.unbindUserService(args, holder[0], true); } catch (RuntimeException ignored) {}
+                    String text = result == null ? "FAILED: no reply" : result;
+                    callback.done(text.startsWith("Success"), text);
+                }, "shizuku-obb").start();
+            }
+            @Override public void onServiceDisconnected(ComponentName component) {}
+        };
+        try { Shizuku.bindUserService(args, holder[0]); }
+        catch (RuntimeException e) { callback.done(false, "Cannot start the Shizuku service: " + e.getMessage()); }
+    }
+
     static void install(android.content.Context context, File apk, Callback callback) {
         String problem = readiness();
         if (problem != null) { callback.done(false, problem); return; }

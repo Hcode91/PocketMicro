@@ -43,7 +43,8 @@ public class MainActivity extends Activity {
     static final String ACTION_REFRESH = "io.github.hozdogus.pocketouya.REFRESH";
     static final String ACTION_IMPORT_STORE = "io.github.hozdogus.pocketouya.IMPORT_STORE_APK";
     private static final String OUYA_GAME = "tv.ouya.intent.category.GAME";
-    private static final int PICK_APK = 1;
+    private static final int PICK_APK = 1, PICK_OBB = 2;
+    private String obbFor;
 
     static final int BG = 0xFF161616;
     static final int CARD = 0xFF242424;
@@ -439,8 +440,9 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle(g.label)
                 .setItems(new String[] { "Play", "App info", "Uninstall", "Engine test (developer)",
-                        "Play with GameMaker engine + touch (beta)", "Capture log + export APK" }, (d, which) -> {
+                        "Play with GameMaker engine + touch (beta)", "Capture log + export APK", "Add OBB data file (Shizuku)" }, (d, which) -> {
                     if (which == 0) launch(g);
+                    else if (which == 6) pickObb(g);
                     else if (which == 3) engineTest(g);
                     else if (which == 4) playWithEngine(g);
                     else if (which == 5) startActivity(new Intent(this,CrashCaptureActivity.class).putExtra("package",g.pkg).putExtra("capture",true));
@@ -543,6 +545,39 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_APK && resultCode == RESULT_OK && data != null && data.getData() != null)
             assessImport(data.getData());
+        if (requestCode == PICK_OBB && resultCode == RESULT_OK && data != null && data.getData() != null && obbFor != null)
+            copyObb(obbFor, data.getData());
+    }
+
+    /** Some games (for example Gameloft's) keep their data in a separate .obb file in Android/obb/<package>/. */
+    private void pickObb(Game g) {
+        obbFor = g.pkg;
+        startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), PICK_OBB);
+    }
+
+    private void copyObb(String pkg, Uri uri) {
+        String name = null;
+        try (android.database.Cursor c = getContentResolver().query(uri, new String[] { android.provider.OpenableColumns.DISPLAY_NAME }, null, null, null)) {
+            if (c != null && c.moveToFirst()) name = c.getString(0);
+        } catch (RuntimeException ignored) {}
+        if (!ObbImport.validName(name)) {
+            new AlertDialog.Builder(this).setTitle("Not an OBB file").setMessage("Choose the game's .obb file" + (name == null ? "." : " (you picked " + name + ").")).setPositiveButton("OK", null).show();
+            return;
+        }
+        final String file = name;
+        Runnable copy = () -> {
+            showProgress("Copying " + file + " through Shizuku…");
+            ShizukuInstaller.copyObb(this, uri, pkg, file, (ok, message) -> {
+                hideProgress();
+                ui.post(() -> new AlertDialog.Builder(this).setTitle(ok ? "OBB added" : "OBB copy failed")
+                        .setMessage(ok ? "Copied to " + ObbImport.folder(pkg) + ". Start the game; its first launch may spend a few minutes unpacking." : message)
+                        .setPositiveButton("OK", null).show());
+            });
+        };
+        if (ObbImport.namesGame(pkg, file)) copy.run();
+        else new AlertDialog.Builder(this).setTitle("Check the file name")
+                .setMessage(file + " doesn't look like this game's OBB (main.<number>." + pkg + ".obb). Games usually only find their OBB under its original name. Copy it anyway?")
+                .setPositiveButton("Copy anyway", (d, w) -> copy.run()).setNegativeButton("Cancel", null).show();
     }
 
     private void showProgress(String msg) {

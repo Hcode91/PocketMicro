@@ -57,6 +57,9 @@ More: [touch controls](docs/touch-controls.md).
 - **Logs:** a global game log with full export, and crash capture through Shizuku or from a
   bug-report file. Nothing is uploaded. See [global log](docs/global-game-log.md) and
   [crash capture](docs/crash-capture.md).
+- **OBB data files:** some games (Gameloft's, for example) keep their data in a separate `.obb`
+  file. Long-press the game and choose **Add OBB data file (Shizuku)** to copy it into
+  `Android/obb/<package>/`, which Android 13+ otherwise blocks.
 - **GameMaker engine (beta):** a built-in translated engine for some GameMaker games.
 
 ## Building

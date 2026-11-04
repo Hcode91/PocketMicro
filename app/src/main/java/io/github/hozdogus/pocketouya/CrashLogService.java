@@ -6,10 +6,10 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/** Optional Shizuku user service. Fixed operations only (crash-buffer capture, install one APK streamed by PocketOuya), never arbitrary commands. */
+/** Optional Shizuku user service. Fixed operations only (crash-buffer capture, install one APK streamed by PocketOuya, copy one OBB into a game's Android/obb folder), never arbitrary commands. */
 public final class CrashLogService extends Binder {
     static final String DESCRIPTOR="io.github.hozdogus.pocketouya.CRASH_CAPTURE";
-    static final int START=1,STOP=2,READ=3,INSTALL=4,DESTROY=16777115;
+    static final int START=1,STOP=2,READ=3,INSTALL=4,OBB=5,DESTROY=16777115;
     private final int owner;
     private final Object lock=new Object();
     private String pkg="",failure="";
@@ -26,6 +26,7 @@ public final class CrashLogService extends Binder {
         data.enforceInterface(DESCRIPTOR);
         if(code==START){start(data.readString());reply.writeNoException();return true;}
         if(code==STOP){stop();reply.writeNoException();return true;}
+        if(code==OBB){String target=data.readString(),name=data.readString();ParcelFileDescriptor file=data.readFileDescriptor();long size=data.readLong();String out=copyObb(target,name,file,size);reply.writeNoException();reply.writeString(out);return true;}
         if(code==INSTALL){ParcelFileDescriptor apk=data.readFileDescriptor();long size=data.readLong();String out=install(apk,size);reply.writeNoException();reply.writeString(out);return true;}
         if(code==READ){
             String snapshot,target,error;boolean active;
@@ -65,6 +66,24 @@ public final class CrashLogService extends Binder {
         List<String> cmd=new ArrayList<>(Arrays.asList("/system/bin/pm","install","-r"));
         if(sdk>=34)cmd.add("--bypass-low-target-sdk-block");
         cmd.add("-S");cmd.add(Long.toString(size));return cmd;
+    }
+    /** Streams one OBB into /storage/emulated/0/Android/obb/<package>/<name>.obb (temp file, then rename). */
+    private String copyObb(String target,String name,ParcelFileDescriptor file,long size){
+        if(file==null)return "FAILED: no file";
+        File out,tmp;
+        try{out=new File(ObbImport.target(target,name));tmp=new File(out.getPath()+".pocketouya-part");}
+        catch(IllegalArgumentException error){try{file.close();}catch(IOException ignored){}return "FAILED: "+error.getMessage();}
+        File dir=out.getParentFile();
+        if(!dir.isDirectory()&&!dir.mkdirs()){try{file.close();}catch(IOException ignored){}return "FAILED: cannot create "+dir;}
+        long copied=0;
+        try(InputStream in=new ParcelFileDescriptor.AutoCloseInputStream(file);OutputStream os=new FileOutputStream(tmp)){
+            byte[] buffer=new byte[1<<20];
+            for(int n;(n=in.read(buffer))>0;){copied+=n;if(copied>ObbImport.MAX_SIZE)throw new IOException("file larger than 8 GB");os.write(buffer,0,n);}
+        }catch(Exception error){tmp.delete();return "FAILED: "+error;}
+        if(size>0&&copied!=size){tmp.delete();return "FAILED: copied "+copied+" of "+size+" bytes";}
+        if(out.exists()&&!out.delete()){tmp.delete();return "FAILED: cannot replace "+out;}
+        if(!tmp.renameTo(out)){tmp.delete();return "FAILED: cannot finish "+out;}
+        return "Success: "+out+" ("+copied+" bytes)";
     }
     private String install(ParcelFileDescriptor apk,long size){
         if(apk==null||size<=0||size>(4L<<30))return "FAILED: invalid APK";
