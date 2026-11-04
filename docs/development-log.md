@@ -1273,3 +1273,5 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   leftStick() and L2/R2; VirtualPadState maps L2/R2 to buttons plus trigger axes; GameMaker maps
   them to gp_shoulderlb/rb. Host tests pass; TouchControls compiled by CI only; phone untested.
   Engine-specific input routes are unchanged (only the on-screen layout is shared).
+
+- **2026-11-04 — WebView main-thread repair confirmed:** Grave Defense Holidays (old AdMob 4.1 SDK) starts with Startup repairs + touch after android.webview-main-thread. N.O.V.A. 3 parked: genuine Freedom Edition (com.gameloft.android.ANMP.GloftNAHM) crashes in CStrings::GetString because it picks /sdcard/gameloft/games/GloftNAHM first and has no storage permission at target 23; untested idea: grant storage permission (manually or via Shizuku after install). Two earlier N.O.V.A. 3 APKs were modified copies (APKMania; AOSP test key) and were not worked on.
