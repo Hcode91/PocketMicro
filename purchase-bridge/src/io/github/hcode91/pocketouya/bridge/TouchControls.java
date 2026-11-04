@@ -45,7 +45,8 @@ public final class TouchControls extends FrameLayout {
         watched.put(app,true);
     }
     private VirtualPad pad;
-    private LookStick look;
+    private Stick leftStick,rightStick;
+    private float scale=1f;
     private final VirtualPad.Sink nativeSink;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final List<View> panels=new ArrayList<>();
@@ -85,24 +86,41 @@ public final class TouchControls extends FrameLayout {
         if(nativeSink instanceof LegacyOuyaPadSink&&!settings.getBoolean("legacy_json_v1",false)){mode=0;settings.edit().putInt("mode",0).putBoolean("legacy_json_v1",true).apply();}
         Log.i("PocketOuyaControls","Input route: "+(nativeSink instanceof LegacyOuyaPadSink?"legacy OUYA JSON controller":nativeSink instanceof OuyaPadSink?"OUYA native":nativeSink instanceof GameMakerPadSink?"GameMaker controller":nativeSink instanceof Ue3PadSink?"Unreal Engine 3 controller":nativeSink instanceof AirPadSink?"Adobe AIR GameInput controller":nativeSink instanceof MarmaladePadSink?"Marmalade":"Android fallback")+"; mode="+mode);
         pad=createPad(activity,mode);
+        // OUYA controller layout for every game: left stick above the d-pad on the left, O/U/Y/A above
+        // the right stick on the right, L1/L2 and R1/R2 on the shoulders, Menu in the middle.
+        int width=getResources().getDisplayMetrics().widthPixels;
+        int height=getResources().getDisplayMetrics().heightPixels;
+        scale=Math.max(0.6f,Math.min(1f,Math.min(width/(float)dp(640),height/(float)dp(360))));
+        int stickSize=size(116),cluster=3*size(44),inner=size(12)+stickSize+size(8),lifted=size(10)+cluster;
+        boolean analog=!(nativeSink instanceof MarmaladePadSink);
+        leftStick=new Stick(activity,"LS",true);
+        addStick(leftStick,Gravity.BOTTOM|Gravity.LEFT,size(12),lifted);
         LinearLayout directions=column();
         row(directions,null,button("↑",VirtualPad.UP,0xff555555),null);
         row(directions,button("←",VirtualPad.LEFT,0xff555555),null,button("→",VirtualPad.RIGHT,0xff555555));
         row(directions,null,button("↓",VirtualPad.DOWN,0xff555555),null);
-        addPanel(directions,Gravity.BOTTOM|Gravity.LEFT,16,22);
+        addPanel(directions,Gravity.BOTTOM|Gravity.LEFT,inner,size(10));
         LinearLayout faces=column();
         row(faces,null,button("Y",VirtualPad.Y,0xffa98413),null);
         row(faces,button("U",VirtualPad.U,0xff1479ad),null,button("A",VirtualPad.A,0xffa73b36));
         row(faces,null,button("O",VirtualPad.O,0xff318b42),null);
-        addPanel(faces,Gravity.BOTTOM|Gravity.RIGHT,16,22);
-        if(!(nativeSink instanceof MarmaladePadSink)&&getResources().getDisplayMetrics().widthPixels>=dp(500)){look=new LookStick(activity);FrameLayout.LayoutParams lookLayout=new FrameLayout.LayoutParams(dp(100),dp(100),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);lookLayout.setMargins(0,0,0,dp(22));panels.add(look);addView(look,lookLayout);}
-        LinearLayout top=new LinearLayout(activity);top.setGravity(Gravity.CENTER);
-        top.addView(button("L1",VirtualPad.L1,0xff555555));
-        top.addView(button("Select",VirtualPad.SELECT,0xff555555));
-        top.addView(button("Menu",VirtualPad.MENU,0xff555555));
-        top.addView(button("Start",VirtualPad.START,0xff555555));
-        top.addView(button("R1",VirtualPad.R1,0xff555555));
-        addPanel(top,Gravity.TOP|Gravity.CENTER_HORIZONTAL,0,getResources().getDisplayMetrics().widthPixels<dp(560)?58:10);
+        addPanel(faces,Gravity.BOTTOM|Gravity.RIGHT,size(12),lifted-size(12));
+        if(analog){rightStick=new Stick(activity,"RS",false);addStick(rightStick,Gravity.BOTTOM|Gravity.RIGHT,inner,size(10));}
+        int shoulderTop=dp(56);
+        LinearLayout leftShoulder=new LinearLayout(activity);leftShoulder.setMotionEventSplittingEnabled(true);
+        leftShoulder.addView(shoulder("L2",VirtualPad.L2));leftShoulder.addView(shoulder("L1",VirtualPad.L1));
+        addPanel(leftShoulder,Gravity.TOP|Gravity.LEFT,size(12),shoulderTop);
+        LinearLayout rightShoulder=new LinearLayout(activity);rightShoulder.setMotionEventSplittingEnabled(true);
+        rightShoulder.addView(shoulder("R1",VirtualPad.R1));rightShoulder.addView(shoulder("R2",VirtualPad.R2));
+        addPanel(rightShoulder,Gravity.TOP|Gravity.RIGHT,size(12),shoulderTop);
+        // Select/Start are not on the OUYA pad but some ported games still ask for them.
+        LinearLayout middle=new LinearLayout(activity);middle.setMotionEventSplittingEnabled(true);
+        middle.addView(small("Select",VirtualPad.SELECT));middle.addView(small("Start",VirtualPad.START));
+        addPanel(middle,Gravity.TOP|Gravity.CENTER_HORIZONTAL,0,dp(width<dp(560)?58:10));
+        Button menu=button("Menu",VirtualPad.MENU,0xff2b2b2b);
+        ((GradientDrawable)menu.getBackground()).setCornerRadius(size(26));
+        FrameLayout.LayoutParams menuLayout=new FrameLayout.LayoutParams(size(64),size(44),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
+        menuLayout.setMargins(0,0,0,size(18));panels.add(menu);addView(menu,menuLayout);
         Button toggle=new Button(activity);toggle.setText("Hide pad");toggle.setAllCaps(false);toggle.setTextSize(11);
         toggle.setFocusable(false);toggle.setFocusableInTouchMode(false);
         FrameLayout.LayoutParams toggleLayout=new FrameLayout.LayoutParams(dp(92),dp(44),Gravity.TOP|Gravity.LEFT);
@@ -133,7 +151,21 @@ public final class TouchControls extends FrameLayout {
     }
     private int dp(int value){return (int)(value*getResources().getDisplayMetrics().density+0.5f);}
     private LinearLayout column(){LinearLayout layout=new LinearLayout(getContext());layout.setOrientation(LinearLayout.VERTICAL);layout.setMotionEventSplittingEnabled(true);return layout;}
-    private int cellWidth(){return Math.max(dp(36),Math.min(dp(58),(getResources().getDisplayMetrics().widthPixels-dp(48))/6));}
+    private int size(int value){return (int)(value*scale*getResources().getDisplayMetrics().density+0.5f);}
+    private int cellWidth(){return size(44);}
+    private void addStick(Stick stick,int gravity,int horizontal,int bottom){
+        FrameLayout.LayoutParams layout=new FrameLayout.LayoutParams(size(116),size(116),gravity);
+        layout.setMargins(horizontal,0,horizontal,bottom);panels.add(stick);addView(stick,layout);
+    }
+    private Button shoulder(String text,int key){
+        Button button=button(text,key,0xff3a3a3a);
+        button.setLayoutParams(new LinearLayout.LayoutParams(size(58),size(40)));return button;
+    }
+    private Button small(String text,int key){
+        Button button=button(text,key,0xff444444);button.setTextSize(10);
+        LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(size(56),size(34));layout.setMargins(dp(3),0,dp(3),0);
+        button.setLayoutParams(layout);return button;
+    }
     private void row(LinearLayout column,View left,View middle,View right){
         LinearLayout row=new LinearLayout(getContext());row.setMotionEventSplittingEnabled(true);
         for(View view:new View[]{left,middle,right})row.addView(view==null?new View(getContext()):view,new LinearLayout.LayoutParams(cellWidth(),Math.min(dp(54),cellWidth())));
@@ -141,7 +173,7 @@ public final class TouchControls extends FrameLayout {
     }
     private void addPanel(View panel,int gravity,int horizontal,int bottomOrTop){
         FrameLayout.LayoutParams layout=new FrameLayout.LayoutParams(-2,-2,gravity);
-        layout.setMargins(dp(horizontal),dp(bottomOrTop),dp(horizontal),dp(bottomOrTop));
+        layout.setMargins(horizontal,bottomOrTop,horizontal,bottomOrTop);
         panels.add(panel);addView(panel,layout);
     }
     private Button button(String text,final int key,int color){
@@ -176,28 +208,42 @@ public final class TouchControls extends FrameLayout {
         });
         return button;
     }
-    private final class LookStick extends View {
+    /** Analog stick. Left drives X/Y (or the d-pad keys on routes without analog input); right drives Z/RZ. */
+    private final class Stick extends View {
         private final android.graphics.Paint paint=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final String label;private final boolean left;
         private int pointer=-1;private float x,y;
-        LookStick(Activity activity){super(activity);setFocusable(false);setContentDescription("Right stick: drag to look");}
+        Stick(Activity activity,String label,boolean left){super(activity);this.label=label;this.left=left;setFocusable(false);setContentDescription(left?"Left stick":"Right stick");}
         void resetPointer(){pointer=-1;x=0;y=0;invalidate();}
         @Override protected void onDraw(android.graphics.Canvas canvas){super.onDraw(canvas);float cx=getWidth()/2f,cy=getHeight()/2f,r=Math.min(cx,cy)-dp(5);
+            paint.setStyle(android.graphics.Paint.Style.FILL);paint.setColor(0x66333333);canvas.drawCircle(cx,cy,r,paint);
             paint.setStyle(android.graphics.Paint.Style.STROKE);paint.setStrokeWidth(dp(1));paint.setColor(0x99ffffff);canvas.drawCircle(cx,cy,r,paint);
-            paint.setStyle(android.graphics.Paint.Style.FILL);paint.setColor(0x66555555);canvas.drawCircle(cx,cy,r,paint);paint.setColor(0xaaffffff);canvas.drawCircle(cx+x*r*0.65f,cy+y*r*0.65f,r*0.25f,paint);
-            paint.setColor(Color.WHITE);paint.setTextSize(dp(12));paint.setTextAlign(android.graphics.Paint.Align.CENTER);canvas.drawText("Look / RS",cx,cy-r*0.5f,paint);
+            paint.setStyle(android.graphics.Paint.Style.FILL);paint.setColor(0xbb555555);canvas.drawCircle(cx+x*r*0.6f,cy+y*r*0.6f,r*0.4f,paint);
+            paint.setColor(Color.WHITE);paint.setTextSize(dp(11));paint.setTextAlign(android.graphics.Paint.Align.CENTER);canvas.drawText(label,cx+x*r*0.6f,cy+y*r*0.6f+dp(4),paint);
         }
         @Override public boolean onTouchEvent(MotionEvent event){int action=event.getActionMasked(),index=event.getActionIndex();
             if(action==MotionEvent.ACTION_DOWN&&pointer<0)pointer=event.getPointerId(index);
-            if(action==MotionEvent.ACTION_CANCEL||((action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_POINTER_UP)&&event.getPointerId(index)==pointer)){resetPointer();stick(0,0);return true;}
-            int at=event.findPointerIndex(pointer);if(at>=0){float radius=Math.max(1,Math.min(getWidth(),getHeight())/2f-dp(5));x=(event.getX(at)-getWidth()/2f)/radius;y=(event.getY(at)-getHeight()/2f)/radius;double length=Math.hypot(x,y);if(length>1){x/=length;y/=length;}stick(x,y);invalidate();}return true;
+            if(action==MotionEvent.ACTION_CANCEL||((action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_POINTER_UP)&&event.getPointerId(index)==pointer)){resetPointer();stick(this,0,0);return true;}
+            int at=event.findPointerIndex(pointer);if(at>=0){float radius=Math.max(1,Math.min(getWidth(),getHeight())/2f-dp(5));x=(event.getX(at)-getWidth()/2f)/radius;y=(event.getY(at)-getHeight()/2f)/radius;double length=Math.hypot(x,y);if(length>1){x/=length;y/=length;}stick(this,x,y);invalidate();}return true;
         }
     }
-    private void stick(float x,float y){if(!usable)return;try{pad.rightStick(x,y);}catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Right stick input disabled after input error",error);}}
+    private final Object stickOwner=new Object();
+    private void stick(Stick which,float x,float y){
+        if(!usable)return;
+        try{
+            if(!which.left)pad.rightStick(x,y);
+            else if(nativeSink instanceof MarmaladePadSink){
+                // Digital-only route: the left stick presses the d-pad directions instead.
+                pad.hold(VirtualPad.LEFT,stickOwner,x<-0.5f);pad.hold(VirtualPad.RIGHT,stickOwner,x>0.5f);
+                pad.hold(VirtualPad.UP,stickOwner,y<-0.5f);pad.hold(VirtualPad.DOWN,stickOwner,y>0.5f);
+            }else pad.leftStick(x,y);
+        }catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Stick input disabled after input error",error);}
+    }
     private void hold(int key,Object owner,boolean down){
         if(!usable)return;
         try{pad.hold(key,owner,down);}catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Touch input disabled after native input error",error);}
     }
-    private void releasePad(){handler.removeCallbacksAndMessages(null);if(look!=null)look.resetPointer();try{pad.releaseAll();}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to release virtual controller",error);}}
+    private void releasePad(){handler.removeCallbacksAndMessages(null);if(leftStick!=null)leftStick.resetPointer();if(rightStick!=null)rightStick.resetPointer();try{pad.releaseAll();}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to release virtual controller",error);}}
     @Override public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(!focused)releasePad();}
     @Override protected void onDetachedFromWindow(){releasePad();super.onDetachedFromWindow();}
 }

@@ -64,3 +64,18 @@ virtual pad always gets Generic.kl and cannot carry both the OUYA scan codes and
 `com.unity3d.player.UnityPlayer` (report bit n = scan 0x130 + n, d-pad as buttons 8-11, Menu and
 Start as 0x13e plus the MENU key), and the previous **Android key order** for other engines.
 
+
+## Step 3: OUYA-shaped touch pad (all games)
+
+The touch overlay is shared by every converted game, so the layout change applies everywhere:
+left analogue stick above the d-pad on the left, O/U/Y/A above the right analogue stick on the
+right, L2/L1 and R1/R2 on the shoulders, Menu in the middle, plus small Select/Start (not on the
+OUYA pad, kept for ported games that ask for them). Sizes scale down on small or portrait screens.
+
+- `VirtualPad.leftStick(x, y)` drives axes 0/1; a held d-pad direction takes over those axes and
+  the stick value returns when it is released. Marmalade (digital keys only) turns the left stick
+  into d-pad presses and hides the right stick.
+- New keys `BUTTON_L2`/`BUTTON_R2` (104/105). Virtual controller: OUYA order bits 12/13 (scan
+  0x13c/0x13d), Android order bits 8/9 (`BTN_TL2`/`BTN_TR2`), and the analogue trigger axes are
+  set fully while held. GameMaker: gp_shoulderlb/rb. Other routes forward the key code.
+- Not done: L3/R3 (stick clicks).

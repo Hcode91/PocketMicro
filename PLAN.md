@@ -1335,3 +1335,10 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   compiled by CI only; device test pending. **Next:** server purchases (owner chose store +
   purchases): products/gamer info for all OUYA SDK games; receipts only where games accept
   plain data (no receipt-encryption bypass).
+
+- **2026-11-04 — OUYA-shaped touch pad:** owner asked for the OUYA controller's layout with two
+  analogue sticks, for all games. TouchControls (shared by every game) now has left stick + d-pad
+  left, face diamond + right stick right, L1/L2 and R1/R2, Menu centre. VirtualPad gained
+  leftStick() and L2/R2; VirtualPadState maps L2/R2 to buttons plus trigger axes; GameMaker maps
+  them to gp_shoulderlb/rb. Host tests pass; TouchControls compiled by CI only; phone untested.
+  Engine-specific input routes are unchanged (only the on-screen layout is shared).

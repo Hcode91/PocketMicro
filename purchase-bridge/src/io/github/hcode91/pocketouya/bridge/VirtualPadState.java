@@ -12,6 +12,7 @@ package io.github.hcode91.pocketouya.bridge;
  * - Android key order, for other engines that read key codes: O = BUTTON_A, A = BUTTON_B,
  *   U = BUTTON_X, Y = BUTTON_Y (Generic.kl), d-pad as DPAD_* keys.
  *
+ * L2/R2 set their button and the analogue trigger axis (Brake/Accelerator) together.
  * Menu is also sent as the MENU key in both layouts (the OUYA delivered its menu press to games
  * as KEYCODE_MENU). Left stick X/Y, right (look) stick Z/RZ. Pure Java, tested on the host.
  */
@@ -38,6 +39,8 @@ public final class VirtualPadState {
             case VirtualPad.DOWN: return 9;
             case VirtualPad.LEFT: return 10;
             case VirtualPad.RIGHT: return 11;
+            case VirtualPad.L2: return 12;
+            case VirtualPad.R2: return 13;
             case VirtualPad.MENU: case VirtualPad.START: return 14; // OUYA Home/Menu button
             case VirtualPad.SELECT: return 15;
             default: return -1;
@@ -49,6 +52,8 @@ public final class VirtualPadState {
             case VirtualPad.Y: return 4;      // BTN_Y -> BUTTON_Y
             case VirtualPad.L1: return 6;     // BTN_TL -> BUTTON_L1
             case VirtualPad.R1: return 7;     // BTN_TR -> BUTTON_R1
+            case VirtualPad.L2: return 8;     // BTN_TL2 -> BUTTON_L2
+            case VirtualPad.R2: return 9;     // BTN_TR2 -> BUTTON_R2
             case VirtualPad.SELECT: return 10;
             case VirtualPad.START: return 11;
             default: return -1;
@@ -74,6 +79,9 @@ public final class VirtualPadState {
         boolean down = action == 0;
         if (bit >= 0) buttons = down ? buttons | (1 << bit) : buttons & ~(1 << bit);
         if (k != 0) keys = down ? keys | k : keys & ~k;
+        // L2/R2 are analogue triggers on the OUYA pad: fully pressed while held, as well as the button.
+        if (key == VirtualPad.L2) lt = down ? 1f : 0f;
+        if (key == VirtualPad.R2) rt = down ? 1f : 0f;
         return true;
     }
 

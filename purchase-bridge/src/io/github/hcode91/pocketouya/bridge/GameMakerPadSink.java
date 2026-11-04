@@ -24,6 +24,8 @@ public final class GameMakerPadSink implements VirtualPad.Sink {
             case VirtualPad.Y: return 3;      // gp_face4 (top)
             case VirtualPad.L1: return 4;     // gp_shoulderl
             case VirtualPad.R1: return 5;     // gp_shoulderr
+            case VirtualPad.L2: return 6;     // gp_shoulderlb
+            case VirtualPad.R2: return 7;     // gp_shoulderrb
             case VirtualPad.SELECT: return 8; // gp_select
             case VirtualPad.START: case VirtualPad.MENU: return 9; // gp_start
             case VirtualPad.UP: return 12; case VirtualPad.DOWN: return 13; case VirtualPad.LEFT: return 14; case VirtualPad.RIGHT: return 15;

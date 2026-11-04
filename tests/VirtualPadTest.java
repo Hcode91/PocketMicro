@@ -28,6 +28,16 @@ public final class VirtualPadTest {
   check(releases.equals(Arrays.asList(96,99)));
   List<Integer> neutral=new ArrayList<>();VirtualPad brokenAxis=new VirtualPad(new VirtualPad.Sink(){public void key(int k,int a){}public void axis(int a,float v){if(v==0){neutral.add(a);if(a==11)throw new IllegalStateException();}}});
   brokenAxis.rightStick(0.5f,0.5f);try{brokenAxis.releaseAll();throw new AssertionError();}catch(IllegalStateException expected){}check(neutral.equals(Arrays.asList(0,1,11,14)));
+  // Left analog stick: X/Y axes; a held d-pad direction overrides it, and the stick returns when released.
+  events.clear();VirtualPad sticks=new VirtualPad(new VirtualPad.Sink(){public void key(int k,int a){events.add("k"+k+":"+a);}public void axis(int a,float v){events.add("a"+a+":"+v);}});
+  sticks.leftStick(0.5f,-0.5f);check(events.equals(Arrays.asList("a0:0.5","a1:-0.5")));
+  sticks.hold(VirtualPad.RIGHT,first,true);check(events.contains("a0:1.0")&&events.get(events.size()-1).equals("a1:0.0"));
+  sticks.hold(VirtualPad.RIGHT,first,false);check(events.get(events.size()-2).equals("a0:0.5")&&events.get(events.size()-1).equals("a1:-0.5"));
+  sticks.leftStick(0.05f,0.05f);check(events.get(events.size()-2).equals("a0:0.0")&&events.get(events.size()-1).equals("a1:0.0"));
+  sticks.leftStick(3,4);check(events.get(events.size()-2).startsWith("a0:0.6")&&events.get(events.size()-1).startsWith("a1:0.8"));
+  sticks.releaseAll();check(events.get(events.size()-1).equals("a1:0.0"));
+  events.clear();sticks.hold(VirtualPad.L2,first,true);sticks.hold(VirtualPad.R2,first,true);check(events.equals(Arrays.asList("k104:0","k105:0")));sticks.releaseAll();
+  try{sticks.leftStick(Float.POSITIVE_INFINITY,0);throw new AssertionError("Infinite stick accepted");}catch(IllegalArgumentException expected){}
   check(io.github.hcode91.pocketouya.bridge.KeyboardPadMap.key(VirtualPad.O)==62);
   check(io.github.hcode91.pocketouya.bridge.KeyboardPadMap.key(VirtualPad.START)==66);
   check(io.github.hcode91.pocketouya.bridge.KeyboardPadMap.key(VirtualPad.LEFT)==VirtualPad.LEFT);

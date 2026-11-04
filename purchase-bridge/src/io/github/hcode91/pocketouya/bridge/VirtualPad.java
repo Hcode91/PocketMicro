@@ -4,11 +4,11 @@ import java.util.*;
 
 /** Per-overlay ownership prevents a second finger/repeat from releasing a held key. */
 public final class VirtualPad {
-    public static final int UP=19,DOWN=20,LEFT=21,RIGHT=22,O=96,U=99,Y=100,A=97,L1=102,R1=103,MENU=82,START=108,SELECT=109;
+    public static final int UP=19,DOWN=20,LEFT=21,RIGHT=22,O=96,U=99,Y=100,A=97,L1=102,R1=103,L2=104,R2=105,MENU=82,START=108,SELECT=109;
     public interface Sink {void key(int key,int action);void axis(int axis,float value);}
     private final Sink sink;
     private final Map<Integer,Set<Object>> held=new LinkedHashMap<>();
-    private float x,y,rx,ry;
+    private float x,y,rx,ry,sx,sy;
     public VirtualPad(Sink sink){this.sink=sink;}
     public void hold(int key,Object owner,boolean down){
         if(owner==null || !valid(key))throw new IllegalArgumentException("Unknown touch control");
@@ -17,20 +17,32 @@ public final class VirtualPad {
         else if(owners!=null){owners.remove(owner);if(owners.isEmpty())held.remove(key);}
         boolean after=held.containsKey(key);
         if(before!=after)sink.key(key,after?0:1);
-        float nextX=(held.containsKey(RIGHT)?1:0)-(held.containsKey(LEFT)?1:0);
-        float nextY=(held.containsKey(DOWN)?1:0)-(held.containsKey(UP)?1:0);
+        updateLeft();
+    }
+    /** Left analog stick X/Y. A held d-pad direction takes over the same axes until released. */
+    public void leftStick(float nextX,float nextY){
+        float[] v=deadZone(nextX,nextY);sx=v[0];sy=v[1];updateLeft();
+    }
+    private void updateLeft(){
+        boolean dpad=held.containsKey(RIGHT)||held.containsKey(LEFT)||held.containsKey(DOWN)||held.containsKey(UP);
+        float nextX=dpad?(held.containsKey(RIGHT)?1:0)-(held.containsKey(LEFT)?1:0):sx;
+        float nextY=dpad?(held.containsKey(DOWN)?1:0)-(held.containsKey(UP)?1:0):sy;
         if(nextX!=x){x=nextX;sink.axis(0,x);}
         if(nextY!=y){y=nextY;sink.axis(1,y);}
     }
-    /** Independent analog look stick: Android/OUYA right-stick axes Z and RZ. */
-    public void rightStick(float nextX,float nextY){
+    private static float[] deadZone(float nextX,float nextY){
         if(Float.isNaN(nextX)||Float.isInfinite(nextX)||Float.isNaN(nextY)||Float.isInfinite(nextY))throw new IllegalArgumentException("Invalid stick position");
         double length=Math.hypot(nextX,nextY);if(length>1){nextX=(float)(nextX/length);nextY=(float)(nextY/length);}else if(length<0.15){nextX=0;nextY=0;}
+        return new float[]{nextX,nextY};
+    }
+    /** Independent analog look stick: Android/OUYA right-stick axes Z and RZ. */
+    public void rightStick(float nextX,float nextY){
+        float[] v=deadZone(nextX,nextY);nextX=v[0];nextY=v[1];
         boolean changedX=nextX!=rx,changedY=nextY!=ry;rx=nextX;ry=nextY;
         if(changedX)sink.axis(11,rx);if(changedY)sink.axis(14,ry);
     }
     public void releaseAll(){
-        List<Integer> keys=new ArrayList<>(held.keySet());float oldRX=rx,oldRY=ry;held.clear();x=0;y=0;rx=0;ry=0;
+        List<Integer> keys=new ArrayList<>(held.keySet());float oldRX=rx,oldRY=ry;held.clear();x=0;y=0;rx=0;ry=0;sx=0;sy=0;
         RuntimeException failure=null;
         for(int key:keys)try{sink.key(key,1);}catch(RuntimeException error){failure=error;}
         try{sink.axis(0,0);}catch(RuntimeException error){failure=error;}
@@ -39,5 +51,5 @@ public final class VirtualPad {
         if(oldRY!=0)try{sink.axis(14,0);}catch(RuntimeException error){failure=error;}
         if(failure!=null)throw failure;
     }
-    private static boolean valid(int key){return key==UP||key==DOWN||key==LEFT||key==RIGHT||key==O||key==U||key==Y||key==A||key==L1||key==R1||key==MENU||key==START||key==SELECT;}
+    private static boolean valid(int key){return key==UP||key==DOWN||key==LEFT||key==RIGHT||key==O||key==U||key==Y||key==A||key==L1||key==R1||key==L2||key==R2||key==MENU||key==START||key==SELECT;}
 }
