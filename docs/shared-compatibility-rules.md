@@ -309,3 +309,21 @@ purchase implementation, native transformer or finalizer detector changes.
   the DEX hook/packaging (`LowAddressRuleTest`, including Soul Fjord's real launcher locally);
   the library itself is built by CI with the NDK and is untested on a phone.
 
+## SurfaceView detach on Android 7+ (2026-11-04)
+
+- **`android.surfaceview-detached-draw`** (startup repair). A game view that extends
+  `SurfaceView` (directly or via `GLSurfaceView`/`VideoView`) and overrides
+  `onDetachedFromWindow()` without calling the parent's version leaves `SurfaceView`'s private
+  `mAttachedToWindow` set. Android 7+ posts `performDrawFinished`, which checks that flag and calls
+  `mParent.requestTransparentRegion(...)`; after the view is removed the parent is null and the
+  main thread crashes. Seen in Soul Fjord with the low-address experiment (08:46 log): Unity 4's
+  `com.unity3d.player.ac` (extends `GLSurfaceView`) is detached when the intro video's own
+  `SurfaceView` is added, and the posted callback crashes 10 ms later. The override is kept, as
+  calling `GLSurfaceView`'s detach would stop the GL thread Unity runs on, and the private field
+  is not app-accessible. Instead each launch activity first calls the helper DEX's
+  `SurfaceDrawGuard.install()`, which runs the main looper inside one posted task and ignores only
+  a `NullPointerException` whose top frame is `android.view.SurfaceView.performDrawFinished`
+  (logged as `PocketOuyaSurfaceGuard`); any other failure is rethrown unchanged. Applied only when
+  such a view class is found. Tests cover detection, the untouched override, reconversion and
+  the guard's filter; phone behaviour after the video starts is untested.
+

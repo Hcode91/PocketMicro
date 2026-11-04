@@ -175,6 +175,14 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     `PocketOuyaLowAddr: reserved ... MB above 0x80000000` line with low test allocations. If
     the crash is unchanged and Scaleform's addresses are low, the high-address hypothesis is
     wrong; if it gets further, keep the option and consider auto-suggesting it.
+  - **2026-11-04 08:46 result (0.1.94, low-address box ticked):** helper reserved 1034 MB above
+    2 GB; new large allocations land low (0x7f7ff380). **The Scaleform crash did not happen**: the
+    game continued to the point where it used to crash and went on to start the intro video
+    (game view detached, video SurfaceView added). It then crashed in Android's
+    `SurfaceView.performDrawFinished` (null parent) because Unity's `ac` view skips SurfaceView's
+    detach. Added startup repair `android.surfaceview-detached-draw` for that. One run is
+    supporting evidence for the high-address hypothesis, not proof; next log should show whether
+    the video plays and whether Unity's view comes back afterwards.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 
