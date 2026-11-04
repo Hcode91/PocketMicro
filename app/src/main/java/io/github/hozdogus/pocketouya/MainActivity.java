@@ -59,6 +59,8 @@ public class MainActivity extends Activity {
         String pkg;
         CharSequence label;
         android.graphics.drawable.Drawable icon;
+        /** The game's own OUYA tile (drawable "ouya_icon"), else its Android TV banner, else null. */
+        android.graphics.drawable.Drawable tile;
     }
 
     private final BroadcastReceiver refresh = new BroadcastReceiver() {
@@ -112,103 +114,262 @@ public class MainActivity extends Activity {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics());
     }
 
+    // OUYA-console-style home: PLAY / DISCOVER / MANAGE menu, wide game tiles, controller navigation.
+    private static final int PLAY = 0, DISCOVER = 1, MANAGE = 2;
+    private int section = PLAY;
+    private final TextView[] menuItems = new TextView[3];
+    private View playPage, managePage;
+    private GridView grid;
+
     private View buildUi() {
+        boolean landscape = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
         LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
+        root.setOrientation(landscape ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         root.setBackgroundColor(BG);
-        root.setPadding(dp(20), dp(24), dp(20), dp(12));
+        root.setPadding(dp(20), dp(18), dp(20), dp(12));
 
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = new TextView(this);
-        title.setText("PocketOuya");
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(28);
-        title.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
-        header.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        LinearLayout menu = new LinearLayout(this);
+        menu.setOrientation(landscape ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+        String[] names = { "PLAY", "DISCOVER", "MANAGE" };
+        for (int i = 0; i < names.length; i++) {
+            final int which = i;
+            TextView item = new TextView(this);
+            item.setText(names[i]);
+            item.setTextSize(landscape ? 30 : 22);
+            item.setLetterSpacing(0.08f);
+            item.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
+            item.setPadding(dp(10), dp(6), dp(14), dp(6));
+            item.setFocusable(true);
+            item.setClickable(true);
+            item.setOnClickListener(v -> selectSection(which, true));
+            item.setOnFocusChangeListener((v, focused) -> { if (focused && which != DISCOVER) selectSection(which, false); else updateMenu(); });
+            menuItems[i] = item;
+            menu.addView(item);
+        }
+        if (landscape) {
+            View spacer = new View(this);
+            menu.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
+            TextView brand = new TextView(this);
+            brand.setText("PocketOuya");
+            brand.setTextColor(0xFF8A8A8A);
+            brand.setTextSize(13);
+            brand.setPadding(dp(12), 0, 0, dp(4));
+            menu.addView(brand);
+            root.addView(menu, new LinearLayout.LayoutParams(dp(230), ViewGroup.LayoutParams.MATCH_PARENT));
+        } else {
+            android.widget.HorizontalScrollView scroll = new android.widget.HorizontalScrollView(this);
+            scroll.setHorizontalScrollBarEnabled(false);
+            scroll.addView(menu);
+            root.addView(scroll);
+        }
 
-        Button add = new Button(this);
-        add.setText("+  ADD GAME");
-        add.setTextColor(Color.WHITE);
-        add.setTypeface(Typeface.DEFAULT_BOLD);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(ACCENT);
-        bg.setCornerRadius(dp(6));
-        add.setBackground(bg);
-        add.setPadding(dp(16), 0, dp(16), 0);
-        add.setOnClickListener(v -> pickApk());
-        header.addView(add);
-        root.addView(header);
-        Button store=new Button(this);store.setText("STORE — OUYA COMMUNITY SERVER");store.setOnClickListener(v->startActivity(new Intent(this,StoreActivity.class)));root.addView(store);
-        Button doctor=new Button(this);doctor.setText("APK COMPATIBILITY DOCTOR");doctor.setOnClickListener(v->startActivity(new Intent(this,ApkDoctorActivity.class)));root.addView(doctor);
-        Button pad=new Button(this);pad.setText("VIRTUAL CONTROLLER TEST (SHIZUKU)");pad.setOnClickListener(v->startActivity(new Intent(this,VirtualPadTestActivity.class)));root.addView(pad);
-        Button logs=new Button(this);logs.setText("GLOBAL LOG / EXPORT");logs.setOnClickListener(v->startActivity(new Intent(this,GlobalLogActivity.class)));root.addView(logs);
+        android.widget.FrameLayout content = new android.widget.FrameLayout(this);
+        content.setPadding(landscape ? dp(8) : 0, landscape ? dp(6) : dp(12), 0, 0);
+        root.addView(content, landscape ? new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1)
+                : new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
-        TextView section = new TextView(this);
-        section.setText("PLAY");
-        section.setTextColor(ACCENT);
-        section.setTextSize(13);
-        section.setLetterSpacing(0.2f);
-        section.setTypeface(Typeface.DEFAULT_BOLD);
-        section.setPadding(0, dp(18), 0, dp(8));
-        root.addView(section);
-
+        LinearLayout play = new LinearLayout(this);
+        play.setOrientation(LinearLayout.VERTICAL);
         empty = new TextView(this);
-        empty.setText("No Ouya games yet.\n\nTap ADD GAME and choose an Ouya game's .apk file. "
-                + "PocketOuya updates it so it installs on modern Android, then it shows up here.\n\n"
-                + "Tip: a Bluetooth controller works best – most Ouya games were made for one.");
+        empty.setText("No OUYA games yet. Choose Add game and pick an OUYA game's original .apk file. "
+                + "A Bluetooth controller works best: most OUYA games were made for one.");
         empty.setTextColor(0xFFAAAAAA);
-        empty.setTextSize(15);
-        empty.setPadding(0, dp(24), 0, 0);
-        root.addView(empty);
-
-        GridView grid = new GridView(this);
+        empty.setTextSize(14);
+        empty.setPadding(dp(4), 0, 0, dp(12));
+        play.addView(empty);
+        grid = new GridView(this);
         grid.setNumColumns(GridView.AUTO_FIT);
-        grid.setColumnWidth(dp(150));
+        grid.setColumnWidth(dp(landscape ? 210 : 160));
         grid.setHorizontalSpacing(dp(12));
         grid.setVerticalSpacing(dp(12));
         grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
+        grid.setPadding(dp(3), dp(3), dp(3), dp(3));
+        grid.setClipToPadding(false);
+        GradientDrawable selector = new GradientDrawable();
+        selector.setColor(Color.TRANSPARENT);
+        selector.setStroke(dp(3), ACCENT);
+        selector.setCornerRadius(dp(6));
+        grid.setSelector(selector);
+        grid.setDrawSelectorOnTop(true);
         adapter = new GamesAdapter();
         grid.setAdapter(adapter);
-        grid.setOnItemClickListener((p, v, pos, id) -> launch(games.get(pos)));
+        grid.setOnItemClickListener((p, v, pos, id) -> { if (pos < games.size()) launch(games.get(pos)); else pickApk(); });
         grid.setOnItemLongClickListener((p, v, pos, id) -> {
-            gameOptions(games.get(pos));
+            if (pos < games.size()) gameOptions(games.get(pos));
             return true;
         });
-        root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        play.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        playPage = play;
+        content.addView(play);
+
+        android.widget.ScrollView manageScroll = new android.widget.ScrollView(this);
+        LinearLayout manage = new LinearLayout(this);
+        manage.setOrientation(LinearLayout.VERTICAL);
+        manageRow(manage, "Add game", "Convert an OUYA game's .apk so it installs on this phone", this::pickApk);
+        manageRow(manage, "APK compatibility doctor", "Scan an APK, see known fixes and prepare a repaired copy",
+                () -> startActivity(new Intent(this, ApkDoctorActivity.class)));
+        manageRow(manage, "Virtual controller test", "Check the Shizuku virtual controller on this phone",
+                () -> startActivity(new Intent(this, VirtualPadTestActivity.class)));
+        manageRow(manage, "Global log and export", "Every game launch and crash, saved on this phone",
+                () -> startActivity(new Intent(this, GlobalLogActivity.class)));
+        TextView version = new TextView(this);
+        version.setText("PocketOuya " + ConversionRecord.converterVersion);
+        version.setTextColor(0xFF777777);
+        version.setTextSize(12);
+        version.setPadding(dp(14), dp(14), 0, dp(8));
+        manage.addView(version);
+        manageScroll.addView(manage);
+        managePage = manageScroll;
+        content.addView(manageScroll);
+
+        selectSection(section == DISCOVER ? PLAY : section, false);
         return root;
     }
 
+    private void manageRow(LinearLayout parent, String title, String detail, Runnable action) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(dp(14), dp(12), dp(14), dp(12));
+        row.setFocusable(true);
+        row.setClickable(true);
+        android.graphics.drawable.StateListDrawable states = new android.graphics.drawable.StateListDrawable();
+        GradientDrawable focused = new GradientDrawable();
+        focused.setColor(CARD);
+        focused.setStroke(dp(2), ACCENT);
+        focused.setCornerRadius(dp(6));
+        GradientDrawable pressed = new GradientDrawable();
+        pressed.setColor(CARD);
+        pressed.setCornerRadius(dp(6));
+        states.addState(new int[] { android.R.attr.state_focused }, focused);
+        states.addState(new int[] { android.R.attr.state_pressed }, pressed);
+        states.addState(new int[0], new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        row.setBackground(states);
+        TextView t = new TextView(this);
+        t.setText(title);
+        t.setTextColor(Color.WHITE);
+        t.setTextSize(18);
+        row.addView(t);
+        TextView d = new TextView(this);
+        d.setText(detail);
+        d.setTextColor(0xFF9A9A9A);
+        d.setTextSize(13);
+        row.addView(d);
+        row.setOnClickListener(v -> action.run());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, 0, dp(4));
+        parent.addView(row, lp);
+    }
+
+    /** DISCOVER opens the store; PLAY and MANAGE switch the page. */
+    private void selectSection(int which, boolean clicked) {
+        if (which == DISCOVER) {
+            if (clicked) startActivity(new Intent(this, StoreActivity.class));
+            updateMenu();
+            return;
+        }
+        section = which;
+        if (playPage != null) playPage.setVisibility(which == PLAY ? View.VISIBLE : View.GONE);
+        if (managePage != null) managePage.setVisibility(which == MANAGE ? View.VISIBLE : View.GONE);
+        updateMenu();
+    }
+
+    private void updateMenu() {
+        for (int i = 0; i < menuItems.length; i++) {
+            TextView item = menuItems[i];
+            if (item == null) continue;
+            item.setTextColor(i == section ? ACCENT : 0xFFCFCFCF);
+            GradientDrawable bg = new GradientDrawable();
+            bg.setCornerRadius(dp(6));
+            bg.setColor(item.isFocused() ? 0x22FFFFFF : Color.TRANSPARENT);
+            item.setBackground(bg);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration config) {
+        super.onConfigurationChanged(config);
+        setContentView(buildUi());
+        loadGames();
+    }
+
+    /** OUYA controller: O (BUTTON_A) selects, A (BUTTON_B) goes back, Y or Menu opens a game's options. */
+    @Override
+    public boolean dispatchKeyEvent(android.view.KeyEvent e) {
+        int key = e.getKeyCode();
+        if (key == android.view.KeyEvent.KEYCODE_BUTTON_A)
+            return super.dispatchKeyEvent(new android.view.KeyEvent(e.getDownTime(), e.getEventTime(), e.getAction(),
+                    android.view.KeyEvent.KEYCODE_DPAD_CENTER, e.getRepeatCount(), e.getMetaState(), e.getDeviceId(),
+                    e.getScanCode(), e.getFlags(), e.getSource()));
+        if (key == android.view.KeyEvent.KEYCODE_BUTTON_B) {
+            if (e.getAction() == android.view.KeyEvent.ACTION_UP) onBackPressed();
+            return true;
+        }
+        if ((key == android.view.KeyEvent.KEYCODE_BUTTON_Y || key == android.view.KeyEvent.KEYCODE_MENU) && grid != null && grid.hasFocus()) {
+            int pos = grid.getSelectedItemPosition();
+            if (e.getAction() == android.view.KeyEvent.ACTION_UP && pos >= 0 && pos < games.size()) gameOptions(games.get(pos));
+            return true;
+        }
+        return super.dispatchKeyEvent(e);
+    }
+
+    /** Keeps the OUYA tile shape (732 x 412) at any column width. */
+    private static final class TileFrame extends android.widget.FrameLayout {
+        TileFrame(Context c) { super(c); }
+        @Override protected void onMeasure(int widthSpec, int heightSpec) {
+            int w = View.MeasureSpec.getSize(widthSpec);
+            int h = w * 412 / 732;
+            super.onMeasure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY));
+        }
+    }
+
     private final class GamesAdapter extends BaseAdapter {
-        @Override public int getCount() { return games.size(); }
-        @Override public Object getItem(int i) { return games.get(i); }
+        @Override public int getCount() { return games.size() + 1; }
+        @Override public Object getItem(int i) { return i < games.size() ? games.get(i) : null; }
         @Override public long getItemId(int i) { return i; }
 
         @Override
         public View getView(int i, View convert, ViewGroup parent) {
-            Game g = games.get(i);
-            LinearLayout card = new LinearLayout(MainActivity.this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setGravity(Gravity.CENTER_HORIZONTAL);
-            card.setPadding(dp(10), dp(14), dp(10), dp(12));
+            TileFrame tile = new TileFrame(MainActivity.this);
             GradientDrawable bg = new GradientDrawable();
             bg.setColor(CARD);
-            bg.setCornerRadius(dp(10));
-            card.setBackground(bg);
-
-            ImageView icon = new ImageView(MainActivity.this);
-            icon.setImageDrawable(g.icon);
-            card.addView(icon, new LinearLayout.LayoutParams(dp(84), dp(84)));
-
+            bg.setCornerRadius(dp(6));
+            tile.setBackground(bg);
+            tile.setClipToOutline(true);
+            if (i >= games.size()) {
+                GradientDrawable dashed = new GradientDrawable();
+                dashed.setColor(0xFF1E1E1E);
+                dashed.setCornerRadius(dp(6));
+                dashed.setStroke(dp(1), 0xFF666666, dp(6), dp(4));
+                tile.setBackground(dashed);
+                TextView add = new TextView(MainActivity.this);
+                add.setText("+  Add game");
+                add.setTextColor(0xFFCFCFCF);
+                add.setTextSize(16);
+                add.setGravity(Gravity.CENTER);
+                tile.addView(add, new android.widget.FrameLayout.LayoutParams(-1, -1));
+                return tile;
+            }
+            Game g = games.get(i);
+            ImageView image = new ImageView(MainActivity.this);
+            if (g.tile != null) {
+                image.setImageDrawable(g.tile);
+                image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                tile.addView(image, new android.widget.FrameLayout.LayoutParams(-1, -1));
+            } else {
+                image.setImageDrawable(g.icon);
+                tile.addView(image, new android.widget.FrameLayout.LayoutParams(dp(64), dp(64), Gravity.CENTER_HORIZONTAL | Gravity.TOP));
+                ((android.widget.FrameLayout.LayoutParams) image.getLayoutParams()).topMargin = dp(12);
+            }
             TextView label = new TextView(MainActivity.this);
             label.setText(g.label);
             label.setTextColor(Color.WHITE);
-            label.setTextSize(14);
-            label.setGravity(Gravity.CENTER);
-            label.setMaxLines(2);
-            label.setPadding(0, dp(8), 0, 0);
-            card.addView(label);
-            return card;
+            label.setTextSize(13);
+            label.setSingleLine(true);
+            label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            label.setPadding(dp(8), dp(4), dp(8), dp(5));
+            label.setBackgroundColor(0xAA000000);
+            tile.addView(label, new android.widget.FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+            return tile;
         }
     }
 
@@ -244,6 +405,12 @@ public class MainActivity extends Activity {
             g.pkg = pkg;
             g.label = pm.getApplicationLabel(ai);
             g.icon = pm.getApplicationIcon(ai);
+            try {
+                android.content.res.Resources res = pm.getResourcesForApplication(ai);
+                int id = res.getIdentifier("ouya_icon", "drawable", pkg);
+                if (id != 0) g.tile = res.getDrawable(id, null);
+            } catch (Exception | OutOfMemoryError ignored) {}
+            if (g.tile == null) g.tile = pm.getApplicationBanner(ai);
             found.put(pkg, g);
         } catch (PackageManager.NameNotFoundException ignored) {
             // uninstalled
