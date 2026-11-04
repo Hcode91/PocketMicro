@@ -33,15 +33,15 @@ public final class UhidGamepadTest {
         check(inputBits(UhidGamepad.DESCRIPTOR) == UhidGamepad.REPORT_SIZE * 8, "descriptor describes exactly the 9-byte report (" + inputBits(UhidGamepad.DESCRIPTOR) + " bits)");
 
         // struct uhid_input2_req { u16 size; u8 data[] }
-        byte[] in = UhidGamepad.input(0x8001, -1f, 1f, 0f, 0.5f, 0f, 1f, -1);
+        byte[] in = UhidGamepad.input(0x8001, UhidGamepad.KEY_UP | UhidGamepad.KEY_MENU, -1f, 1f, 0f, 0.5f, 0f, 1f);
         ByteBuffer ib = le(in);
         check(ib.getInt(0) == 12 && ib.getShort(4) == 9 && in.length == 6 + 9, "UHID_INPUT2 with 9-byte report");
         check(in[6] == 1 && (in[7] & 0xff) == 0x80, "buttons little-endian bitfield");
         check((in[8] & 0xff) == 0 && (in[9] & 0xff) == 255 && (in[10] & 0xff) == 128 && (in[11] & 0xff) == 191, "sticks scaled to 0..255, centre 128");
         check((in[12] & 0xff) == 0 && (in[13] & 0xff) == 255, "triggers 0..255");
-        check(in[14] == 8, "hat null state when centred");
-        check(UhidGamepad.input(0, 0, 0, 0, 0, 0, 0, 2)[14] == 2, "hat direction kept");
-        check((UhidGamepad.input(0, 5f, -5f, 0, 0, -1f, 3f, 9)[8] & 0xff) == 255 && UhidGamepad.input(0, 5f, -5f, 0, 0, -1f, 3f, 9)[9] == 0, "values clamped");
+        check(in[14] == (8 | 16), "d-pad/menu key bits in the last byte");
+        check(UhidGamepad.input(0, 0xff, 0, 0, 0, 0, 0, 0)[14] == 0x1f, "only the five key bits are sent");
+        check((UhidGamepad.input(0, 0, 5f, -5f, 0, 0, -1f, 3f)[8] & 0xff) == 255 && UhidGamepad.input(0, 0, 5f, -5f, 0, 0, -1f, 3f)[9] == 0, "values clamped");
 
         check(le(UhidGamepad.destroy()).getInt(0) == 1, "UHID_DESTROY");
         ByteBuffer g = le(UhidGamepad.getReportReply(77));

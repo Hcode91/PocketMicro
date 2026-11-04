@@ -113,7 +113,7 @@ public final class TouchControls extends FrameLayout {
         inputLayout.setMargins(dp(106),dp(8),0,0);addView(input,inputLayout);
         input.setOnClickListener(v->{
             releasePad();
-            String[] options=new String[]{nativeSink instanceof LegacyOuyaPadSink?"Auto (legacy OUYA JSON)":nativeSink instanceof GameMakerPadSink?"Auto (GameMaker controller)":nativeSink instanceof Ue3PadSink?"Auto (Unreal Engine 3 controller)":nativeSink instanceof AirPadSink?"Auto (Adobe AIR controller)":nativeSink instanceof MarmaladePadSink?"Auto (Marmalade keys)":nativeSink==null?"Auto (Android gamepad)":"Auto (OUYA native)","Android gamepad","Keyboard"};
+            String[] options=new String[]{nativeSink instanceof LegacyOuyaPadSink?"Auto (legacy OUYA JSON)":nativeSink instanceof GameMakerPadSink?"Auto (GameMaker controller)":nativeSink instanceof Ue3PadSink?"Auto (Unreal Engine 3 controller)":nativeSink instanceof AirPadSink?"Auto (Adobe AIR controller)":nativeSink instanceof MarmaladePadSink?"Auto (Marmalade keys)":nativeSink==null?"Auto (virtual controller via Shizuku)":"Auto (OUYA native)","Android gamepad","Keyboard","Virtual controller (Shizuku)"};
             new android.app.AlertDialog.Builder(activity).setTitle("Game input mode").setItems(options,(dialog,which)->{
                 releasePad();usable=true;
                 try{pad=createPad(activity,which);}catch(Exception error){usable=false;Log.e("PocketOuyaControls","Input mode unavailable",error);return;}
@@ -124,7 +124,10 @@ public final class TouchControls extends FrameLayout {
         toggle.setOnClickListener(v->{releasePad();shown=!shown;for(View panel:panels)panel.setVisibility(shown?View.VISIBLE:View.GONE);toggle.setText(shown?"Hide pad":"Show pad");});
     }
     private VirtualPad createPad(Activity activity,int mode)throws Exception{
+        // Shizuku virtual controller: a real "OUYA Game Controller" input device; falls back to the in-game route until connected.
+        if(mode==3)return new VirtualPad(new VirtualDeviceSink(activity,nativeSink!=null?nativeSink:new AndroidPadSink(activity,false)));
         if(mode==0&&nativeSink!=null)return new VirtualPad(nativeSink);
+        if(mode==0)return new VirtualPad(new VirtualDeviceSink(activity,new AndroidPadSink(activity,false)));
         if(mode==2&&nativeSink instanceof MarmaladePadSink)return new VirtualPad(new MarmaladePadSink(activity,true));
         return new VirtualPad(new AndroidPadSink(activity,mode==2));
     }

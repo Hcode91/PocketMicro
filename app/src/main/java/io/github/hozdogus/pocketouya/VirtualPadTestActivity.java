@@ -91,8 +91,8 @@ public final class VirtualPadTestActivity extends Activity {
     private void input(int buttons, float lx, float ly) {
         Parcel data = Parcel.obtain(), reply = Parcel.obtain();
         try {
-            data.writeInterfaceToken(VirtualPadService.DESCRIPTOR); data.writeInt(buttons);
-            data.writeFloat(lx); data.writeFloat(ly); data.writeFloat(0); data.writeFloat(0); data.writeFloat(0); data.writeFloat(0); data.writeInt(-1);
+            data.writeInterfaceToken(VirtualPadService.DESCRIPTOR); data.writeInt(buttons); data.writeInt(0);
+            data.writeFloat(lx); data.writeFloat(ly); data.writeFloat(0); data.writeFloat(0); data.writeFloat(0); data.writeFloat(0);
             remote.transact(VirtualPadService.INPUT, data, reply, 0); reply.readException();
             if (reply.readInt() == 0) line("Input write failed.");
         } catch (Exception error) { line("Input failed: " + error); }

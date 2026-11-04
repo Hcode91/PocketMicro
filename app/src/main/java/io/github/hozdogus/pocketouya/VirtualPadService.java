@@ -16,9 +16,13 @@ import java.io.FileDescriptor;
  */
 public final class VirtualPadService extends Binder {
     static final String DESCRIPTOR = "io.github.hozdogus.pocketouya.VIRTUAL_PAD";
-    static final int CREATE = 1, INPUT = 2, REMOVE = 3, STATUS = 4, DESTROY = 16777115;
+    static final int CREATE = 1, INPUT = 2, REMOVE = 3, STATUS = 4, ALLOW = 5, DESTROY = 16777115;
     private final int owner;
     private final Object lock = new Object();
+    /** The one game process PocketOuya has allowed to drive the pad, and its death token. */
+    private int game = -1;
+    private IBinder gameToken;
+    private final IBinder.DeathRecipient gameDied = () -> { synchronized (lock) { game = -1; gameToken = null; } remove(); };
     private FileDescriptor fd;
     private String status = "No virtual controller.";
     private boolean started, opened;
@@ -30,19 +34,38 @@ public final class VirtualPadService extends Binder {
         if (code == PING_TRANSACTION) return true;
         int caller = Binder.getCallingUid();
         if (code == DESTROY) { if (caller != owner && caller != android.os.Process.myUid()) throw new SecurityException("Virtual pad belongs to PocketOuya"); remove(); System.exit(0); return true; }
-        if (caller != owner) throw new SecurityException("Virtual pad belongs to PocketOuya");
+        boolean fromGame; synchronized (lock) { fromGame = game != -1 && caller == game; }
+        if (caller != owner && !fromGame) throw new SecurityException("Virtual pad belongs to PocketOuya");
         data.enforceInterface(DESCRIPTOR);
+        if (code == ALLOW && caller != owner) throw new SecurityException("Only PocketOuya can allow a game");
         switch (code) {
+            case ALLOW: {
+                int uid = data.readInt(); IBinder token = data.readStrongBinder();
+                String result = allow(uid, token);
+                reply.writeNoException(); reply.writeString(result); return true;
+            }
             case CREATE: { String result = create(); reply.writeNoException(); reply.writeString(result); return true; }
             case INPUT: {
-                int buttons = data.readInt(); float lx = data.readFloat(), ly = data.readFloat(), rx = data.readFloat(), ry = data.readFloat(), lt = data.readFloat(), rt = data.readFloat(); int hat = data.readInt();
-                boolean ok = send(UhidGamepad.input(buttons, lx, ly, rx, ry, lt, rt, hat));
-                reply.writeNoException(); reply.writeInt(ok ? 1 : 0); return true;
+                int buttons = data.readInt(), keys = data.readInt(); float lx = data.readFloat(), ly = data.readFloat(), rx = data.readFloat(), ry = data.readFloat(), lt = data.readFloat(), rt = data.readFloat();
+                boolean ok = send(UhidGamepad.input(buttons, keys, lx, ly, rx, ry, lt, rt));
+                if ((flags & FLAG_ONEWAY) == 0) { reply.writeNoException(); reply.writeInt(ok ? 1 : 0); }
+                return true;
             }
             case REMOVE: { remove(); reply.writeNoException(); return true; }
             case STATUS: { String s; synchronized (lock) { s = status + (fd == null ? "" : " Kernel: " + (started ? "started" : "not started") + ", " + (opened ? "in use by Android" : "not opened yet") + "."); } reply.writeNoException(); reply.writeString(s); return true; }
             default: return super.onTransact(code, data, reply, flags);
         }
+    }
+
+    /** Lets one game process (by uid) create and drive the pad; the pad goes when that process dies. */
+    private String allow(int uid, IBinder token) {
+        if (uid < 10000 || token == null) return "FAILED: invalid game";
+        synchronized (lock) {
+            if (gameToken != null && gameToken != token) { try { gameToken.unlinkToDeath(gameDied, 0); } catch (RuntimeException ignored) {} }
+            try { token.linkToDeath(gameDied, 0); } catch (RemoteException gone) { return "FAILED: game already closed"; }
+            game = uid; gameToken = token;
+        }
+        return "OK";
     }
 
     private String create() {

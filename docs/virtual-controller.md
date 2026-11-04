@@ -1,4 +1,4 @@
-# Shizuku virtual controller (step 1: device test)
+# Shizuku virtual controller
 
 Goal: let PocketOuya's touch pad drive a real Android input device named "OUYA Game Controller",
 so every engine sees a genuine controller (Unity 4 only lists real `InputDevice`s as joysticks;
@@ -22,3 +22,30 @@ Unverified until the phone test: whether the shell user may open `/dev/uhid` on 
 14 (SELinux/group), and how the device's keys map. Next steps after a pass: route the touch pad
 to the service while a game runs (OUYA button order O/U/Y/A, d-pad), remove the pad when the
 game closes, and check Unity 4 reports the name to Soul Fjord.
+
+**Step 1 result (2026-11-04, S23, Android 14):** pass. Android listed "OUYA Game Controller"
+(id 8, vendor 1209, product f0a) as an external gamepad and joystick with axes X Y Z RZ
+LTRIGGER RTRIGGER BRAKE GAS HAT_X HAT_Y; the kernel started and opened it; A arrived as
+`KEYCODE_BUTTON_A` down/up and the left stick as X 1.00.
+
+## Step 2: touch pad drives the controller in games
+
+- Report changed: the hat is replaced by key bits for the d-pad and Menu (HID keyboard usages
+  Right/Left/Down/Up → `DPAD_*`, Application → `KEY_COMPOSE` → `MENU`), because the OUYA pad
+  sent its d-pad as keys. Report stays 9 bytes.
+- `VirtualPadState` (helper DEX, pure Java): touch keys → OUYA layout. O → bit 0 (`BUTTON_A`),
+  A → 1 (`BUTTON_B`), U → 3 (`BUTTON_X`), Y → 4 (`BUTTON_Y`), L1/R1 → 6/7, Select/Start → 10/11;
+  d-pad/Menu → key bits; axes 0/1 → left stick, 11/14 (look stick) → Z/RZ.
+- `VirtualDeviceSink` (helper DEX): asks `content://io.github.hozdogus.pocketouya.virtualpad`
+  `call("connect")` with a per-process token, sends `CREATE`, then one-way `INPUT` states. Until
+  connected, or if Shizuku is unavailable, input goes to the in-game route.
+- `VirtualPadProvider` (PocketOuya): answers only packages in PocketOuya's imported list, waits
+  up to 3 s for Shizuku's binder in a cold process, requires Shizuku permission already granted,
+  binds `VirtualPadService` as a daemon (tag `virtual_pad_game`) and calls owner-only `ALLOW(uid,
+  token)`. The service accepts input from that uid and removes the pad when the token dies.
+- Touch pad modes: "Auto" uses the virtual controller when the game has no engine-specific route
+  (e.g. Soul Fjord); new explicit mode "Virtual controller (Shizuku)" for any game.
+
+Untested on the phone: provider start from a game, Unity 4 reporting the name to Soul Fjord's
+OuyaInput, and whether d-pad presses (also sent as left stick) clash with Soul Fjord's d-pad actions.
+
