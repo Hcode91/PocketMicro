@@ -37,11 +37,16 @@ android {
 
     // Fixed key in the repo so each CI build installs over the last one.
     signingConfigs {
+        // Official builds: the private release key from CI secrets (see docs/signing.md).
+        // Without it (forks, local builds) the public test key in the repo is used.
         ci {
-            storeFile file('ci.keystore')
-            storePassword 'android'
-            keyAlias 'app'
-            keyPassword 'android'
+            def releaseStore = System.getenv('POCKETOUYA_KEYSTORE')
+            def releasePassword = System.getenv('POCKETOUYA_KEYSTORE_PASSWORD')
+            boolean useRelease = releaseStore && releasePassword
+            storeFile useRelease ? file(releaseStore) : file('ci.keystore')
+            storePassword useRelease ? releasePassword : 'android'
+            keyAlias useRelease ? 'pocketouya' : 'app'
+            keyPassword useRelease ? releasePassword : 'android'
         }
     }
 

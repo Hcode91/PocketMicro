@@ -39,7 +39,21 @@ jobs:
           cmake --build engine-build --target so_inspect yoyo_boot
 
 
+      - name: Use the release signing key if set
+        env:
+          KEYSTORE_B64: ${{ secrets.POCKETOUYA_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+            echo "POCKETOUYA_KEYSTORE=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+            echo "Signing with the release key"
+          else
+            echo "::warning::POCKETOUYA_KEYSTORE_B64 is not set; this APK is signed with the public test key"
+          fi
+
       - name: Build APK
+        env:
+          POCKETOUYA_KEYSTORE_PASSWORD: ${{ secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
         run: |
           set +e
           gradle assembleDebug --no-daemon 2>&1 | tee build.log
