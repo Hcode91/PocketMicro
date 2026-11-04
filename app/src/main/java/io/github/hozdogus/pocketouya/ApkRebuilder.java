@@ -90,13 +90,16 @@ public final class ApkRebuilder {
                     GameCompatibilityPatcher.Result plan=GameCompatibilityPatcher.patch(input,result.launcherActivities,touch);
                     replacements.putAll(plan.dex);input.putAll(plan.dex);appendBridge=plan.needsBridge();result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+plan.report;
                 }
+                java.util.List<String> names=new java.util.ArrayList<>();for(ZipEntry e:java.util.Collections.list(zip.entries()))names.add(e.getName());
                 if(runtimeRepair){
+                    UnityScaleformVideoRule.Result video=UnityScaleformVideoRule.apply(input,names);
+                    replacements.putAll(video.replacements);input.putAll(video.replacements);appendBridge|=video.needsBridge;
+                    if(video.status!=CompatibilityEvidence.Status.SKIPPED)result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+video.line();
                     SurfaceDetachRule.Result guard=SurfaceDetachRule.apply(input,result.launcherActivities);
                     replacements.putAll(guard.replacements);input.putAll(guard.replacements);appendBridge|=guard.needsBridge;
                     if(guard.status!=CompatibilityEvidence.Status.SKIPPED||!guard.views.isEmpty())result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+guard.line();
                 }
                 if(lowAddress){
-                    java.util.List<String> names=new java.util.ArrayList<>();for(ZipEntry e:java.util.Collections.list(zip.entries()))names.add(e.getName());
                     LowAddressRule.Result low=LowAddressRule.apply(input,result.launcherActivities,names,lowAddressLibrary);
                     replacements.putAll(low.replacements);appendBridge|=low.needsBridge;
                     result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+low.line();

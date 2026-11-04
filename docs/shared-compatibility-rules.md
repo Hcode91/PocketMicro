@@ -327,3 +327,18 @@ purchase implementation, native transformer or finalizer detector changes.
   such a view class is found. Tests cover detection, the untouched override, reconversion and
   the guard's filter; phone behaviour after the video starts is untested.
 
+## Unity full-screen video with Scaleform (2026-11-04)
+
+- **`unity.scaleform-skip-video`** (startup repair). Unity 4's `Handheld.PlayFullScreenMovie`
+  pauses the player, removes its GL view, plays the file in Android's `MediaPlayer` and
+  resumes. Scaleform's Unity plugin (`libgfxunity3d.so`) does not survive that cycle on modern
+  Android. In Soul Fjord's 09:13 log (0.1.95, low-address and SurfaceView guard active) the
+  5-second intro video played to completion, Unity's view came back, and 0.4 s later the same
+  `RTCommandQueue::PopCommand` null crash occurred, now with the manager at `0x78353050`
+  (below 2 GB), which disproves high addresses as the cause; earlier runs crashed at the pause
+  before the video instead. For Unity APKs that ship `libgfxunity3d.so` only,
+  `UnityPlayer.showVideoPlayer(String,int,int,int,boolean,int,int)` is replaced by a call to the
+  helper's `UnityVideo.skipped(file)` (logs `PocketOuyaUnityVideo`) and `return-void`, so the
+  player is never paused for a video. Cost: intro/cut-scene videos are not shown. Unity games
+  without the plugin keep their videos.
+

@@ -183,6 +183,13 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     detach. Added startup repair `android.surfaceview-detached-draw` for that. One run is
     supporting evidence for the high-address hypothesis, not proof; next log should show whether
     the video plays and whether Unity's view comes back afterwards.
+  - **2026-11-04 09:13 result (0.1.95):** guard caught the SurfaceView callback, the intro video
+    played to completion, Unity's view returned, then the same Scaleform crash 0.4 s later with the
+    manager at 0x78353050: **high-address hypothesis disproven**; the trigger is Unity's
+    pause/resume around full-screen video (consistent with the very first investigation). The
+    low-address option stays as an opt-in experiment but is not needed for this. Added
+    `unity.scaleform-skip-video`; next log should show `PocketOuyaUnityVideo` skip lines and
+    whether the menu appears without a crash.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 
