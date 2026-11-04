@@ -169,6 +169,12 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     engine) mishandles high addresses and hands out memory overlapping the live manager, zeroing
     +0x2c. Confirming it needs either the manager's memory at crash time or a low-address
     experiment; owner to decide.
+  - **2026-11-04: owner chose the low-address experiment.** Added opt-in conversion option
+    `pocketouya.low-addresses` (see shared-compatibility-rules.md). Test: convert the original
+    Soul Fjord APK with startup repairs and the new box ticked; the global log must show a
+    `PocketOuyaLowAddr: reserved ... MB above 0x80000000` line with low test allocations. If
+    the crash is unchanged and Scaleform's addresses are low, the high-address hypothesis is
+    wrong; if it gets further, keep the option and consider auto-suggesting it.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 

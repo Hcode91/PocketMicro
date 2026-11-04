@@ -23,6 +23,8 @@ jobs:
           java-version: 17
       - name: Test APK compatibility inspection
         run: bash scripts/test-compatibility.sh
+      - name: Test low-address helper planner
+        run: cc -O2 -Wall -Werror -Ilowaddr tests/lowaddr/test_lowaddr.c lowaddr/pocketouya_lowaddr.c -o /tmp/test_lowaddr && /tmp/test_lowaddr
       - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '8.12'

@@ -289,3 +289,23 @@ purchase implementation, native transformer or finalizer detector changes.
   classes are unchanged; already-forced reads are recognised, so a second pass changes nothing.
   The converter run on the Word Shaker APK applies all three parts (2 resource groups,
   10 activities, 2 screenLayout reads); gameplay on a phone is not yet confirmed.
+
+## Low memory addresses experiment (2026-11-04, opt-in)
+
+- **`pocketouya.low-addresses`.** Conversion option "Experiment: keep the game's memory below
+  2 GB", unticked by default. The OUYA's 32-bit kernel kept a game's memory below 3 GB; a 32-bit
+  game on a 64-bit kernel also gets addresses up to 4 GB. Under test for Soul Fjord, whose
+  Scaleform manager sat at `0xe4edb050` when its render-thread pointer was found null; that
+  high-address memory mishandling causes the crash is **unproven**. Each launch activity's
+  `onCreate` first calls the helper DEX's `LowAddress.reserve()` (an `onCreate` calling super is
+  added when missing), which loads `libpocketouya_lowaddr.so`, added beside the game's own
+  `lib/armeabi-v7a` (or `lib/armeabi`) libraries. Its constructor reads `/proc/self/maps` and
+  maps the free gaps above 2 GB as `PROT_NONE`, `MAP_NORESERVE`, `MAP_FIXED_NOREPLACE` (never
+  over an existing mapping), leaving 64 MB under the main stack. If less than 768 MB would stay
+  free below 2 GB it uses 3 GB instead, and below that it reserves nothing. It logs the result
+  and test allocation addresses under `PocketOuyaLowAddr`. Refused for APKs with arm64/x86
+  libraries (they may not run as 32-bit ARM), Java-only APKs, and already converted APKs. Game
+  code and libraries are otherwise unchanged. Host tests cover the planner (`tests/lowaddr`) and
+  the DEX hook/packaging (`LowAddressRuleTest`, including Soul Fjord's real launcher locally);
+  the library itself is built by CI with the NDK and is untested on a phone.
+

@@ -103,6 +103,29 @@ def dexBridge = tasks.register('dexPurchaseBridge', JavaExec) {
 android.sourceSets.main.res.srcDir bridgeRes
 tasks.named('preBuild').configure { dependsOn dexBridge }
 
+// Opt-in low-address helper (pocketouya.low-addresses): one small 32-bit ARM library that the
+// converter adds to a game when asked. Built with the NDK's clang straight into a raw resource.
+def lowAddrRes = layout.buildDirectory.dir('generated/lowaddr/res')
+def buildLowAddr = tasks.register('buildLowAddressHelper', Exec) {
+    def src = rootProject.file('lowaddr/pocketouya_lowaddr.c')
+    inputs.files(src, rootProject.file('lowaddr/pocketouya_lowaddr.h'))
+    def out = lowAddrRes.map { it.file('raw/pocketouya_lowaddr.so') }
+    outputs.file out
+    doFirst {
+        def ndk = android.ndkDirectory
+        def host = ['linux-x86_64', 'darwin-x86_64', 'windows-x86_64'].find { new File(ndk, "toolchains/llvm/prebuilt/$it/bin").isDirectory() }
+        if (host == null) throw new GradleException("NDK clang not found under $ndk")
+        def clang = new File(ndk, "toolchains/llvm/prebuilt/$host/bin/clang" + (host.startsWith('windows') ? '.exe' : ''))
+        def target = out.get().asFile
+        target.parentFile.mkdirs()
+        commandLine clang.path, '--target=armv7a-linux-androideabi21', '-shared', '-fPIC', '-O2', '-Wall', '-Werror',
+                '-fvisibility=hidden', '-Wl,--build-id=sha1', '-Wl,-z,noexecstack', '-s',
+                '-I', rootProject.file('lowaddr').path, '-o', target.path, src.path, '-llog'
+    }
+}
+android.sourceSets.main.res.srcDir lowAddrRes
+tasks.named('preBuild').configure { dependsOn buildLowAddr }
+
 // Pure JVM protocol/DEX tests. The fake Android/Unity classes are test-only and
 // never enter the app APK or the injected bridge resource.
 configurations { purchaseHostTests }
@@ -134,6 +157,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/TvLayoutRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/TvLandscapeRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/TvScreenSizeRule.java',
+            'src/main/java/io/github/hozdogus/pocketouya/LowAddressRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/StoreClient.java',
             'src/main/java/io/github/hozdogus/pocketouya/OuyaControllerPlayersRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/OuyaAccountRule.java',
@@ -169,6 +193,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'tests/TvLayoutRuleTest.java',
             'tests/TvLandscapeRuleTest.java',
             'tests/TvScreenSizeRuleTest.java',
+            'tests/LowAddressRuleTest.java',
             'tests/StoreClientTest.java',
             'tests/TombstoneTextTest.java',
             'tests/ClickteamSurfaceLayoutRuleTest.java',
