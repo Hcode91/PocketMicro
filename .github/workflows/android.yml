@@ -2,7 +2,7 @@ name: Android APK
 
 on:
   push:
-    branches: [main, master, feature/ouya-purchase-compatibility, feature/compat-evidence-detector, feature/shared-compatibility-rules, feature/generic-service-fix]
+    branches: [main, master, feature/generic-service-fix]
   workflow_dispatch:
 
 permissions:
