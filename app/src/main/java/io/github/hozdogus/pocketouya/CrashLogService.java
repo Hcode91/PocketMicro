@@ -83,7 +83,11 @@ public final class CrashLogService extends Binder {
         if(size>0&&copied!=size){tmp.delete();return "FAILED: copied "+copied+" of "+size+" bytes";}
         if(out.exists()&&!out.delete()){tmp.delete();return "FAILED: cannot replace "+out;}
         if(!tmp.renameTo(out)){tmp.delete();return "FAILED: cannot finish "+out;}
-        return "Success: "+out+" ("+copied+" bytes)";
+        // Written as the Shizuku shell user, so the game would get EACCES (Unity: "Can Load Game? False"):
+        // open the folder and file to the game. Only the shell user's own copies can change.
+        dir.setReadable(true,false);dir.setExecutable(true,false);dir.setWritable(true,false); // fails harmlessly when the game made the folder itself
+        boolean open=out.setReadable(true,false)&out.setWritable(true,false);
+        return "Success: "+out+" ("+copied+" bytes)"+(open?"":"; could not open its permissions to the game");
     }
     private String install(ParcelFileDescriptor apk,long size){
         if(apk==null||size<=0||size>(4L<<30))return "FAILED: invalid APK";
