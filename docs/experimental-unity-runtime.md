@@ -10,7 +10,7 @@ evidence. It can match other APKs with the same restricted structure. No package
 IDs, build hashes or catalog offsets select it. The original APK stays intact.
 Ordinary startup repairs and the APK doctor do not enable this option. Every app conversion,
 including this experiment, now attempts the existing shared touch-input hooks
-automatically. Purchases remain off in this experiment. Low-level native-only
+automatically. Low-level native-only
 programmatic overloads keep their original behavior. Touch hooks compose after
 the CPU guard and the report names the input route or explains why it was
 skipped; phone input is unverified.

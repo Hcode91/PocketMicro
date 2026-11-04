@@ -15,8 +15,7 @@ repository. The archive omits the assets, and no device crash log was supplied.
 - Three ARM32 `armeabi` libraries: `lib__57d5__.so`, `libjniproxy.so`, `libff3.so`.
   No arm64 runtime or GameMaker runner/data was supplied. Ordinary installed-app
   launch is the applicable path; PocketOuya's GameMaker Engine test cannot run it.
-- OUYA Java interfaces are present, but this is not the matching Unity SDK
-  protocol supported by the current purchase bridge.
+- OUYA Java interfaces are present.
 
 SHA-256 evidence:
 
@@ -92,7 +91,7 @@ does not identify the precise exception or signal shown by Samsung's dialog.
   in the conversion report, including normal conversions with native warnings.
   Parsing has per-library, total-byte and count bounds. Other incompatibilities
   and libraries skipped by those limits can remain; no clean-scan claim is made.
-- Optional touch/purchase conversion now skips all compatibility changes when
+- Optional touch conversion now skips all compatibility changes when
   any input DEX contains an unknown/reserved instruction. Original DEX bytes are
   preserved and no helper is appended. The report states that the runtime is
   unsupported, instead of announcing usable hooks for bytecode the rewriter
@@ -104,7 +103,7 @@ does not identify the precise exception or signal shown by Samsung's dialog.
 
 Synthetic ELF32/ELF64 tests cover both text-relocation declarations, nonmatching
 flags, truncated inputs and invalid bounds. A protected-bytecode fixture checks
-that neither touch nor purchase hooks are emitted. Existing protocol, DEX,
+that no touch hooks are emitted. Existing protocol, DEX,
 state, activity-alias and multidex tests pass. Android app Java compilation was
 checked separately; CI checks Gradle packaging.
 

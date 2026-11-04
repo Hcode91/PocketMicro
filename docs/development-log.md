@@ -1,4 +1,4 @@
-# PocketOuya – plan & progress
+# PocketOuya – development log
 
 Goal: play Ouya games on a modern Android phone (owner's device: Samsung Galaxy S23, Snapdragon 8 Gen 2).
 **Correction (2026-11-03):** launch logs show 32-bit (`lib/arm`) games starting on the S23, so the
@@ -293,20 +293,6 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   identify the game-side entitlement conditions. Unity runtime support remains
   a separate prerequisite for executing callbacks through Engine test.
 
-- **2026-11-01 — normal launch confirmed; offline purchase profile implemented:**
-  owner clarified that Knightmare Tower launches after normal conversion and
-  does not need Engine test. Added an opt-in, exact-DEX-fingerprint conversion
-  profile for the supplied OUYA 2.1.0 build. Six verified Java Unity SDK entry
-  points delegate to our injected DEX, which delivers local product/gamer/
-  purchase/receipt callbacks and persists local durable purchase state. No
-  Xposed/root/global Cipher hook is used. Normal conversion remains unchanged.
-  Synthetic DEX and mocked-runtime tests pass, and rewriting the actual supplied
-  archive preserves its resources/native libraries. No game files are committed.
-  Actual unlock still needs a phone run with the complete original APK; the
-  supplied archive omitted managed assets. See docs/knightmare-tower-compatibility.md.
-  **Next:** build branch APK, reimport original full Knightmare Tower APK with
-  offline profile, launch normally and use the purchase/unlock button. Investigate
-  actual managed callbacks/logs if the title does not accept the local receipts.
 - **2026-11-01 — Android compiler dependency fix:** the purchase/host-engine tests
   passed, but APK Java compilation failed resolving Guava ImmutableList exposed
   by dexlib2's API. Added explicit Guava 33.3.1-android to both the application
@@ -731,34 +717,6 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   No new APK/game launch has been verified on the phone; AIR/stouyapi not changed.
 
 
-- **2026-11-01 — Existing stouyapi server client:** owner changed deployment
-  choice from local phone server to existing/public server. Added independently
-  implemented HTTPS client and OUYA COMMUNITY SERVER settings/test, proposed
-  default https://ouya.cweiske.de from upstream's published HTTP host. Live HTTPS
-  is UNVERIFIED: configured proxy failed before connecting; no HTTP/TLS bypass.
-  Global service disabled initially. Matching legacy Unity conversions can route
-  six plugin APIs through a new ServiceOuya bridge and explicit per-installed-
-  game host provider approval. Android caller UID/package/signer checks, no shared
-  UIDs, no caller-selected URLs/package paths, two concurrent host requests, one
-  bounded bridge worker/queue, timeouts/deadline, 256 KiB response bounds, no
-  redirects, receipt-envelope depth/count limits and purchase SKU/UUID correlation.
-  No official credentials, session mutations, auto-downloads or local server.
-  Server receipts/products remain server data; no offline fallback on failures.
-  Static receipt generation and nonpersistent upstream purchase handler disclosed.
-  Offline options preserved. Unsupported SDK/developer fields and API30+ provider
-  visibility remain unchanged/reported. No PHP implementation or binaries copied.
-  Tests: protocol/transport errors and bounds, envelope decoding, purchase request
-  correlation, Unity callbacks/failure routes/no invented local persistence,
-  six DEX hooks, offline isolation, touch coexistence, complete ZIP helper/assets
-  and API30 skip fixtures pass. App/bridge Android compile and D8 pass; prior
-  host compatibility/native/log suites pass. docs/stouyapi-server.md has scope,
-  privacy/setup and explicit device-test gaps. No public-server/gameplay success
-  claimed. **Next:** install branch build, TEST CONNECTION on phone, save/enable,
-  reconvert original supported Unity game with Community server (+touch), install,
-  approve installed game's access, normal Play; export global log on failure.
-  Device must validate provider authorization/revocation and real API coverage.
-
-
 - **2026-11-01 — Remove stouyapi at owner's request; Abbigale new trace:**
   removed the entire 5fc257b server integration: settings/test UI, global enable,
   per-game approvals, exported provider, client, injected ServiceOuya, conversion
@@ -810,33 +768,6 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   repaired/promoted rather than loader-only, install update, normal Play, export
   fresh global log on failure. Gameplay remains UNVERIFIED; further engine/JNI/
   Android/dependency issues possible. Server integration remains removed.
-
-
-- **2026-11-01 — Global offline purchase default; Abbigale launch confirmed:**
-  owner confirmed the 850753c real-runtime repair launches Abbigale. Recorded
-  exact-build phone confirmation; does not prove resolver cause or purchase
-  compatibility. Owner then requested a global option for offline purchase
-  attempts across games. Added OFFLINE PURCHASE OPTIONS, private persistent
-  default (initially off), and a visible per-conversion checkbox for every mode.
-  Explicit offline modes preselect it too; individual overrides do not change
-  global preference. Removed native-repair/offline mutual-exclusion guard so
-  users can retain working startup fixes and touch while attempting local
-  receipts. Reports remain separated; no new SDK adapter/universal unlock,
-  server, network permission or runtime-wide hook. Existing installed games
-  require original-APK reconversion; toggling default does not alter them.
-  Updated UI/docs on local receipts, restarts/data removal, original game network
-  behavior and unsupported SDKs. Native report no longer incorrectly says no
-  purchase changes in combined mode; records Vector and Abbigale confirmations.
-  Tests: combined native-inspection/touch/offline ZIP fixture validates six SDK
-  hooks, helper and assets; prior host/native/receipt/log suites and Android
-  compile pass. Actual supplied Abbigale conversion preserves BOTH repaired
-  native output hashes/assets and touch helper, but SDK match is FALSE/zero
-  purchase hooks. No purchase support/unlock is claimed for Abbigale; separate
-  adapter needed. Docs/global-offline-purchases.md explains scope. No runtime or
-  vendor bytes committed. **Next:** branch build, enable/save default, reconvert
-  original APKs with desired startup/touch mode, review supported/unchanged
-  purchase report, normal Play and try in-game purchase button where supported.
-  Global-dialog behavior and game acceptance remain phone tests.
 
 
 - **2026-11-01 — Unity 4.3.4f1 NativeActivity / AD2442 text relocations:**

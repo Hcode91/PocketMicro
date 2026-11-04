@@ -176,4 +176,4 @@ idempotence and start-before-bind ordering. Foreground-service APIs are excluded
 Generated fixtures and bounded semantics models are not ART or phone execution.
 The six newly targeted affected APKs were not supplied and remain unverified.
 Full suite/native replay, D8/source compilation and available real-fixture results
-are recorded in PLAN.md; unavailable fixtures are explicitly skipped.
+are recorded in the development log; unavailable fixtures are explicitly skipped.

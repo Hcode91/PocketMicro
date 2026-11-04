@@ -92,7 +92,7 @@ native loading and gameplay remain unverified.
 - Existing host/input/purchase/doctor/assessment/shared/experimental suites,
   generated structural detector suite and Android source compilation.
 - Compatibility/log/export script; native replay results and missing-fixture
-  counts are recorded in PLAN.md. No missing fixture counts as passing.
+  counts are recorded in the development log. No missing fixture counts as passing.
 
 No vendor APK, DEX, library, assets or scratch candidate is stored in Git.
 

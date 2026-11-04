@@ -42,8 +42,7 @@ have separate bounds. No APK contents or report is uploaded.
 - Strip old APK signature metadata and sign a separate output using the same
   key used by PocketOuya conversions. The original file is unchanged.
 
-The doctor intentionally adds no controls or offline purchase hooks and does not
-use the Add game global purchase preference. Use Add game for those options.
+The doctor never changes a game's purchase checks.
 
 ## Limits that must stay visible
 

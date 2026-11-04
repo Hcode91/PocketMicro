@@ -21,7 +21,7 @@ android {
         }
     }
 
-    // Native engine (32-bit ARM translator) – see engine/ and PLAN.md.
+    // Native engine (32-bit ARM translator) – see engine/ and docs/development-log.md.
     externalNativeBuild {
         cmake {
             path file('../engine/CMakeLists.txt')
