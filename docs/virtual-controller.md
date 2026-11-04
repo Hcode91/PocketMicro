@@ -49,3 +49,18 @@ LTRIGGER RTRIGGER BRAKE GAS HAT_X HAT_Y; the kernel started and opened it; A arr
 Untested on the phone: provider start from a game, Unity 4 reporting the name to Soul Fjord's
 OuyaInput, and whether d-pad presses (also sent as left stick) clash with Soul Fjord's d-pad actions.
 
+## Step 2 fix: Unity uses the OUYA pad's raw button order (2026-11-04)
+
+Owner report with step 2 in Soul Fjord: U did nothing, A acted like O. Unity 4's key handler
+passes `(keyCode, unicode, down, scanCode, deviceId)` to `nativeKeyState`, and the symptoms fit
+Unity numbering joystick buttons by **scan code**. The real OUYA pad's key layout
+(Vendor_2836_Product_0001.kl from an OUYA) is `0x130 BUTTON_A` (O), `0x131 BUTTON_X` (U),
+`0x132 BUTTON_Y` (Y), `0x133 BUTTON_B` (A), `0x134/0x135` L1/R1, `0x136/0x137` L3/R3,
+`0x138-0x13b` d-pad up/down/left/right, `0x13c/0x13d` L2/R2, `0x13e` Home, while step 2 sent the
+generic Linux order (A at 0x131, U at 0x133): Soul Fjord saw A in U's slot and U in A's slot.
+Stock Android ships no OUYA key layout (AOSP data/keyboards has none for vendor 2836), so the
+virtual pad always gets Generic.kl and cannot carry both the OUYA scan codes and its key codes.
+`VirtualPadState` therefore has two layouts: **OUYA scan order** for games containing
+`com.unity3d.player.UnityPlayer` (report bit n = scan 0x130 + n, d-pad as buttons 8-11, Menu and
+Start as 0x13e plus the MENU key), and the previous **Android key order** for other engines.
+

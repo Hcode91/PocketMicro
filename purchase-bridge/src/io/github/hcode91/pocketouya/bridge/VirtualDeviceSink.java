@@ -21,12 +21,17 @@ public final class VirtualDeviceSink implements VirtualPad.Sink {
     static final int CREATE = 1, INPUT = 2;
     private static final IBinder TOKEN = new Binder(); // lives as long as this process
     private final VirtualPad.Sink fallback;
-    private final VirtualPadState state = new VirtualPadState();
+    private final VirtualPadState state;
     private volatile IBinder pad;
     private volatile boolean failed;
 
     public VirtualDeviceSink(final Activity activity, VirtualPad.Sink fallback) {
         this.fallback = fallback;
+        // Unity 4 numbers joystick buttons by scan code; OUYA-era Unity scripts expect the real OUYA pad's raw order.
+        boolean unity;
+        try { Class.forName("com.unity3d.player.UnityPlayer", false, activity.getClassLoader()); unity = true; }
+        catch (ClassNotFoundException | LinkageError notUnity) { unity = false; }
+        state = new VirtualPadState(unity);
         new Thread(new Runnable() { public void run() { connect(activity); } }, "pocketouya-virtual-pad").start();
     }
 
@@ -43,7 +48,7 @@ public final class VirtualDeviceSink implements VirtualPad.Sink {
             finally { data.recycle(); reply.recycle(); }
             if (created == null || !created.startsWith("OK")) { failed = true; Log.w(TAG, "Virtual controller unavailable (" + created + "); using the in-game route"); return; }
             pad = binder;
-            Log.i(TAG, "Input route: virtual controller \"OUYA Game Controller\" via Shizuku");
+            Log.i(TAG, "Input route: virtual controller \"OUYA Game Controller\" via Shizuku; layout: " + (state.ouyaScanOrder() ? "OUYA scan order (Unity)" : "Android key order"));
         } catch (Exception | LinkageError error) {
             failed = true; Log.w(TAG, "Virtual controller unavailable; using the in-game route", error);
         }
