@@ -327,18 +327,28 @@ purchase implementation, native transformer or finalizer detector changes.
   such a view class is found. Tests cover detection, the untouched override, reconversion and
   the guard's filter; phone behaviour after the video starts is untested.
 
-## Unity full-screen video with Scaleform (2026-11-04)
+## Scaleform vertex-attribute overflow (2026-11-04)
 
-- **`unity.scaleform-skip-video`** (startup repair). Unity 4's `Handheld.PlayFullScreenMovie`
-  pauses the player, removes its GL view, plays the file in Android's `MediaPlayer` and
-  resumes. Scaleform's Unity plugin (`libgfxunity3d.so`) does not survive that cycle on modern
-  Android. In Soul Fjord's 09:13 log (0.1.95, low-address and SurfaceView guard active) the
-  5-second intro video played to completion, Unity's view came back, and 0.4 s later the same
-  `RTCommandQueue::PopCommand` null crash occurred, now with the manager at `0x78353050`
-  (below 2 GB), which disproves high addresses as the cause; earlier runs crashed at the pause
-  before the video instead. For Unity APKs that ship `libgfxunity3d.so` only,
-  `UnityPlayer.showVideoPlayer(String,int,int,int,boolean,int,int)` is replaced by a call to the
-  helper's `UnityVideo.skipped(file)` (logs `PocketOuyaUnityVideo`) and `return-void`, so the
-  player is never paused for a video. Cost: intro/cut-scene videos are not shown. Unity games
-  without the plugin keep their videos.
-
+- **`unity.scaleform-skip-video` (withdrawn).** Briefly skipped Unity full-screen videos for games
+  with Scaleform's Unity plugin, on the theory that the pause/resume around the video broke the
+  plugin. The 09:27 log disproved it: with the video skipped (no pause), the same crash followed
+  0.45 s later, at the first Scaleform frame. Removed; videos play normally again.
+- **`ouya.gles-vertex-attribs`** (startup repair). The actual Soul Fjord cause, found in
+  `SFManagerImpl::SaveStateBlock()` (called from `Display` between the first-frame glyph-cache
+  setup and `ProcessCommands`): it calls `glGetIntegerv(GL_MAX_VERTEX_ATTRIBS)` and, for each
+  attribute, stores `glGetVertexAttribiv(i, GL_VERTEX_ATTRIB_ARRAY_ENABLED) != 0` as a byte at
+  manager `+0x10+i`. The manager reserves 16 bytes there (the OUYA's Tegra 3 reports 16); Adreno
+  reports 32, so bytes 16-31 overwrite `+0x20..+0x2f`, including the render-thread pointer at
+  `+0x2c`, which `ProcessCommands` then dereferences (fault address 0x40 = null + 0x34 + 0x0c).
+  This explains every run: one frame, independent of address range, video or store timing. The
+  library's code is not changed. Its `DT_NEEDED` `libGLESv2.so` string is renamed to the
+  same-length `libpogles.so` (refused when symbol versioning is present, `DT_HASH` is missing, the
+  library does not import `glGetIntegerv`, another symbol name shares the string, or the shim
+  name already exists). The shim (`glcaps/pocketouya_gles.c`, built by CI with the NDK, soname
+  `libpogles.so`) depends on `libGLESv2.so`, so the plugin's other GL imports still resolve there
+  through breadth-first dependency lookup; it defines only `glGetIntegerv`, forwarding to the real
+  one and capping `GL_MAX_VERTEX_ATTRIBS` at 16. Only `lib/armeabi(-v7a)/libgfxunity3d.so` is
+  changed. Verified on the real Soul Fjord library: 6 bytes changed, size unchanged, 85 GL imports
+  intact. Untested on a phone.
+- The opt-in `pocketouya.low-addresses` experiment is not needed for this crash (it only moved its
+  timing) and stays off by default.

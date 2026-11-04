@@ -126,6 +126,29 @@ def buildLowAddr = tasks.register('buildLowAddressHelper', Exec) {
 android.sourceSets.main.res.srcDir lowAddrRes
 tasks.named('preBuild').configure { dependsOn buildLowAddr }
 
+// GPU-limit shim (ouya.gles-vertex-attribs): libpogles.so caps GL_MAX_VERTEX_ATTRIBS at the OUYA's 16
+// for Scaleform's Unity plugin; everything else resolves to libGLESv2.so through its dependency.
+def glesRes = layout.buildDirectory.dir('generated/glcaps/res')
+def buildGles = tasks.register('buildGlesLimitShim', Exec) {
+    def src = rootProject.file('glcaps/pocketouya_gles.c')
+    inputs.file src
+    def out = glesRes.map { it.file('raw/pocketouya_gles.so') }
+    outputs.file out
+    doFirst {
+        def ndk = android.ndkDirectory
+        def host = ['linux-x86_64', 'darwin-x86_64', 'windows-x86_64'].find { new File(ndk, "toolchains/llvm/prebuilt/$it/bin").isDirectory() }
+        if (host == null) throw new GradleException("NDK clang not found under $ndk")
+        def clang = new File(ndk, "toolchains/llvm/prebuilt/$host/bin/clang" + (host.startsWith('windows') ? '.exe' : ''))
+        def target = out.get().asFile
+        target.parentFile.mkdirs()
+        commandLine clang.path, '--target=armv7a-linux-androideabi21', '-shared', '-fPIC', '-O2', '-Wall', '-Werror',
+                '-fvisibility=hidden', '-Wl,-soname,libpogles.so', '-Wl,--build-id=sha1', '-Wl,-z,noexecstack', '-s',
+                '-o', target.path, src.path, '-Wl,--no-as-needed', '-lGLESv2', '-ldl'
+    }
+}
+android.sourceSets.main.res.srcDir glesRes
+tasks.named('preBuild').configure { dependsOn buildGles }
+
 // Pure JVM protocol/DEX tests. The fake Android/Unity classes are test-only and
 // never enter the app APK or the injected bridge resource.
 configurations { purchaseHostTests }
@@ -160,7 +183,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/LowAddressRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/LaunchHook.java',
             'src/main/java/io/github/hozdogus/pocketouya/SurfaceDetachRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/UnityScaleformVideoRule.java',
+            'src/main/java/io/github/hozdogus/pocketouya/ScaleformGlesRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/StoreClient.java',
             'src/main/java/io/github/hozdogus/pocketouya/OuyaControllerPlayersRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/OuyaAccountRule.java',
@@ -198,7 +221,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'tests/TvScreenSizeRuleTest.java',
             'tests/LowAddressRuleTest.java',
             'tests/SurfaceDetachRuleTest.java',
-            'tests/UnityScaleformVideoRuleTest.java',
+            'tests/ScaleformGlesRuleTest.java',
             'tests/StoreClientTest.java',
             'tests/TombstoneTextTest.java',
             'tests/ClickteamSurfaceLayoutRuleTest.java',

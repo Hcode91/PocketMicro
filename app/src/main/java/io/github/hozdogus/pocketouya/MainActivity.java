@@ -540,7 +540,11 @@ public class MainActivity extends Activity {
                 if(lowAddress)try(java.io.InputStream input=getResources().openRawResource(R.raw.pocketouya_lowaddr)) {
                     lowAddressLibrary=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT),lowAddressLibrary);
+                byte[] glesShim=null;
+                if(runtimeRepair)try(java.io.InputStream input=getResources().openRawResource(R.raw.pocketouya_gles)) {
+                    glesShim=ApkRebuilder.readAll(input);
+                }
+                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT),lowAddressLibrary,glesShim);
                 original.delete();
 
                 showProgress("Signing…");

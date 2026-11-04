@@ -19,12 +19,16 @@ public final class ApkRebuilder {
     /** All app install/export preparation paths request controls; low-level APIs remain explicit. */
     public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget)throws IOException {
         if(experimental&&runtimeRepair)throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup repairs");
-        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,null);
+        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,null,null);
     }
     /** As above; a non-null lowAddressLibrary also applies the opt-in pocketouya.low-addresses experiment. */
     public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary)throws IOException {
+        return prepareForInstall(in,out,bridge,runtimeRepair,experimental,minimumTarget,lowAddressLibrary,null);
+    }
+    /** As above; glesShim (libpogles.so) lets startup repairs apply ouya.gles-vertex-attribs. */
+    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim)throws IOException {
         if(experimental&&runtimeRepair)throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup repairs");
-        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,lowAddressLibrary);
+        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim);
     }
     public static ManifestPatcher.Result rebuild(File in, File out) throws IOException {
         return rebuild(in,out,null,false,false);
@@ -33,7 +37,7 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,runtimeRepair,ManifestPatcher.MIN_TARGET);
     }
     public static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget)throws IOException {
-        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,false,null);
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,false,null,null);
     }
     public static ManifestPatcher.Result rebuildExperimental(File in,File out)throws IOException {
         return rebuildExperimental(in,out,ManifestPatcher.MIN_TARGET);
@@ -43,9 +47,9 @@ public final class ApkRebuilder {
     }
     /** Explicit experiment with optional existing touch bridge. */
     public static ManifestPatcher.Result rebuildExperimental(File in,File out,byte[] bridge,boolean touch,int minimumTarget)throws IOException {
-        return rebuild(in,out,bridge,touch,false,minimumTarget,true,null);
+        return rebuild(in,out,bridge,touch,false,minimumTarget,true,null,null);
     }
-    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary)throws IOException {
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim)throws IOException {
         boolean lowAddress=lowAddressLibrary!=null;
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
@@ -56,6 +60,16 @@ public final class ApkRebuilder {
                 SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true,result.manifest);
                 replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
                 if(repair.manifest!=null)result.manifest=repair.manifest;
+                java.util.Map<String,byte[]> scaleform=new java.util.LinkedHashMap<>();java.util.List<String> all=new java.util.ArrayList<>();
+                for(ZipEntry e:java.util.Collections.list(zip.entries())){
+                    all.add(e.getName());
+                    if(!e.getName().matches("lib/[^/]+/"+ScaleformGlesRule.TARGET.replace(".","\\.")))continue;
+                    byte[] current=replacements.get(e.getName());
+                    scaleform.put(e.getName(),current!=null?current:readBounded(zip.getInputStream(e),32*1024*1024));
+                }
+                ScaleformGlesRule.Result gles=ScaleformGlesRule.apply(scaleform,all,glesShim);
+                replacements.putAll(gles.replacements);
+                if(gles.status!=CompatibilityEvidence.Status.SKIPPED)result.compatibilityReport+="\n"+gles.line();
             }
             if(experimental){
                 ExperimentalUnityRuntimeRepair.Plan repair=ExperimentalUnityRuntimeRepair.plan(zip);
@@ -92,9 +106,6 @@ public final class ApkRebuilder {
                 }
                 java.util.List<String> names=new java.util.ArrayList<>();for(ZipEntry e:java.util.Collections.list(zip.entries()))names.add(e.getName());
                 if(runtimeRepair){
-                    UnityScaleformVideoRule.Result video=UnityScaleformVideoRule.apply(input,names);
-                    replacements.putAll(video.replacements);input.putAll(video.replacements);appendBridge|=video.needsBridge;
-                    if(video.status!=CompatibilityEvidence.Status.SKIPPED)result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+video.line();
                     SurfaceDetachRule.Result guard=SurfaceDetachRule.apply(input,result.launcherActivities);
                     replacements.putAll(guard.replacements);input.putAll(guard.replacements);appendBridge|=guard.needsBridge;
                     if(guard.status!=CompatibilityEvidence.Status.SKIPPED||!guard.views.isEmpty())result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+guard.line();

@@ -190,6 +190,12 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     low-address option stays as an opt-in experiment but is not needed for this. Added
     `unity.scaleform-skip-video`; next log should show `PocketOuyaUnityVideo` skip lines and
     whether the menu appears without a crash.
+  - **2026-11-04 09:27 result (0.1.96): video skipped, same crash 0.45 s later.** Root cause
+    found: `SaveStateBlock` writes GL_MAX_VERTEX_ATTRIBS (32 on Adreno, 16 on the OUYA) flag bytes
+    into a 16-byte manager array, overwriting the render-thread pointer at +0x2c on the first
+    Scaleform frame. Added `ouya.gles-vertex-attribs` (GL shim capping the limit at 16 for
+    libgfxunity3d.so) and withdrew `unity.scaleform-skip-video`. The SurfaceView guard stays (real
+    separate bug when Unity plays a video). Next: confirm the menu renders.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 
