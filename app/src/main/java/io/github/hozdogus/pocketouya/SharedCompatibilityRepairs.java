@@ -104,6 +104,9 @@ public final class SharedCompatibilityRepairs {
             JavascriptInterfaceRule.Result js=apply?JavascriptInterfaceRule.repair(diagnosticInput):JavascriptInterfaceRule.inspect(diagnosticInput);
             if(js.status!=CompatibilityEvidence.Status.SKIPPED)report.append(js.status).append(' ').append(JavascriptInterfaceRule.ID).append(": ").append(js.reason).append('\n');
             if(apply){plan.replacements.putAll(js.replacements);diagnosticInput.putAll(js.replacements);}
+            WebViewThreadRule.Result web=apply?WebViewThreadRule.repair(diagnosticInput):WebViewThreadRule.inspect(diagnosticInput);
+            if(web.status!=CompatibilityEvidence.Status.SKIPPED)report.append(web.status).append(' ').append(WebViewThreadRule.ID).append(": ").append(web.reason).append('\n');
+            if(apply){plan.replacements.putAll(web.replacements);diagnosticInput.putAll(web.replacements);}
             if(tvLayouts){
                 TvScreenSizeRule.Result size=apply?TvScreenSizeRule.repair(diagnosticInput):TvScreenSizeRule.inspect(diagnosticInput);
                 if(size.status!=CompatibilityEvidence.Status.SKIPPED)report.append(size.status).append(' ').append(TvScreenSizeRule.ID).append(": ").append(size.reason).append('\n');

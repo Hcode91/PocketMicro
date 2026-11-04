@@ -352,3 +352,18 @@ purchase implementation, native transformer or finalizer detector changes.
   intact. Untested on a phone.
 - The opt-in `pocketouya.low-addresses` experiment is not needed for this crash (it only moved its
   timing) and stays off by default.
+
+## android.webview-main-thread
+
+Old SDKs, above all Google AdMob 4.x (2011-2013), load their ad pages with
+`WebView.loadDataWithBaseURL`/`loadUrl` from a background `AsyncTask`. Android only warned
+about that for old targets, but today's WebView (updated through the Play Store) throws
+"Calling methods on another thread than the UI thread" for every app, so the game crashes as
+soon as its banner loads (Grave Defense Holidays), even with its original target kept.
+
+Each `loadUrl`, `loadData`, `loadDataWithBaseURL` and `stopLoading` call on a WebView (or a
+subclass) becomes a static call into a small class added to the game's DEX
+(`io.github.hozdogus.pocketouya.compat.WebViewOnMain`). On the main thread it makes the same
+call straight away, so behaviour is unchanged; on any other thread it posts the call to the main
+thread. Ads are not removed or blocked. Runs with Startup repairs; host-tested on synthetic DEX
+(subclass and range calls, other WebView calls untouched, idempotent).
