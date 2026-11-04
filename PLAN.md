@@ -1346,3 +1346,14 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   all other1713 payloads unchanged and CRC passes. Second trial device result pending.
   Evidence and instructions in soul-fjord-video-lifecycle.md. Push APK build without
   waiting; no native queue fix or phone success claimed.
+
+- **2026-11-04 — Soul Fjord runtime-only result:** owner's 08:15 log confirms
+  v0.1.90 runtime-only marker, both promotions, no startup/SDK/input patches. Loader
+  now passes; same UnityMain Scaleform queue fault, address0x40 and same four native
+  frame offsets. Disabled SDK/input edits are not necessary for this failure.
+  Full decoded native dump is available, but manager pointer values in stack
+  windows are not manager heap bytes: object contents/write history remain absent.
+  Java fetchGamerInfo lookup error remains; video teardown not recorded. Recorded
+  comparison matrix and limits in lifecycle report. No more option permutations,
+  speculative native guard, code change or new APK build for this log. Next need
+  targeted constructor/publication/lifetime evidence; actual queue cause UNKNOWN.

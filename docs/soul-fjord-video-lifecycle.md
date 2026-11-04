@@ -266,3 +266,43 @@ rejection. Aggregate host tests and Android Java compile passed. Actual Soul Fjo
 conversion retains API16; both promoted libraries equal the original asset bytes.
 Phone outcome for this second trial remains unverified. No new fingerprint,
 instruction patch, purchase or Scaleform algorithm was introduced.
+
+## Runtime-only device result (08:15 run, 2026-11-04)
+
+The next supplied log, `PocketOuya-global-game-log (1).txt`, records v0.1.90 and
+`diagnostic.runtime-only`, with both embedded runtimes promoted. Startup repairs,
+touch injection and experimental runtime repairs are disabled. The recorded
+process1351/thread1379 creates an OpenGL context at 08:15:27.557, then crashes on
+UnityMain at 08:15:31.172448596. The signal, address0x40 and all four Scaleform
+frame offsets match the earlier SDK/input-enabled conversion:
+
+| Stage | Observed result |
+| --- | --- |
+| Original-code baseline | Main-thread embedded-loader stack overflow; comparison point not reached |
+| Runtime promotion only | Loader passed; same Scaleform command-queue null-pointer fault |
+| Earlier full startup repairs + touch | Same Scaleform command-queue null-pointer fault |
+
+SDK/input edits are therefore **not necessary** to produce the queue crash in
+this configuration. This does not prove that promotion is correct in every respect,
+that it causes the queue fault, or that the untouched APK would reach that point
+on this phone. The retained saves/settings were not controlled by a data reset.
+
+The original Java `fetchGamerInfo` lookup error is still present. No synthetic
+store-offline callback is recorded in this run; the native queue fault still follows.
+There are no recorded MediaPlayer or game-surface-destruction events before it.
+This further weakens a video-handover repair as the next experiment.
+
+A full decoded native tombstone is now present for the Scaleform fault. It confirms
+queue receiver0x34 and mutex pointer0x40. The stack contains repeated references to
+`0xe4edb050`, consistent with the saved manager receiver and its +0x80 field address.
+However, its memory windows cover stack/register targets, library code and GOT;
+they **do not contain bytes at the manager's heap address**. A pointer appearing in
+stack memory must not be mistaken for a dump of the pointed-to object. There is
+still no observation of the constructor's final pointer store or the subsequent
+write/lifetime event responsible for the null.
+
+No further install-option permutations are justified by this result. The next
+technical requirement is targeted native initialization/lifetime evidence, rather
+than another ordinary startup log or a guard that silently skips drawing. No new
+repair or build was added for this log-only result. The runtime-only trial did not
+fix gameplay; the Scaleform cause remains UNKNOWN.
