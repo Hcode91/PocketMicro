@@ -215,3 +215,15 @@ embedded loader. The owner confirmed that this resolves the repeating native
 string-error launch crash for the inspected build. The report should show two real runtimes
 repaired/promoted. Unknown/missing payloads retain the partial loader-only option
 and its explicit limitations. No other game's runtimes are substituted.
+
+## Licence
+
+PocketOuya is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. It is distributed WITHOUT ANY WARRANTY; see
+[LICENSE](LICENSE) for the full text.
+
+Copyright (C) 2026 Hcode91
+
+Third-party components keep their own licences: Shizuku API (Apache-2.0), dexlib2/smali
+(BSD-3-Clause), apksig (Apache-2.0), Guava (Apache-2.0), dynarmic (0BSD) and Boost (BSL-1.0).
