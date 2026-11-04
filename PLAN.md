@@ -153,6 +153,22 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   - Not to retry: native trace/logging wrapper, patching libgfxunity3d.so checks, and building
     DEX/Java-code reading tools for this game were all stopped by Claude's safety checks.
   - Owner parked it again 2026-11-03.
+  - **2026-11-04 (this branch), original-code baseline from `feature/unity-video-surface` (0.1.90):**
+    same crash with every PocketOuya repair off except Unity runtime promotion, so the SDK/DEX
+    repairs are not the cause. Static facts added from the APK the owner supplied:
+    the game's C# (`Assembly-CSharp-firstpass`) creates the manager only in
+    `TryGfxManager.Awake/OnEnable/get_SFMgr` -> `new SFManager` -> `SF_Init`; `OnDisable` only
+    calls `SF_Uninit` (destroys movies, not the render thread); nothing calls `SFManager.Destroy`,
+    so `SF_DestroyManager`/`SF_Destroy` never run. `UnitySetGraphicsDevice` init and `SF_Init` both
+    use the same singleton (`CreateManager` returns the existing one); device shutdown frees it and
+    clears the same global. A second check confirms only the constructor writes manager+0x2c
+    (`ShutdownRenderHAL`'s +0x2c store is to a MovieNode). No other thread was inside Scaleform at
+    the crash. From saved registers in the 08:15 tombstone the manager is at `0xe4edb050`, i.e.
+    above 3 GB: a 32-bit process on a 64-bit kernel gets addresses the OUYA (32-bit kernel, <3 GB)
+    never produced. Leading hypothesis, unproven: Scaleform's own heap (SysAllocMalloc + MH heap
+    engine) mishandles high addresses and hands out memory overlapping the live manager, zeroing
+    +0x2c. Confirming it needs either the manager's memory at crash time or a low-address
+    experiment; owner to decide.
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 
