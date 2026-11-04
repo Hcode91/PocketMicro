@@ -196,6 +196,11 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     Scaleform frame. Added `ouya.gles-vertex-attribs` (GL shim capping the limit at 16 for
     libgfxunity3d.so) and withdrew `unity.scaleform-skip-video`. The SurfaceView guard stays (real
     separate bug when Unity plays a video). Next: confirm the menu renders.
+  - **2026-11-04 09:43: Soul Fjord launches and runs (0.1.97).** Touch controls do nothing: the
+    touch pad's "Android fallback" events come from device id -1, and Unity 4 only treats real
+    InputDevices as joysticks (`com.unity3d.player.f` lists `InputDevice.getDeviceIds()`); the
+    game's OuyaInput also matches controllers by name (OUYA GAME CONTROLLER, Xbox 360, PS3…).
+    Owner chose the Shizuku virtual controller: see docs/virtual-controller.md (step 1 device test).
 - **OuyaFacade layout variant (Worm Copter).** `ouya.store-offline.answer-requests` reports
   "request queue layout not recognised"; support that ODK version so store requests can't hang.
 

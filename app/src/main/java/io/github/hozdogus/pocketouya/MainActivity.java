@@ -141,6 +141,7 @@ public class MainActivity extends Activity {
         root.addView(header);
         Button store=new Button(this);store.setText("STORE — OUYA COMMUNITY SERVER");store.setOnClickListener(v->startActivity(new Intent(this,StoreActivity.class)));root.addView(store);
         Button doctor=new Button(this);doctor.setText("APK COMPATIBILITY DOCTOR");doctor.setOnClickListener(v->startActivity(new Intent(this,ApkDoctorActivity.class)));root.addView(doctor);
+        Button pad=new Button(this);pad.setText("VIRTUAL CONTROLLER TEST (SHIZUKU)");pad.setOnClickListener(v->startActivity(new Intent(this,VirtualPadTestActivity.class)));root.addView(pad);
         Button logs=new Button(this);logs.setText("GLOBAL LOG / EXPORT");logs.setOnClickListener(v->startActivity(new Intent(this,GlobalLogActivity.class)));root.addView(logs);
 
         TextView section = new TextView(this);
