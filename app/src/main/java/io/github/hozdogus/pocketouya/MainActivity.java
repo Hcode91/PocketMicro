@@ -431,10 +431,13 @@ public class MainActivity extends Activity {
 
     private void chooseImportMode(Uri uri) {
         new AlertDialog.Builder(this).setTitle("Game conversion")
-            .setItems(new String[]{"Android install compatibility + touch", "Startup repairs + touch — native engines / legacy SDKs", "Experimental Unity embedded-runtime repair + touch", "Diagnostic baseline — original code, Shizuku install"},(dialog,which)-> {
-                if(which==3)new AlertDialog.Builder(this).setTitle("Diagnostic baseline test")
+            .setItems(new String[]{"Android install compatibility + touch", "Startup repairs + touch — native engines / legacy SDKs", "Experimental Unity embedded-runtime repair + touch", "Diagnostic baseline — original code, Shizuku install", "Diagnostic Unity runtime promotion only"},(dialog,which)-> {
+                if(which==4)new AlertDialog.Builder(this).setTitle("Unity runtime-only test")
+                    .setMessage("Use the complete original APK. Applies only the existing embedded Unity runtime promotion rule. Keeps the original Android target and DEX; no SDK repairs, touch hooks or native instruction patches. Requires Shizuku.\n\nThis tests the loader separately from the other repairs. It is not a confirmed Scaleform fix. Update in place to retain saves; do not uninstall or clear data. Export the global log after launching.")
+                    .setPositiveButton("Prepare runtime-only test",(d,w)->importApk(uri,false,false,true,2)).setNegativeButton("Cancel",null).show();
+                else if(which==3)new AlertDialog.Builder(this).setTitle("Diagnostic baseline test")
                     .setMessage("Use the complete original APK. Keeps its Android target and copies game code, libraries and assets unchanged. Adds no repairs or touch pad. Requires Shizuku.\n\nThis replaces the installed conversion if its signing key matches. App data is retained by an update; saved settings may still influence the result. Do not uninstall or clear data for this test.\n\nAfter launching, export the global log so we can compare the crash with the repaired conversion. This is an isolation test, not a confirmed fix.")
-                    .setPositiveButton("Prepare baseline",(d,w)->importApk(uri,false,false,true,true)).setNegativeButton("Cancel",null).show();
+                    .setPositiveButton("Prepare baseline",(d,w)->importApk(uri,false,false,true,1)).setNegativeButton("Cancel",null).show();
                 else if(which==2)confirmExperimentalImport(uri);
                 else confirmImport(uri,which==1);})
             .setNegativeButton("Cancel",null).show();
@@ -518,9 +521,9 @@ public class MainActivity extends Activity {
     }
 
     private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget) {
-        importApk(uri,runtimeRepair,experimental,keepTarget,false);
+        importApk(uri,runtimeRepair,experimental,keepTarget,0);
     }
-    private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget, boolean baseline) {
+    private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget, int diagnosticMode) {
         showProgress("Copying the game…");
         new Thread(() -> {
             File dir = new File(getCacheDir(), "import-"+java.util.UUID.randomUUID());
@@ -533,10 +536,10 @@ public class MainActivity extends Activity {
 
                 showProgress("Updating it for this version of Android…");
                 byte[] bridge=null;
-                if(!baseline)try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
+                if(diagnosticMode==0)try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
                     bridge=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = baseline?ApkRebuilder.prepareDiagnosticBaseline(original,patched):ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT));
+                ManifestPatcher.Result r = diagnosticMode==2?ApkRebuilder.prepareDiagnosticRuntimeOnly(original,patched):diagnosticMode==1?ApkRebuilder.prepareDiagnosticBaseline(original,patched):ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT));
                 original.delete();
 
                 showProgress("Signing…");

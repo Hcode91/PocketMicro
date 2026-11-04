@@ -1332,3 +1332,17 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   ZIP CRC passes, conversion record sole added entry. Device result pending; compare
   original-loader failure, same queue crash or progression before choosing the next
   change. CI branch enabled; push build without waiting. Instructions in lifecycle doc.
+
+- **2026-11-04 — Soul Fjord baseline result / runtime-only trial:** owner's global
+  log(3) confirms v0.1.89 baseline selected. Main-thread native stack overflow near
+  stack guard during proxy/embedded-runtime startup, not the prior UnityMain
+  Scaleform fault. Full dump present; repeated records identify the same PID/time.
+  Thus baseline fails earlier and does not determine whether SDK/input edits cause
+  the later fault. Added explicit Diagnostic Unity runtime promotion only option:
+  existing structural rule only, retained target/DEX/assets/plugins, no SDK edits,
+  touch bridge or catalog/native instruction patches. No-match rejects preparation.
+  Host regressions and aggregate suite pass; Android Java compilation passes.
+  Actual APK test retains API16; both libmono/libunity promoted directly from assets,
+  all other1713 payloads unchanged and CRC passes. Second trial device result pending.
+  Evidence and instructions in soul-fjord-video-lifecycle.md. Push APK build without
+  waiting; no native queue fix or phone success claimed.

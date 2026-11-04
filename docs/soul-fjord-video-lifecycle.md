@@ -228,3 +228,41 @@ payload entries matched SHA-256, ZIP CRC passed, and the only added entry was th
 conversion record. Aggregate host tests and compatibility/log/export tests passed.
 Android Java compilation passed with existing annotation warnings. Device execution
 and the full CI APK build are pending; neither success nor a changed crash is claimed.
+
+## Baseline device result and second trial (2026-11-04)
+
+The supplied global log `(3)` confirms conversion and launch with PocketOuya
+0.1.89 and `startup repairs=no, touch=no, experimental runtime=no`, plus the
+`diagnostic.baseline` marker. This time a full native dump is available. Its main
+thread (PID/TID 4634) faults near the stack guard at `0xff511ff0`; Android reports
+likely stack overflow. The sole unwound frame is anonymous PC `0x7d7c88` and stack
+memory shows repeated return-address groups and `basic_string::_S_create` text.
+Startup output shows the original proxy loader loading the embedded Mono runtime,
+then loading the Unity proxy. This is consistent with the previously observed
+embedded-loader recursive string-error failure; its precise initiating error is
+not established by the string alone.
+
+This is an earlier, different fault from the UnityMain Scaleform queue crash. The
+baseline did not reach the comparison point and cannot exonerate or implicate the
+other startup repairs. Duplicate records with PID4634 and the same timestamp in
+the journal refer to the same captured crash, not independent repetitions.
+
+The next explicit test option is **All conversion options → Diagnostic Unity
+runtime promotion only → Prepare runtime-only test**, using the complete original
+APK with Shizuku running. It invokes only the existing structural embedded-runtime
+promotion rule. It retains the original target, DEX, SDK behavior, assets and plugin
+libraries; no input bridge or native instruction patches are selected. If no
+runtime matches, preparation fails with an explicit unavailable result.
+
+This trial intentionally uses the original embedded runtimes without catalog
+repairs. A new earlier native loader failure is a possible result, and must not be
+reported as a fix for Scaleform. If the queue fault returns, the disabled SDK/input
+changes are not necessary for that failure. If it progresses further, add those
+changes independently before attributing the difference to any one rule.
+
+Host regression tests cover both runtime replacements, unchanged DEX/other payloads,
+no bridge injection, provenance, retained target, immutable source and no-match
+rejection. Aggregate host tests and Android Java compile passed. Actual Soul Fjord
+conversion retains API16; both promoted libraries equal the original asset bytes.
+Phone outcome for this second trial remains unverified. No new fingerprint,
+instruction patch, purchase or Scaleform algorithm was introduced.

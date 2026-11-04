@@ -23,7 +23,11 @@ public final class ApkRebuilder {
     }
     /** Explicit diagnostic control; ordinary installs continue to request touch controls. */
     public static ManifestPatcher.Result prepareDiagnosticBaseline(File in,File out)throws IOException {
-        return rebuild(in,out,null,false,false,ManifestPatcher.KEEP_TARGET,false,true);
+        return rebuild(in,out,null,false,false,ManifestPatcher.KEEP_TARGET,false,1);
+    }
+    /** Only the existing structural proxy-promotion rule; no SDK/DEX/native byte patches. */
+    public static ManifestPatcher.Result prepareDiagnosticRuntimeOnly(File in,File out)throws IOException {
+        return rebuild(in,out,null,false,false,ManifestPatcher.KEEP_TARGET,false,2);
     }
     public static ManifestPatcher.Result rebuild(File in, File out) throws IOException {
         return rebuild(in,out,null,false,false);
@@ -45,15 +49,22 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,false,minimumTarget,true);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental)throws IOException {
-        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,false);
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,0);
     }
-    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,boolean baseline)throws IOException {
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,int diagnosticMode)throws IOException {
+        boolean baseline=diagnosticMode==1;
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
             if(manifestEntry==null)throw new IOException("Not an Android app (no AndroidManifest.xml).");
             ManifestPatcher.Result result=ManifestPatcher.patch(readBounded(zip.getInputStream(manifestEntry),4*1024*1024),minimumTarget);
             if(baseline)result.compatibilityReport="SKIPPED diagnostic.baseline — Diagnostic baseline: original Android target retained; DEX, native libraries and assets copied unchanged. No startup repairs or touch injection requested. Install through Shizuku. This tests whether conversion changes contribute to a failure; it is not a confirmed repair. Use a complete original APK: existing modifications in the input cannot be undone.";
             java.util.Map<String,byte[]> replacements=new java.util.LinkedHashMap<>();
+            if(diagnosticMode==2){
+                UnityEmbeddedRuntimePromotion.Result promotion=UnityEmbeddedRuntimePromotion.plan(zip,java.util.Collections.emptyMap(),true);
+                if(promotion.replacements.isEmpty())throw new IOException("Runtime-only test unavailable: "+promotion.status+" "+promotion.reason);
+                replacements.putAll(promotion.replacements);
+                result.compatibilityReport="SKIPPED diagnostic.runtime-only — Runtime promotion only: original target retained, SDK repairs and touch injection disabled; original DEX retained. Use the complete original APK. This isolates the embedded loader and does not establish a Scaleform repair.\n"+promotion.status+" "+UnityEmbeddedRuntimePromotion.ID+": "+promotion.reason;
+            }
             if(runtimeRepair){
                 SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true);
                 replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
@@ -71,7 +82,7 @@ public final class ApkRebuilder {
                 }
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);
-            if(baseline&&!nativeWarnings.isEmpty())nativeWarnings+="\nDiagnostic baseline retains target API "+result.newTarget+". The API 23+ text-relocation restriction above applies only if the retained target reaches that level; this test does not raise it.";
+            if(diagnosticMode!=0&&!nativeWarnings.isEmpty())nativeWarnings+="\nDiagnostic test retains target API "+result.newTarget+". The API 23+ text-relocation restriction above applies only if the retained target reaches that level; this test does not raise it.";
             boolean appendBridge=false;int nextDex=2;
             if(touch){
                 if(bridge==null||bridge.length==0)throw new IOException("Converter compatibility bridge is missing");
