@@ -387,8 +387,9 @@ in a 2009 px window at x = 134..2143. Games that read raw screen touch positions
 every tap ~134 px to the right (N.O.V.A. 3's fire button only reacted when tapped to its left);
 the full-screen window flags from the touch controls can't override this compat letterbox.
 
-Every `<activity>` without its own `android:maxAspectRatio` gets `maxAspectRatio="3.0"`
+**Opt-in** (owner's choice, 2026-11-05): only applied when **Full screen on wide phones** is
+ticked in the conversion dialog, with or without startup repairs, so games that look wrong at
+full width keep Android's letterbox. Every `<activity>` without its own `android:maxAspectRatio` gets `maxAspectRatio="3.0"`
 (0x01010521, float) in the binary manifest, using the same attribute writer as
-`ouya.tv-layouts.landscape`. Activities that set a ratio keep it. Runs with Startup repairs;
-matches N.O.V.A. 3's 11 activities and the manifest still parses (package, target, launcher).
+`ouya.tv-layouts.landscape`. Activities that set a ratio keep it. Matches N.O.V.A. 3's 11 activities and the manifest still parses (package, target, launcher).
 Samsung's per-app "Full screen apps" switch is the manual equivalent.

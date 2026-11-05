@@ -33,7 +33,6 @@ public final class TouchControls extends FrameLayout {
                 String name=current.getClass().getName();
                 boolean eligible=name.startsWith(pkg+".")||name.startsWith("com.unity3d.player.")||name.startsWith("com.ideaworks3d.marmalade.")||name.startsWith("org.cocos2dx.")||name.startsWith("com.badlogic.gdx.backends.android.")||name.startsWith("org.libsdl.app.")||name.startsWith("com.yoyogames.");
                 if(!eligible)return;
-                fullScreen(current);
                 final WeakReference<Activity> ref=new WeakReference<>(current);
                 try{current.getWindow().getDecorView().post(()->{Activity next=ref.get();if(next!=null&&resumed.contains(next)&&!next.isFinishing()&&!next.isDestroyed())install(next);});}
                 catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to attach controls to this screen",error);}
@@ -52,25 +51,6 @@ public final class TouchControls extends FrameLayout {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final List<View> panels=new ArrayList<>();
     private boolean usable=true,shown=true;
-
-    /**
-     * OUYA games expect the whole TV screen. Left alone, a phone keeps them out of the camera
-     * cutout and navigation bar, so the game's window starts ~130 px in; games that read raw
-     * screen touch positions (Gameloft's N.O.V.A. 3) then register every tap that far to the
-     * right. Drawing into the cutout with the system bars hidden puts the window at (0,0).
-     */
-    static void fullScreen(Activity activity){
-        try{
-            Window window=activity.getWindow();
-            if(android.os.Build.VERSION.SDK_INT>=28){
-                WindowManager.LayoutParams attrs=window.getAttributes();
-                attrs.layoutInDisplayCutoutMode=android.os.Build.VERSION.SDK_INT>=30?WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS:WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-                window.setAttributes(attrs);
-            }
-            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        }catch(RuntimeException error){Log.w("PocketOuyaControls","Unable to make the game full screen",error);}
-    }
 
     public static void install(Activity activity){
         try{
@@ -267,6 +247,6 @@ public final class TouchControls extends FrameLayout {
         try{pad.hold(key,owner,down);}catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Touch input disabled after native input error",error);}
     }
     private void releasePad(){handler.removeCallbacksAndMessages(null);if(leftStick!=null)leftStick.resetPointer();if(rightStick!=null)rightStick.resetPointer();try{pad.releaseAll();}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to release virtual controller",error);}}
-    @Override public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(!focused)releasePad();else if(getContext() instanceof Activity)fullScreen((Activity)getContext());}
+    @Override public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(!focused)releasePad();}
     @Override protected void onDetachedFromWindow(){releasePad();super.onDetachedFromWindow();}
 }

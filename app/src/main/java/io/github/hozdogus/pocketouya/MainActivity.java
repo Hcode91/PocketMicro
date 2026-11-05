@@ -645,7 +645,7 @@ public class MainActivity extends Activity {
         TextView info=new TextView(this);info.setText("Use the complete original APK. This attempts the ARM-only embedded-runtime repair tested locally with Monocle Man: replace a structurally matched proxy pair with its real runtimes and repair Unity's ARM finalizer. Other APKs with the same supported structure can match.\n\nLocal checks do not prove whole-program safety or phone startup. Unsupported layouts and Thumb-dependent repairs remain unchanged. The report explains the result before installation. Assets are preserved. A matching Unity CPU-description getter receives a null-string fallback.\n\nEvery conversion attempts to add the existing OUYA pad to matching game activities. Input compatibility is reported separately; some games may ignore fallback events. Offline purchase hooks are off for this experiment. Existing saves may matter when replacing an installed game.\n\nOrdinary startup repairs and the APK doctor do not select this experiment.");content.addView(info);
         android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
         new AlertDialog.Builder(this).setTitle("Experimental Unity runtime repair").setView(scroll)
-            .setPositiveButton("Inspect and prepare test",(dialog,which)->importApk(uri,false,true,false,false))
+            .setPositiveButton("Inspect and prepare test",(dialog,which)->importApk(uri,false,true,false,false,false))
             .setNegativeButton("Cancel",null).show();
     }
 
@@ -664,6 +664,13 @@ public class MainActivity extends Activity {
         TextView keepInfo=new TextView(this);
         keepInfo.setText("Needed for Adobe AIR and other old engines whose libraries rewrite their own code when loading: Android only allows that for apps built for old versions, but Android 14 installs those only through a shell install. Requires Shizuku running during the install; you can turn Developer options off afterwards.\nChecking this game's libraries…\n");
         content.addView(keepInfo);
+        android.widget.CheckBox wide=new android.widget.CheckBox(this);
+        wide.setText("Full screen on wide phones");
+        wide.setChecked(false);content.addView(wide);
+        TextView wideInfo=new TextView(this);
+        wideInfo.setText("Android shows old games no wider than 1.86:1, with black bars at the sides of a modern phone. Tick to let this game fill the screen. "
+                + "This also fixes taps landing off-target in games such as N.O.V.A. 3. Leave it off if the game looks stretched or its menus sit in the wrong place.\n");
+        content.addView(wideInfo);
         android.widget.CheckBox low=new android.widget.CheckBox(this);
         low.setText("Experiment: keep the game's memory below 2 GB");
         low.setChecked(false);content.addView(low);
@@ -681,7 +688,7 @@ public class MainActivity extends Activity {
         explanation.setText(common+details);content.addView(explanation);
         android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(content);
         new AlertDialog.Builder(this).setTitle(runtimeRepair?"Startup repairs":"Conversion options").setView(scroll)
-            .setPositiveButton("Inspect and convert",(dialog,which)->importApk(uri,runtimeRepair,false,keep.isChecked(),low.isChecked()))
+            .setPositiveButton("Inspect and convert",(dialog,which)->importApk(uri,runtimeRepair,false,keep.isChecked(),low.isChecked(),wide.isChecked()))
             .setNegativeButton("Cancel",null).show();
     }
     /** First ARM native library in the APK that declares text relocations, or null. */
@@ -723,7 +730,7 @@ public class MainActivity extends Activity {
         },"install-conversion").start();
     }
 
-    private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget, boolean lowAddress) {
+    private void importApk(Uri uri, boolean runtimeRepair, boolean experimental, boolean keepTarget, boolean lowAddress, boolean fullScreen) {
         showProgress("Copying the game…");
         new Thread(() -> {
             File dir = new File(getCacheDir(), "import-"+java.util.UUID.randomUUID());
@@ -747,7 +754,7 @@ public class MainActivity extends Activity {
                 if(runtimeRepair)try(java.io.InputStream input=getResources().openRawResource(R.raw.pocketouya_gles)) {
                     glesShim=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT),lowAddressLibrary,glesShim);
+                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT),lowAddressLibrary,glesShim,fullScreen);
                 original.delete();
 
                 showProgress("Signing…");

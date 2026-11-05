@@ -27,8 +27,12 @@ public final class ApkRebuilder {
     }
     /** As above; glesShim (libpogles.so) lets startup repairs apply ouya.gles-vertex-attribs. */
     public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim)throws IOException {
+        return prepareForInstall(in,out,bridge,runtimeRepair,experimental,minimumTarget,lowAddressLibrary,glesShim,false);
+    }
+    /** As above; fullScreen applies the opt-in android.wide-screen manifest change. */
+    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen)throws IOException {
         if(experimental&&runtimeRepair)throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup repairs");
-        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim);
+        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,fullScreen);
     }
     public static ManifestPatcher.Result rebuild(File in, File out) throws IOException {
         return rebuild(in,out,null,false,false);
@@ -50,12 +54,21 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,false,minimumTarget,true,null,null);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim)throws IOException {
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,false);
+    }
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen)throws IOException {
         boolean lowAddress=lowAddressLibrary!=null;
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
             if(manifestEntry==null)throw new IOException("Not an Android app (no AndroidManifest.xml).");
             ManifestPatcher.Result result=ManifestPatcher.patch(readBounded(zip.getInputStream(manifestEntry),4*1024*1024),minimumTarget);
             java.util.Map<String,byte[]> replacements=new java.util.LinkedHashMap<>();
+            String wideLine=null;
+            if(fullScreen){
+                TvLandscapeRule.Result wide=WideScreenRule.repair(result.manifest);
+                if(wide.manifest!=null)result.manifest=wide.manifest;
+                wideLine=wide.status+" "+WideScreenRule.ID+": "+wide.reason;
+            }
             if(runtimeRepair){
                 SharedCompatibilityRepairs.Plan repair=SharedCompatibilityRepairs.plan(zip,true,result.manifest);
                 replacements.putAll(repair.replacements);result.compatibilityReport=repair.report;
@@ -116,6 +129,7 @@ public final class ApkRebuilder {
                     result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+low.line();
                 }
             }
+            if(wideLine!=null)result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n")+wideLine;
             if(!nativeWarnings.isEmpty())result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+nativeWarnings;
             byte[] buffer=new byte[65536];
             try(ZipOutputStream output=new ZipOutputStream(new FileOutputStream(out))){

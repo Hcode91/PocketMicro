@@ -77,12 +77,9 @@ release/repress and idempotent cleanup. Full Android Java compilation passes.
 Actual Maldita touch input and view layout still require verification on a phone;
 no new successful gameplay run is inferred from these tests.
 
-## Full screen (2026-11-05)
+## Full screen (2026-11-05, withdrawn)
 
-When the controls attach to a game screen they also make it full screen: the window draws into
-the camera cutout (`layoutInDisplayCutoutMode` ALWAYS, or SHORT_EDGES before Android 11) with
-the status and navigation bars hidden (immersive sticky), reapplied when the game regains focus.
-OUYA games expect the whole TV screen. Without this, the S23 kept N.O.V.A. 3's window at
-x = 134..2143 of 2340 px, and because the game reads raw screen touch positions every tap
-registered ~134 px to the right of where it landed (the fire button only worked when tapped to
-its left).
+A brief change made the controls force every game edge to edge (into the camera cutout, system
+bars hidden). It did not fix N.O.V.A. 3's tap offset, which came from Android's 1.86:1 letterbox for
+old apps, and the owner wants full screen per game, so it was removed. See `android.wide-screen`
+(the conversion option **Full screen on wide phones**).

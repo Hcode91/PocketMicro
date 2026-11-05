@@ -66,15 +66,6 @@ public final class SharedCompatibilityRepairs {
                 }
             }
         }
-        {
-            ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
-            byte[] source=plan.manifest!=null?plan.manifest:manifest!=null?manifest:manifestEntry==null?null:ApkRebuilder.readBounded(zip.getInputStream(manifestEntry),4*1024*1024);
-            if(source!=null){
-                TvLandscapeRule.Result wide=apply?WideScreenRule.repair(source):WideScreenRule.inspect(source);
-                if(wide.status!=CompatibilityEvidence.Status.SKIPPED)report.append(wide.status).append(' ').append(WideScreenRule.ID).append(": ").append(wide.reason).append('\n');
-                if(apply&&wide.manifest!=null)plan.manifest=wide.manifest;
-            }
-        }
         if(dexSkipped)report.append("SKIPPED ").append(OuyaServiceCleanupRule.ID).append(": DEX budget; all original DEX preserved\n");
         else{
             OuyaServiceCleanupRule.Result result=apply?OuyaServiceCleanupRule.repair(dex):OuyaServiceCleanupRule.inspect(dex);
