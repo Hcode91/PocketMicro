@@ -39,7 +39,8 @@ not supported.
 `.github/workflows/android.yml`, job `winphone`:
 
 1. Gradle builds PocketOuya as an Android library (`-PpocketouyaLibrary`) and collects it with its
-   dependencies into `build/winphone-libs` (`:app:collectWinPhoneLibraries`).
+   dependencies into `build/winphone-libs` (`:app:collectWinPhoneLibraries`). `winphone/dedupe-wp-libs.py` then
+   removes any Java class WPR's NuGet packages already ship, so D8 never sees one twice.
 2. `winphone/wpr` is WPR, pinned as a submodule (0.2.09). `prepare-wpr.py` adapts its Android
    head: PocketOuya's package name, label and icon; PocketOuya's MainActivity as the launcher; WPR's
    game process renamed `:wpgame` (PocketOuya has its own `:game`); the library and the bridge

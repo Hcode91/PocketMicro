@@ -111,6 +111,15 @@ jobs:
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" >/dev/null'
       - name: Prepare WPR as PocketOuya
         run: python3 winphone/prepare-wpr.py winphone/wpr "$GITHUB_WORKSPACE" build/winphone-libs
+      # D8 stops at the first class it finds twice, so find every Java class PocketOuya's
+      # libraries share with WPR's NuGet packages and remove PocketOuya's copy up front.
+      - name: Remove duplicate Java classes
+        run: |
+          dotnet restore winphone/wpr/Src/Platforms/WPR.Platform.Android/WPR.Platform.Android.csproj \
+            -p:SolutionDir="$GITHUB_WORKSPACE/winphone/wpr/Src/" -p:IncludeAndroidTargets=true --nologo
+          python3 winphone/dedupe-wp-libs.py \
+            winphone/wpr/Src/Platforms/WPR.Platform.Android/obj/project.assets.json \
+            winphone/wpr build/winphone-libs
       - name: Signing key
         env:
           KEYSTORE_B64: ${{ secrets.POCKETOUYA_KEYSTORE_B64 }}
