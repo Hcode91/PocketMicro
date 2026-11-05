@@ -60,6 +60,11 @@ More: [touch controls](docs/touch-controls.md).
 - **OBB data files:** some games (Gameloft's, for example) keep their data in a separate `.obb`
   file. Long-press the game and choose **Add OBB data file (Shizuku)** to copy it into
   `Android/obb/<package>/`, which Android 13+ otherwise blocks.
+- **Cheat menu (opt-in):** tick **Cheat menu (single-player games)** when converting a game
+  to add a **Cheats** button to its touch controls. Like Cheat Engine, it searches the game's own
+  memory for a value (exact, or unknown and narrowed by increased/decreased), then edits or
+  freezes it, and saves cheats per game. No root: it only reads the game's own process. Meant for
+  offline single-player play; don't use it on purchases or paid content.
 - **GameMaker engine (beta):** a built-in translated engine for some GameMaker games.
 
 ## Building

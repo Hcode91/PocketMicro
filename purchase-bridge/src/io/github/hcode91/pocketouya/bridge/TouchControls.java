@@ -139,6 +139,13 @@ public final class TouchControls extends FrameLayout {
                 Toast.makeText(activity,"Input: "+options[which],Toast.LENGTH_SHORT).show();
             }).show();
         });
+        if(CheatMenu.enabled(activity)){
+            Button cheat=new Button(activity);cheat.setText("Cheats");cheat.setAllCaps(false);cheat.setTextSize(11);
+            cheat.setFocusable(false);cheat.setFocusableInTouchMode(false);
+            FrameLayout.LayoutParams cheatLayout=new FrameLayout.LayoutParams(dp(82),dp(44),Gravity.TOP|Gravity.RIGHT);
+            cheatLayout.setMargins(0,dp(8),dp(8),0);addView(cheat,cheatLayout);
+            cheat.setOnClickListener(v->{releasePad();CheatMenu.open(activity);});
+        }
         toggle.setOnClickListener(v->{releasePad();shown=!shown;for(View panel:panels)panel.setVisibility(shown?View.VISIBLE:View.GONE);toggle.setText(shown?"Hide pad":"Show pad");});
     }
     private VirtualPad createPad(Activity activity,int mode)throws Exception{

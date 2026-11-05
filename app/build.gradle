@@ -215,7 +215,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/ConversionRecord.java',
             'src/main/java/io/github/hozdogus/pocketouya/ManifestPatcher.java',
             'src/main/java/io/github/hozdogus/pocketouya/TombstoneText.java')
-    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/AndroidPadSink.java'; exclude '**/AirPadSink.java'; exclude '**/VirtualDeviceSink.java' }
+    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/CheatMenu.java'; exclude '**/AndroidPadSink.java'; exclude '**/AirPadSink.java'; exclude '**/VirtualDeviceSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
     source rootProject.files(
             'tests/PlatformCrashRulesTest.java',
@@ -235,6 +235,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'tests/ScaleformGlesRuleTest.java',
             'tests/UhidGamepadTest.java',
             'tests/VirtualPadStateTest.java',
+            'tests/MemoryScannerTest.java',
             'tests/StoreClientTest.java',
             'tests/TombstoneTextTest.java',
             'tests/ClickteamSurfaceLayoutRuleTest.java',

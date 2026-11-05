@@ -1277,3 +1277,12 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
 - **2026-11-04 — WebView main-thread repair confirmed:** Grave Defense Holidays (old AdMob 4.1 SDK) starts with Startup repairs + touch after android.webview-main-thread. N.O.V.A. 3 parked: genuine Freedom Edition (com.gameloft.android.ANMP.GloftNAHM) crashes in CStrings::GetString because it picks /sdcard/gameloft/games/GloftNAHM first and has no storage permission at target 23; untested idea: grant storage permission (manually or via Shizuku after install). Two earlier N.O.V.A. 3 APKs were modified copies (APKMania; AOSP test key) and were not worked on.
 
 - **2026-11-05 — N.O.V.A. 3 playable:** genuine Freedom Edition runs past the tutorial after gms.plus-one-missing-drawable (Google+ +1 artwork crash), android.wide-screen (1.86:1 letterbox shifted taps by 134 px) and OBB copies opened to the game (shell-owned OBB gave EACCES; Uncharted: Fortune Hunter confirmed the same fix). Owner confirmed taps line up.
+
+- **2026-11-05 — Opt-in cheat menu:** owner asked for a cheat engine for PocketOuya games
+  (single-player only; modern Play Store games out of scope). New conversion checkbox adds
+  assets/pocketouya/cheats; TouchControls then shows a Cheats button opening CheatMenu. The
+  MemoryScanner searches the game's own /proc/self/mem (private writable heap/anon/stack/library
+  data; /dev mappings skipped): exact search, unknown-value snapshot to the cache dir, narrowing
+  (equal/changed/unchanged/increased/decreased/by), edit and freeze (100 ms writer), cheats saved
+  per game with library-relative offsets where possible; saved cheats load unfrozen. Host test
+  runs on the JVM's own memory; CheatMenu UI compiled by CI only; phone untested.

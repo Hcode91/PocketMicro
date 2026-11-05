@@ -31,8 +31,12 @@ public final class ApkRebuilder {
     }
     /** As above; fullScreen applies the opt-in android.wide-screen manifest change. */
     public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen)throws IOException {
+        return prepareForInstall(in,out,bridge,runtimeRepair,experimental,minimumTarget,lowAddressLibrary,glesShim,fullScreen,false);
+    }
+    /** As above; cheats adds the opt-in in-game cheat menu (a marker asset read by the touch controls). */
+    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen,boolean cheats)throws IOException {
         if(experimental&&runtimeRepair)throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup repairs");
-        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,fullScreen);
+        return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,fullScreen,cheats);
     }
     public static ManifestPatcher.Result rebuild(File in, File out) throws IOException {
         return rebuild(in,out,null,false,false);
@@ -54,9 +58,14 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,false,minimumTarget,true,null,null);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim)throws IOException {
-        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,false);
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,false,false);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen)throws IOException {
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,fullScreen,false);
+    }
+    /** Path of the marker asset that switches on the in-game cheat menu (CheatMenu.MARKER in the bridge). */
+    static final String CHEAT_MARKER="assets/pocketouya/cheats";
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen,boolean cheats)throws IOException {
         boolean lowAddress=lowAddressLibrary!=null;
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
@@ -103,7 +112,7 @@ public final class ApkRebuilder {
                 }
             }
             String nativeWarnings=NativeStartupChecks.inspect(zip,replacements);
-            boolean appendBridge=false;int nextDex=2;
+            boolean appendBridge=false,touchHooked=false;int nextDex=2;
             if(touch||lowAddress){
                 if(bridge==null||bridge.length==0)throw new IOException("Converter compatibility bridge is missing");
                 java.util.Map<String,byte[]> input=new java.util.LinkedHashMap<>();long total=0;
@@ -121,7 +130,7 @@ public final class ApkRebuilder {
                 if(!input.containsKey("classes.dex"))throw new IOException("Missing primary DEX; compatibility cannot be inspected");
                 if(touch){
                     GameCompatibilityPatcher.Result plan=GameCompatibilityPatcher.patch(input,result.launcherActivities,touch);
-                    replacements.putAll(plan.dex);input.putAll(plan.dex);appendBridge=plan.needsBridge();result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+plan.report;
+                    replacements.putAll(plan.dex);input.putAll(plan.dex);appendBridge=plan.needsBridge();touchHooked=plan.touchEnabled;result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+plan.report;
                 }
                 java.util.List<String> names=new java.util.ArrayList<>();for(ZipEntry e:java.util.Collections.list(zip.entries()))names.add(e.getName());
                 if(runtimeRepair){
@@ -135,6 +144,8 @@ public final class ApkRebuilder {
                     result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+low.line();
                 }
             }
+            boolean cheatMenu=cheats&&touchHooked;
+            if(cheats)wideLine=(wideLine==null?"":wideLine+"\n")+(cheatMenu?"Cheat menu: added (Cheats button at the top right of the touch controls).":"Cheat menu: not added, because the touch controls couldn't be attached to this game.");
             if(wideLine!=null)result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n")+wideLine;
             if(!nativeWarnings.isEmpty())result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+nativeWarnings;
             byte[] buffer=new byte[65536];
@@ -142,7 +153,7 @@ public final class ApkRebuilder {
                 Enumeration<? extends ZipEntry> entries=zip.entries();
                 while(entries.hasMoreElements()){
                     ZipEntry entry=entries.nextElement();String name=entry.getName();
-                    if(isOldSignature(name)||entry.isDirectory()||name.equals(ConversionRecord.ENTRY))continue;
+                    if(isOldSignature(name)||entry.isDirectory()||name.equals(ConversionRecord.ENTRY)||(name.equals(CHEAT_MARKER)&&!cheatMenu))continue;
                     byte[] replacement=name.equals("AndroidManifest.xml")?result.manifest:replacements.get(name);
                     ZipEntry target=new ZipEntry(name);target.setTime(entry.getTime());
                     if(entry.getMethod()==ZipEntry.STORED){
@@ -163,6 +174,7 @@ public final class ApkRebuilder {
                     target.setSize(added.getValue().length);target.setCompressedSize(added.getValue().length);target.setCrc(crc.getValue());
                     output.putNextEntry(target);output.write(added.getValue());output.closeEntry();
                 }
+                if(cheatMenu&&zip.getEntry(CHEAT_MARKER)==null){output.putNextEntry(new ZipEntry(CHEAT_MARKER));output.write(new byte[]{'1'});output.closeEntry();}
                 output.putNextEntry(new ZipEntry(ConversionRecord.ENTRY));output.write(ConversionRecord.build(runtimeRepair,touch,experimental,result.compatibilityReport));output.closeEntry();
             }
             return result;

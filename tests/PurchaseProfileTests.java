@@ -19,6 +19,7 @@ public final class PurchaseProfileTests {
         io.github.hozdogus.pocketouya.ScaleformGlesRuleTest.main(new String[0]);
         io.github.hozdogus.pocketouya.UhidGamepadTest.main(new String[0]);
         VirtualPadStateTest.main(new String[0]);
+        MemoryScannerTest.main(new String[0]);
         ObbImportTest.main(new String[0]);
         io.github.hozdogus.pocketouya.StoreClientTest.main(new String[0]);
         io.github.hozdogus.pocketouya.TombstoneTextTest.main(new String[0]);
