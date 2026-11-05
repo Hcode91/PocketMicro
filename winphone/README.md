@@ -23,6 +23,9 @@ not supported.
 - **MANAGE → Add Windows Phone game** picks a `.xap` and installs it. The game then appears in PLAY.
 - Long-press a Windows Phone game for **Play with logging**, **Export Windows Phone logs** and
   **Remove**.
+- In a game, the **☰** button at the top left has **Back** (one Back press, for gesture
+  navigation) and **Quit** (tap twice). Quit lets the game close properly, which is also what makes
+  a WP8 C++ game write its summary of unanswered Windows calls to the log.
 - Every launch and how it ended goes into PocketOuya's global log.
 
 ## Logs
@@ -41,7 +44,8 @@ not supported.
 1. Gradle builds PocketOuya as an Android library (`-PpocketouyaLibrary`) and collects it with its
    dependencies into `build/winphone-libs` (`:app:collectWinPhoneLibraries`). `winphone/dedupe-wp-libs.py` then
    removes any Java class WPR's NuGet packages already ship, so D8 never sees one twice.
-2. `winphone/wpr` is WPR, pinned as a submodule (0.2.09). `prepare-wpr.py` adapts its Android
+2. `winphone/wpr` is WPR-droid (https://github.com/Hcode91/WPR-droid), PocketOuya's fork of WPR
+   0.2.09, pinned as a submodule. Runtime fixes and the in-game controls live there. `prepare-wpr.py` adapts its Android
    head: PocketOuya's package name, label and icon; PocketOuya's MainActivity as the launcher; WPR's
    game process renamed `:wpgame` (PocketOuya has its own `:game`); the library and the bridge
    (`Bridge/WinPhoneBridgeActivity.cs`) added to the build.

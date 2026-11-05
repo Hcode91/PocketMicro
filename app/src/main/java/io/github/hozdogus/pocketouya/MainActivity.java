@@ -377,6 +377,20 @@ public class MainActivity extends Activity {
             label.setPadding(dp(8), dp(4), dp(8), dp(5));
             label.setBackgroundColor(0xAA000000);
             tile.addView(label, new android.widget.FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+            if (g.wp != null) {
+                TextView badge = new TextView(MainActivity.this);
+                badge.setText("Windows Phone");
+                badge.setTextColor(Color.WHITE);
+                badge.setTextSize(10);
+                badge.setPadding(dp(6), dp(2), dp(6), dp(2));
+                GradientDrawable chip = new GradientDrawable();
+                chip.setColor(0xCC1E88E5);
+                chip.setCornerRadius(dp(4));
+                badge.setBackground(chip);
+                android.widget.FrameLayout.LayoutParams at = new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
+                at.setMargins(0, dp(6), dp(6), 0);
+                tile.addView(badge, at);
+            }
             return tile;
         }
     }

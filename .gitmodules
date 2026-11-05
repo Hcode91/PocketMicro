@@ -1,4 +1,4 @@
 [submodule "winphone/wpr"]
 	path = winphone/wpr
-	url = https://github.com/Bubbleshum/WPR.git
+	url = https://github.com/Hcode91/WPR-droid.git
 	shallow = true
