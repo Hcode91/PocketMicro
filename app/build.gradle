@@ -131,6 +131,31 @@ def buildLowAddr = tasks.register('buildLowAddressHelper', Exec) {
 android.sourceSets.main.res.srcDir lowAddrRes
 tasks.named('preBuild').configure { dependsOn buildLowAddr }
 
+// Cheat-menu memory helper: process_vm_readv/writev for the game's own memory (Android blocks
+// /proc/self/mem). Added to a game only when "Cheat menu" is ticked, in each ARM ABI it ships.
+def cheatRes = layout.buildDirectory.dir('generated/cheatmem/res')
+[[name: 'v7a', target: 'armv7a-linux-androideabi21'], [name: 'arm64', target: 'aarch64-linux-android21']].each { abi ->
+    def task = tasks.register("buildCheatMemoryHelper_${abi.name}", Exec) {
+        def src = rootProject.file('cheatmem/pocketouya_cheatmem.c')
+        inputs.file src
+        def out = cheatRes.map { it.file("raw/pocketouya_cheatmem_${abi.name}.so") }
+        outputs.file out
+        doFirst {
+            def ndk = android.ndkDirectory
+            def host = ['linux-x86_64', 'darwin-x86_64', 'windows-x86_64'].find { new File(ndk, "toolchains/llvm/prebuilt/$it/bin").isDirectory() }
+            if (host == null) throw new GradleException("NDK clang not found under $ndk")
+            def clang = new File(ndk, "toolchains/llvm/prebuilt/$host/bin/clang" + (host.startsWith('windows') ? '.exe' : ''))
+            def target = out.get().asFile
+            target.parentFile.mkdirs()
+            commandLine clang.path, "--target=${abi.target}", '-shared', '-fPIC', '-O2', '-Wall', '-Werror', '-fvisibility=hidden',
+                    '-Wl,-soname,libpocketouya_cheatmem.so', '-Wl,--build-id=sha1', '-Wl,-z,noexecstack', '-Wl,-z,max-page-size=16384', '-s',
+                    '-o', target.path, src.path
+        }
+    }
+    tasks.named('preBuild').configure { dependsOn task }
+}
+android.sourceSets.main.res.srcDir cheatRes
+
 // GPU-limit shim (ouya.gles-vertex-attribs): libpogles.so caps GL_MAX_VERTEX_ATTRIBS at the OUYA's 16
 // for Scaleform's Unity plugin; everything else resolves to libGLESv2.so through its dependency.
 def glesRes = layout.buildDirectory.dir('generated/glcaps/res')

@@ -1286,3 +1286,8 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   (equal/changed/unchanged/increased/decreased/by), edit and freeze (100 ms writer), cheats saved
   per game with library-relative offsets where possible; saved cheats load unfrozen. Host test
   runs on the JVM's own memory; CheatMenu UI compiled by CI only; phone untested.
+  Phone test: Android refused /proc/self/mem (EACCES). Memory now goes through
+  libpocketouya_cheatmem.so (process_vm_readv/writev on the game's own pid; bad addresses return
+  errors instead of crashing), added in each ARM ABI the game ships (both v7a and arm64 for games
+  without native code). /proc/self/mem remains the desktop-test fallback. Host test passes through
+  both paths.

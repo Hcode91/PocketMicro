@@ -41,6 +41,24 @@ public final class MemoryScanner {
     private static final int CHUNK=1<<20;
 
     private final File maps,mem,snapshotFile;
+
+    // Android blocks /proc/self/mem for apps, so games use the small native helper
+    // (libpocketouya_cheatmem.so, process_vm_readv on the game's own pid). Desktop tests use /proc/self/mem.
+    private static final boolean NATIVE;
+    static{
+        boolean loaded=false;
+        try{System.loadLibrary("pocketouya_cheatmem");loaded=true;}catch(Throwable absent){}
+        NATIVE=loaded;
+    }
+    private static native int nativeRead(long address,byte[] target,int length);
+    private static native boolean nativeWrite(long address,byte[] source,int length);
+    /** Whether the game can search its memory (the helper loaded, or /proc/self/mem opens). */
+    public static String unavailableReason(){
+        if(NATIVE)return null;
+        try{new RandomAccessFile("/proc/self/mem","r").close();return null;}
+        catch(IOException error){return "The cheat helper library isn't in this game. Convert it again with the newest PocketOuya and Cheat menu ticked.";}
+    }
+
     private Type type=Type.INT32;
     private long[] addresses=new long[0];
     private long[] previous=new long[0];
@@ -64,12 +82,11 @@ public final class MemoryScanner {
         long[] found=new long[1024],values=new long[1024];int n=0;
         ByteBuffer buffer=ByteBuffer.allocate(CHUNK).order(ByteOrder.LITTLE_ENDIAN);
         List<Region> regions=regions();int done=0;
-        try(FileChannel channel=new RandomAccessFile(mem,"r").getChannel()){
+        try(Reader reader=open()){
             for(Region r:regions){
                 if(progress!=null){if(progress.cancelled())throw new InterruptedIOException("Search cancelled");progress.update("Searching memory… "+(++done*100/Math.max(1,regions.size()))+"% · "+n+" found");}
                 for(long at=r.start;at<r.end;at+=CHUNK){
-                    int length=(int)Math.min(CHUNK,r.end-at);
-                    if(!read(channel,buffer,at,length))continue;
+                    int length=reader.read(buffer,at,(int)Math.min(CHUNK,r.end-at));
                     for(int i=0;i+type.size<=length;i+=type.align){
                         long raw=raw(buffer,i,type);
                         if(!equalsValue(raw,type,value))continue;
@@ -88,13 +105,13 @@ public final class MemoryScanner {
         reset();this.type=type;long total=0;
         ByteBuffer buffer=ByteBuffer.allocate(CHUNK).order(ByteOrder.LITTLE_ENDIAN);
         List<Region> regions=regions();int done=0;
-        try(FileChannel channel=new RandomAccessFile(mem,"r").getChannel();
+        try(Reader reader=open();
             DataOutputStream out=new DataOutputStream(new BufferedOutputStream(new FileOutputStream(snapshotFile),1<<16))){
             for(Region r:regions){
                 if(progress!=null){if(progress.cancelled())throw new InterruptedIOException("Search cancelled");progress.update("Remembering memory… "+(++done*100/Math.max(1,regions.size()))+"%");}
                 for(long at=r.start;at<r.end;at+=CHUNK){
-                    int length=(int)Math.min(CHUNK,r.end-at);
-                    if(!read(channel,buffer,at,length))continue;
+                    int length=reader.read(buffer,at,(int)Math.min(CHUNK,r.end-at));
+                    if(length<=0)continue;
                     if(total+length>MAX_SNAPSHOT)throw new IOException("This game uses too much memory for an unknown-value search. Search for a number shown in the game instead.");
                     out.writeLong(at);out.writeInt(length);out.write(buffer.array(),0,length);total+=length;
                 }
@@ -109,14 +126,14 @@ public final class MemoryScanner {
         if(count==0)return 0;
         long[] kept=new long[count],values=new long[count];int n=0;
         ByteBuffer buffer=ByteBuffer.allocate(64*1024).order(ByteOrder.LITTLE_ENDIAN);
-        try(FileChannel channel=new RandomAccessFile(mem,"r").getChannel()){
+        try(Reader reader=open()){
             int i=0;
             while(i<count){
                 if(progress!=null&&progress.cancelled())throw new InterruptedIOException("Search cancelled");
                 long base=addresses[i];int j=i;
                 while(j<count&&addresses[j]+type.size-base<=buffer.capacity())j++;
                 int length=(int)(addresses[j-1]+type.size-base);
-                if(read(channel,buffer,base,length)){
+                if(reader.read(buffer,base,length)==length){
                     for(int k=i;k<j;k++){
                         long raw=raw(buffer,(int)(addresses[k]-base),type);
                         if(matches(compare,raw,previous[k],type,value)){kept[n]=addresses[k];values[n]=raw;n++;}
@@ -133,13 +150,13 @@ public final class MemoryScanner {
         ByteBuffer now=ByteBuffer.allocate(CHUNK).order(ByteOrder.LITTLE_ENDIAN);
         ByteBuffer then=ByteBuffer.allocate(CHUNK).order(ByteOrder.LITTLE_ENDIAN);
         long size=snapshotFile.length(),seen=0;
-        try(FileChannel channel=new RandomAccessFile(mem,"r").getChannel();
+        try(Reader reader=open();
             DataInputStream in=new DataInputStream(new BufferedInputStream(new FileInputStream(snapshotFile),1<<16))){
             while(seen<size){
                 long at=in.readLong();int length=in.readInt();in.readFully(then.array(),0,length);seen+=12+length;
                 if(progress!=null){if(progress.cancelled())throw new InterruptedIOException("Search cancelled");progress.update("Comparing… "+(seen*100/Math.max(1,size))+"% · "+n+" found");}
-                if(!read(channel,now,at,length))continue;
-                for(int i=0;i+type.size<=length;i+=type.align){
+                int got=reader.read(now,at,length);
+                for(int i=0;i+type.size<=got;i+=type.align){
                     long current=raw(now,i,type);
                     if(!matches(compare,current,raw(then,i,type),type,value))continue;
                     if(n==MAX_RESULTS)throw new IOException("Over "+MAX_RESULTS+" matches. Keep playing so the value changes, then search again (for example Decreased).");
@@ -154,8 +171,8 @@ public final class MemoryScanner {
     /** Current value at an address, or null when it can no longer be read. */
     public Double read(long address,Type type){
         ByteBuffer buffer=ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-        try(FileChannel channel=new RandomAccessFile(mem,"r").getChannel()){
-            if(!read(channel,buffer,address,type.size))return null;
+        try(Reader reader=open()){
+            if(reader.read(buffer,address,type.size)!=type.size)return null;
             return toDouble(raw(buffer,0,type),type);
         }catch(IOException error){return null;}
     }
@@ -173,6 +190,7 @@ public final class MemoryScanner {
             default:buffer.putDouble(value);
         }
         buffer.flip();
+        if(NATIVE)return nativeWrite(address,Arrays.copyOf(buffer.array(),type.size),type.size);
         try(FileChannel channel=new RandomAccessFile(mem,"rw").getChannel()){
             while(buffer.hasRemaining())if(channel.write(buffer,address+buffer.position())<=0)return false;
             return true;
@@ -247,12 +265,25 @@ public final class MemoryScanner {
         return new Region(start,end,offset,path);
     }
 
-    private static boolean read(FileChannel channel,ByteBuffer buffer,long at,int length){
-        buffer.clear();buffer.limit(length);
-        try{
-            while(buffer.hasRemaining()){int n=channel.read(buffer,at+buffer.position());if(n<=0)return false;}
-            return true;
-        }catch(IOException|RuntimeException unreadable){return false;}
+    /** Reads memory into a heap buffer; returns how many bytes were readable (0 when none). */
+    private interface Reader extends Closeable{int read(ByteBuffer buffer,long at,int length);void close()throws IOException;}
+
+    private Reader open()throws IOException{
+        if(NATIVE)return new Reader(){
+            public int read(ByteBuffer buffer,long at,int length){buffer.clear();int n=nativeRead(at,buffer.array(),length);return Math.max(0,n);}
+            public void close(){}
+        };
+        final FileChannel channel=new RandomAccessFile(mem,"r").getChannel();
+        return new Reader(){
+            public int read(ByteBuffer buffer,long at,int length){
+                buffer.clear();buffer.limit(length);
+                try{
+                    while(buffer.hasRemaining()){int n=channel.read(buffer,at+buffer.position());if(n<=0)break;}
+                }catch(IOException|RuntimeException unreadable){}
+                return buffer.position();
+            }
+            public void close()throws IOException{channel.close();}
+        };
     }
 
     static long raw(ByteBuffer b,int i,Type type){

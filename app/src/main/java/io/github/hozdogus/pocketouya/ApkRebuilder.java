@@ -31,10 +31,14 @@ public final class ApkRebuilder {
     }
     /** As above; fullScreen applies the opt-in android.wide-screen manifest change. */
     public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen)throws IOException {
-        return prepareForInstall(in,out,bridge,runtimeRepair,experimental,minimumTarget,lowAddressLibrary,glesShim,fullScreen,false);
+        return prepareForInstall(in,out,bridge,runtimeRepair,experimental,minimumTarget,lowAddressLibrary,glesShim,fullScreen,null,null);
     }
-    /** As above; cheats adds the opt-in in-game cheat menu (a marker asset read by the touch controls). */
-    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen,boolean cheats)throws IOException {
+    /**
+     * As above; non-null cheat helper libraries (32-bit and 64-bit ARM) add the opt-in in-game cheat
+     * menu: a marker asset read by the touch controls plus libpocketouya_cheatmem.so in the game's ARM ABIs.
+     */
+    public static ManifestPatcher.Result prepareForInstall(File in,File out,byte[] bridge,boolean runtimeRepair,boolean experimental,int minimumTarget,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen,byte[] cheat32,byte[] cheat64)throws IOException {
+        byte[][] cheats=cheat32==null||cheat64==null?null:new byte[][]{cheat32,cheat64};
         if(experimental&&runtimeRepair)throw new IOException("Experimental runtime preparation must be selected separately from ordinary startup repairs");
         return rebuild(in,out,bridge,true,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,fullScreen,cheats);
     }
@@ -58,14 +62,36 @@ public final class ApkRebuilder {
         return rebuild(in,out,bridge,touch,false,minimumTarget,true,null,null);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim)throws IOException {
-        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,false,false);
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,false,null);
     }
     private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen)throws IOException {
-        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,fullScreen,false);
+        return rebuild(in,out,bridge,touch,runtimeRepair,minimumTarget,experimental,lowAddressLibrary,glesShim,fullScreen,null);
     }
     /** Path of the marker asset that switches on the in-game cheat menu (CheatMenu.MARKER in the bridge). */
     static final String CHEAT_MARKER="assets/pocketouya/cheats";
-    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen,boolean cheats)throws IOException {
+    static final String CHEAT_LIBRARY="libpocketouya_cheatmem.so";
+
+    /**
+     * Where the cheat helper goes: one copy in each ARM ABI folder the game already ships, so the game
+     * keeps running in the same 32/64-bit mode. A game with no native libraries runs as 64-bit, so it
+     * gets both copies (Android picks arm64-v8a, or armeabi-v7a on a 32-bit-only phone).
+     */
+    static java.util.Map<String,byte[]> cheatLibraries(ZipFile zip,byte[] v7a,byte[] arm64){
+        java.util.Set<String> abis=new java.util.TreeSet<>();boolean anyNative=false;
+        for(ZipEntry e:java.util.Collections.list(zip.entries())){
+            String n=e.getName();
+            if(!n.startsWith("lib/")||!n.endsWith(".so")||n.endsWith("/"+CHEAT_LIBRARY))continue;
+            String[] parts=n.split("/");if(parts.length!=3)continue;
+            anyNative=true;abis.add(parts[1]);
+        }
+        java.util.Map<String,byte[]> out=new java.util.LinkedHashMap<>();
+        if(!anyNative){out.put("lib/armeabi-v7a/"+CHEAT_LIBRARY,v7a);out.put("lib/arm64-v8a/"+CHEAT_LIBRARY,arm64);return out;}
+        if(abis.contains("arm64-v8a"))out.put("lib/arm64-v8a/"+CHEAT_LIBRARY,arm64);
+        if(abis.contains("armeabi-v7a"))out.put("lib/armeabi-v7a/"+CHEAT_LIBRARY,v7a);
+        if(abis.contains("armeabi"))out.put("lib/armeabi/"+CHEAT_LIBRARY,v7a);
+        return out;
+    }
+    private static ManifestPatcher.Result rebuild(File in,File out,byte[] bridge,boolean touch,boolean runtimeRepair,int minimumTarget,boolean experimental,byte[] lowAddressLibrary,byte[] glesShim,boolean fullScreen,byte[][] cheats)throws IOException {
         boolean lowAddress=lowAddressLibrary!=null;
         try (ZipFile zip = new ZipFile(in)) {
             ZipEntry manifestEntry=zip.getEntry("AndroidManifest.xml");
@@ -144,8 +170,8 @@ public final class ApkRebuilder {
                     result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+low.line();
                 }
             }
-            boolean cheatMenu=cheats&&touchHooked;
-            if(cheats)wideLine=(wideLine==null?"":wideLine+"\n")+(cheatMenu?"Cheat menu: added (Cheats button at the top right of the touch controls).":"Cheat menu: not added, because the touch controls couldn't be attached to this game.");
+            boolean cheatMenu=cheats!=null&&touchHooked;
+            if(cheats!=null)wideLine=(wideLine==null?"":wideLine+"\n")+(cheatMenu?"Cheat menu: added (Cheats button at the top right of the touch controls).":"Cheat menu: not added, because the touch controls couldn't be attached to this game.");
             if(wideLine!=null)result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n")+wideLine;
             if(!nativeWarnings.isEmpty())result.compatibilityReport+=(result.compatibilityReport.isEmpty()?"":"\n\n")+nativeWarnings;
             byte[] buffer=new byte[65536];
@@ -153,7 +179,7 @@ public final class ApkRebuilder {
                 Enumeration<? extends ZipEntry> entries=zip.entries();
                 while(entries.hasMoreElements()){
                     ZipEntry entry=entries.nextElement();String name=entry.getName();
-                    if(isOldSignature(name)||entry.isDirectory()||name.equals(ConversionRecord.ENTRY)||(name.equals(CHEAT_MARKER)&&!cheatMenu))continue;
+                    if(isOldSignature(name)||entry.isDirectory()||name.equals(ConversionRecord.ENTRY)||(name.equals(CHEAT_MARKER)&&!cheatMenu)||name.endsWith("/"+CHEAT_LIBRARY))continue;
                     byte[] replacement=name.equals("AndroidManifest.xml")?result.manifest:replacements.get(name);
                     ZipEntry target=new ZipEntry(name);target.setTime(entry.getTime());
                     if(entry.getMethod()==ZipEntry.STORED){
@@ -175,6 +201,11 @@ public final class ApkRebuilder {
                     output.putNextEntry(target);output.write(added.getValue());output.closeEntry();
                 }
                 if(cheatMenu&&zip.getEntry(CHEAT_MARKER)==null){output.putNextEntry(new ZipEntry(CHEAT_MARKER));output.write(new byte[]{'1'});output.closeEntry();}
+                if(cheatMenu)for(java.util.Map.Entry<String,byte[]> lib:cheatLibraries(zip,cheats[0],cheats[1]).entrySet()){
+                    ZipEntry target=new ZipEntry(lib.getKey());target.setMethod(ZipEntry.STORED);CRC32 crc=new CRC32();crc.update(lib.getValue());
+                    target.setSize(lib.getValue().length);target.setCompressedSize(lib.getValue().length);target.setCrc(crc.getValue());
+                    output.putNextEntry(target);output.write(lib.getValue());output.closeEntry();
+                }
                 output.putNextEntry(new ZipEntry(ConversionRecord.ENTRY));output.write(ConversionRecord.build(runtimeRepair,touch,experimental,result.compatibilityReport));output.closeEntry();
             }
             return result;

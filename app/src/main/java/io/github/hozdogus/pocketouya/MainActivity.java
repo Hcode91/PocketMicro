@@ -761,7 +761,12 @@ public class MainActivity extends Activity {
                 if(runtimeRepair)try(java.io.InputStream input=getResources().openRawResource(R.raw.pocketouya_gles)) {
                     glesShim=ApkRebuilder.readAll(input);
                 }
-                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT),lowAddressLibrary,glesShim,fullScreen,cheats);
+                byte[] cheat32=null,cheat64=null;
+                if(cheats){
+                    try(java.io.InputStream input=getResources().openRawResource(R.raw.pocketouya_cheatmem_v7a)){cheat32=ApkRebuilder.readAll(input);}
+                    try(java.io.InputStream input=getResources().openRawResource(R.raw.pocketouya_cheatmem_arm64)){cheat64=ApkRebuilder.readAll(input);}
+                }
+                ManifestPatcher.Result r = ApkRebuilder.prepareForInstall(original,patched,bridge,runtimeRepair,experimental,keepTarget?ManifestPatcher.KEEP_TARGET:ModernApkDoctor.minimumTarget(android.os.Build.VERSION.SDK_INT),lowAddressLibrary,glesShim,fullScreen,cheat32,cheat64);
                 original.delete();
 
                 showProgress("Signing…");

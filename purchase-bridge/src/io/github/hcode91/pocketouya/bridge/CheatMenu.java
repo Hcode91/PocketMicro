@@ -111,7 +111,9 @@ public final class CheatMenu {
         dialog=new AlertDialog.Builder(activity).setTitle("Cheats").setView(scroll).setPositiveButton("Close",null).create();
         dialog.setOnDismissListener(d->handler.removeCallbacks(refresh));
         dialog.show();
-        if(busy)status("A search is still running…");
+        String unavailable=MemoryScanner.unavailableReason();
+        if(unavailable!=null)status(unavailable);
+        else if(busy)status("A search is still running…");
         else status(describe());
         showResults();showCheats();
         handler.postDelayed(refresh,800);
