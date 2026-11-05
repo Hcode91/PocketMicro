@@ -27,11 +27,18 @@ import org.jf.dexlib2.writer.pool.DexPool;
  *   Collection.iterator() on null yields an empty iterator: no receipts, so the game treats the
  *   content as not purchased. Nothing is unlocked; purchase checks still run.
  *
+ * gms.plus-one-missing-drawable — Google+ is gone and today's Play Services no longer ships the
+ *   +1 button artwork, so the bundled Play Services library's PlusOneButton fallback asks for
+ *   resource 0 and crashes with Resources$NotFoundException (N.O.V.A. 3 Freedom Edition). Inside
+ *   com.google.android.gms.plus classes, Resources.getDrawable(int) returns null when the
+ *   resource is missing, the same result the library already uses when Play Services is absent.
+ *
  * Each rewritten call keeps its registers and becomes invoke-static of a private helper added
  * to the calling class.
  */
 public final class CallGuardRules {
-    public static final String UNBIND_ID = "android.legacy-unbind", RECEIPTS_ID = "ouya.store-offline.null-receipts";
+    public static final String UNBIND_ID = "android.legacy-unbind", RECEIPTS_ID = "ouya.store-offline.null-receipts", PLUS_ID = "gms.plus-one-missing-drawable";
+    static final String RES = "Landroid/content/res/Resources;", DRAWABLE = "Landroid/graphics/drawable/Drawable;", DRAW_HELPER = "pocketouyaSafe_getDrawable";
     static final String CONTEXT = "Landroid/content/Context;", CONN = "Landroid/content/ServiceConnection;";
     static final String UNBIND_HELPER = "pocketouyaSafe_unbindService", ITER_HELPER = "pocketouyaSafe_iterator";
     private static final Set<String> FRAMEWORK_CONTEXTS = Set.of(CONTEXT, "Landroid/content/ContextWrapper;", "Landroid/view/ContextThemeWrapper;", "Landroid/app/Activity;",
@@ -71,6 +78,13 @@ public final class CallGuardRules {
         MethodReference r = ref(i);
         return r != null && r.getName().equals("iterator") && r.getParameterTypes().isEmpty() && r.getReturnType().equals("Ljava/util/Iterator;")
                 && COLLECTIONS.contains(r.getDefiningClass()) && regs(i) == 1;
+    }
+    static boolean isPlusDrawable(Instruction i, String owner) {
+        if (!owner.startsWith("Lcom/google/android/gms/plus/")) return false;
+        if (i.getOpcode() != Opcode.INVOKE_VIRTUAL && i.getOpcode() != Opcode.INVOKE_VIRTUAL_RANGE) return false;
+        MethodReference r = ref(i);
+        return r != null && r.getName().equals("getDrawable") && r.getDefiningClass().equals(RES) && r.getReturnType().equals(DRAWABLE)
+                && r.getParameterTypes().size() == 1 && r.getParameterTypes().get(0).toString().equals("I") && regs(i) == 2;
     }
     static boolean usesOuyaStore(Method m) {
         if (m.getImplementation() == null) return false;
@@ -113,6 +127,21 @@ public final class CallGuardRules {
                 "Ljava/util/Iterator;", 0x100a, Set.of(), Set.of(), b.getMethodImplementation());
     }
 
+    static Method drawableHelper(String owner) {
+        MethodImplementationBuilder b = new MethodImplementationBuilder(3); // v0 local, p0 resources = v1, p1 id = v2
+        b.addLabel("start");
+        b.addInstruction(new BuilderInstruction35c(Opcode.INVOKE_VIRTUAL, 2, 1, 2, 0, 0, 0, new ImmutableMethodReference(RES, "getDrawable", List.of("I"), DRAWABLE)));
+        b.addInstruction(new BuilderInstruction11x(Opcode.MOVE_RESULT_OBJECT, 0));
+        b.addLabel("end");
+        b.addInstruction(new BuilderInstruction11x(Opcode.RETURN_OBJECT, 0));
+        b.addLabel("missing");
+        b.addInstruction(new BuilderInstruction11n(Opcode.CONST_4, 0, 0));
+        b.addInstruction(new BuilderInstruction11x(Opcode.RETURN_OBJECT, 0));
+        b.addCatch(new ImmutableTypeReference("Landroid/content/res/Resources$NotFoundException;"), b.getLabel("start"), b.getLabel("end"), b.getLabel("missing"));
+        return new ImmutableMethod(owner, DRAW_HELPER, List.of(new ImmutableMethodParameter(RES, Set.of(), null), new ImmutableMethodParameter("I", Set.of(), null)),
+                DRAWABLE, 0x100a, Set.of(), Set.of(), b.getMethodImplementation());
+    }
+
     private static boolean ours(String type) { return type.startsWith("Lio/github/hcode91/pocketouya/") || type.startsWith("Lio/github/hozdogus/pocketouya/"); }
 
     private static BuilderInstruction toStatic(Instruction i, ImmutableMethodReference helper) {
@@ -126,7 +155,7 @@ public final class CallGuardRules {
 
     private static Result run(Map<String, byte[]> input, boolean apply) {
         Result result = new Result();
-        int unbinds = 0, iterators = 0;
+        int unbinds = 0, iterators = 0, drawables = 0;
         try {
             long total = 0; for (byte[] d : input.values()) total += d.length;
             if (input.size() > 64 || total > 64L * 1024 * 1024) { result.reports.put(UNBIND_ID, "SKIPPED DEX budget; no edits"); return result; }
@@ -136,13 +165,13 @@ public final class CallGuardRules {
                 DexPool pool = new DexPool(file.getValue().getOpcodes()); boolean changed = false;
                 for (ClassDef c : file.getValue().getClasses()) {
                     if (ours(c.getType()) || AccessFlags.INTERFACE.isSet(c.getAccessFlags())) { pool.internClass(c); continue; }
-                    boolean hasUnbindHelper = false, hasIterHelper = false;
-                    for (Method m : c.getMethods()) { if (m.getName().equals(UNBIND_HELPER)) hasUnbindHelper = true; if (m.getName().equals(ITER_HELPER)) hasIterHelper = true; }
-                    List<Method> methods = new ArrayList<>(); boolean classChanged = false, needUnbind = false, needIter = false;
+                    boolean hasUnbindHelper = false, hasIterHelper = false, hasDrawHelper = false;
+                    for (Method m : c.getMethods()) { if (m.getName().equals(UNBIND_HELPER)) hasUnbindHelper = true; if (m.getName().equals(ITER_HELPER)) hasIterHelper = true; if (m.getName().equals(DRAW_HELPER)) hasDrawHelper = true; }
+                    List<Method> methods = new ArrayList<>(); boolean classChanged = false, needUnbind = false, needIter = false, needDraw = false;
                     for (Method m : c.getMethods()) {
                         if (m.getImplementation() == null || m.getName().startsWith("pocketouyaSafe_")) { methods.add(m); continue; }
                         boolean store = usesOuyaStore(m);
-                        List<Integer> u = new ArrayList<>(), it = new ArrayList<>(); List<Instruction> code = new ArrayList<>();
+                        List<Integer> u = new ArrayList<>(), it = new ArrayList<>(), dr = new ArrayList<>(); List<Instruction> code = new ArrayList<>();
                         int n = 0;
                         for (Instruction i : m.getImplementation().getInstructions()) {
                             if (i instanceof org.jf.dexlib2.iface.instruction.formats.UnknownInstruction) throw new UnsupportedOperationException("Reserved DEX instruction in " + c.getType());
@@ -150,22 +179,26 @@ public final class CallGuardRules {
                             // OUYA SDK classes are handled by ouya.content.null-context-cleanup.
                             if (!hasUnbindHelper && !c.getType().startsWith("Ltv/ouya/") && isUnbind(i, supers)) u.add(n);
                             if (store && !hasIterHelper && isIterator(i)) it.add(n);
+                            if (!hasDrawHelper && isPlusDrawable(i, c.getType())) dr.add(n);
                             n++;
                         }
-                        unbinds += u.size(); iterators += it.size();
-                        if (!apply || (u.isEmpty() && it.isEmpty())) { methods.add(m); continue; }
+                        unbinds += u.size(); iterators += it.size(); drawables += dr.size();
+                        if (!apply || (u.isEmpty() && it.isEmpty() && dr.isEmpty())) { methods.add(m); continue; }
                         MutableMethodImplementation body = new MutableMethodImplementation(m.getImplementation());
                         var unbindRef = new ImmutableMethodReference(c.getType(), UNBIND_HELPER, List.of(CONTEXT, CONN), "V");
                         var iterRef = new ImmutableMethodReference(c.getType(), ITER_HELPER, List.of("Ljava/lang/Iterable;"), "Ljava/util/Iterator;");
                         for (int at : u) body.replaceInstruction(at, toStatic(code.get(at), unbindRef));
                         for (int at : it) body.replaceInstruction(at, toStatic(code.get(at), iterRef));
-                        needUnbind |= !u.isEmpty(); needIter |= !it.isEmpty();
+                        var drawRef = new ImmutableMethodReference(c.getType(), DRAW_HELPER, List.of(RES, "I"), DRAWABLE);
+                        for (int at : dr) body.replaceInstruction(at, toStatic(code.get(at), drawRef));
+                        needUnbind |= !u.isEmpty(); needIter |= !it.isEmpty(); needDraw |= !dr.isEmpty();
                         methods.add(new ImmutableMethod(m.getDefiningClass(), m.getName(), m.getParameters(), m.getReturnType(), m.getAccessFlags(), m.getAnnotations(), m.getHiddenApiRestrictions(), body));
                         classChanged = true;
                     }
                     if (classChanged) {
                         if (needUnbind) methods.add(unbindHelper(c.getType()));
                         if (needIter) methods.add(iteratorHelper(c.getType()));
+                        if (needDraw) methods.add(drawableHelper(c.getType()));
                         pool.internClass(new ImmutableClassDef(c.getType(), c.getAccessFlags(), c.getSuperclass(), c.getInterfaces(), c.getSourceFile(), c.getAnnotations(), c.getFields(), methods));
                         changed = true;
                     } else pool.internClass(c);
@@ -179,6 +212,7 @@ public final class CallGuardRules {
             }
             String s = apply ? "VERIFIED " : "SUPPORTED ";
             if (unbinds > 0) result.reports.put(UNBIND_ID, s + unbinds + " Context.unbindService call(s); \"Service not registered\" (bind never succeeded) is ignored instead of crashing.");
+            if (drawables > 0) result.reports.put(PLUS_ID, s + drawables + " Resources.getDrawable call(s) in the bundled Google+ library; the +1 button artwork today's Play Services no longer ships returns null (the library's own \"not available\" result) instead of crashing.");
             if (iterators > 0) result.reports.put(RECEIPTS_ID, s + iterators + " collection iteration(s) in OUYA store code; a list the closed store never filled iterates as empty (no receipts, nothing unlocked) instead of crashing.");
         } catch (UnsupportedOperationException e) {
             result.replacements.clear(); result.reports.clear(); result.reports.put(UNBIND_ID, "UNSUPPORTED " + e.getMessage() + "; original DEX retained");

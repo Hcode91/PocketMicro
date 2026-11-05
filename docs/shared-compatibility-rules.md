@@ -367,3 +367,14 @@ subclass) becomes a static call into a small class added to the game's DEX
 call straight away, so behaviour is unchanged; on any other thread it posts the call to the main
 thread. Ads are not removed or blocked. Runs with Startup repairs. Confirmed on the owner's phone with Grave Defense Holidays (2026-11-04); host-tested on synthetic DEX
 (subclass and range calls, other WebView calls untouched, idempotent).
+
+## gms.plus-one-missing-drawable
+
+Google+ was shut down and today's Play Services no longer ships the +1 button artwork
+(`ic_plusone_*`). Games that bundle an old Play Services library and create a `PlusOneButton`
+fall back to `PlusOneDummyView`, which asks Play Services for that artwork, gets resource ID 0,
+and crashes the main thread with `Resources$NotFoundException: Resource ID #0x0` (N.O.V.A. 3
+Freedom Edition, right after the splash screen). Inside `com.google.android.gms.plus` classes
+only, `Resources.getDrawable(int)` goes through a helper that returns null when the resource is
+missing, which is what the library already returns when Play Services is absent. Part of
+`CallGuardRules`; runs with Startup repairs. Matches 3 calls in N.O.V.A. 3's DEX.

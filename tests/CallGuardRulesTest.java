@@ -61,6 +61,25 @@ public final class CallGuardRulesTest {
         Method it = find(out, CallGuardRules.ITER_HELPER);
         check(it.getImplementation().getInstructions().iterator().next().getOpcode() == Opcode.IF_EQZ, "iterator helper checks for null first");
         check(CallGuardRules.repair(Map.of("classes.dex", out)).replacements.isEmpty(), "idempotent");
+        // Google+ +1 fallback: getDrawable(int) in gms.plus classes returns null when the artwork is missing.
+        String plus = "Lcom/google/android/gms/plus/PlusOneDummyView$b;", RES = CallGuardRules.RES, DR = CallGuardRules.DRAWABLE;
+        var getDrawable = new org.jf.dexlib2.immutable.reference.ImmutableMethodReference(RES, "getDrawable", List.of("I"), DR);
+        java.util.function.BiFunction<String, String, Method> draw = (owner, name) -> new org.jf.dexlib2.immutable.ImmutableMethod(owner, name, List.of(), DR, 1, Set.of(), Set.of(),
+                new org.jf.dexlib2.immutable.ImmutableMethodImplementation(3, List.of(
+                        new org.jf.dexlib2.immutable.instruction.ImmutableInstruction11n(Opcode.CONST_4, 1, 0),
+                        new org.jf.dexlib2.immutable.instruction.ImmutableInstruction35c(Opcode.INVOKE_VIRTUAL, 2, 0, 1, 0, 0, 0, getDrawable),
+                        new org.jf.dexlib2.immutable.instruction.ImmutableInstruction11x(Opcode.MOVE_RESULT_OBJECT, 0),
+                        new org.jf.dexlib2.immutable.instruction.ImmutableInstruction11x(Opcode.RETURN_OBJECT, 0)), List.of(), List.of()));
+        byte[] gms = GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls(plus, "Ljava/lang/Object;", List.of(draw.apply(plus, "a"))),
+                GeneralCompatibilityTest.cls("Lcom/example/game/Menu;", "Ljava/lang/Object;", List.of(draw.apply("Lcom/example/game/Menu;", "icon"))));
+        var plusFix = CallGuardRules.repair(Map.of("classes.dex", gms));
+        check(plusFix.report().contains("VERIFIED " + CallGuardRules.PLUS_ID + ": 1 "), "Google+ drawable guarded: " + plusFix.report());
+        byte[] plusOut = plusFix.replacements.get("classes.dex");
+        check(firstCall(find(plusOut, "a")).getName().equals(CallGuardRules.DRAW_HELPER), "gms.plus getDrawable goes to the helper");
+        check(firstCall(find(plusOut, "icon")).getName().equals("getDrawable"), "game's own getDrawable untouched");
+        var drawTry = find(plusOut, CallGuardRules.DRAW_HELPER).getImplementation().getTryBlocks();
+        check(drawTry.size() == 1 && "Landroid/content/res/Resources$NotFoundException;".equals(drawTry.get(0).getExceptionHandlers().get(0).getExceptionType()), "drawable helper catches only NotFoundException");
+        check(CallGuardRules.repair(Map.of("classes.dex", plusOut)).replacements.isEmpty(), "Google+ guard idempotent");
         check(CallGuardRules.repair(Map.of("classes.dex", new byte[]{1, 2})).report().contains("UNKNOWN"), "malformed retained");
         System.out.println("Call guards: Context/ContextWrapper/subclass unbindService (direct+range), OUYA-store-only null-safe iteration, non-Context and non-store calls untouched, helper shapes, idempotence pass");
     }
