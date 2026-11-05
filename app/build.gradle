@@ -10,8 +10,11 @@ android {
         applicationId 'io.github.hozdogus.pocketouya'
         minSdk 29
         targetSdk 35
-        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
-        versionName "0.1." + (System.getenv('GITHUB_RUN_NUMBER') ?: 'dev')
+        // The repo moved on 2026-11-05 and GitHub's run numbers restarted at 1; the offset keeps
+        // version codes above the old repo's builds (up to 0.1.13x) so updates still install.
+        def run = System.getenv('GITHUB_RUN_NUMBER')
+        versionCode(run ? (run as int) + 200 : 1)
+        versionName "0.1." + (run ? ((run as int) + 200) : 'dev')
         ndk { abiFilters 'arm64-v8a' }
         externalNativeBuild {
             cmake {
