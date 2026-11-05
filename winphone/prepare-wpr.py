@@ -92,7 +92,10 @@ def main():
     edit(manifest, '<manifest xmlns:android="http://schemas.android.com/apk/res/android"',
          '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"')
     edit(manifest, '<application android:label="WPR" android:icon="@mipmap/ic_launcher"',
-         '<application android:label="PocketOuya" android:icon="@mipmap/ic_launcher" tools:replace="android:label,android:icon"')
+         '<application android:label="PocketOuya" android:icon="@mipmap/ic_launcher" android:allowBackup="false"'
+         ' tools:replace="android:label,android:icon,android:allowBackup"')
+    # (.NET Android writes allowBackup="true" when the app manifest leaves it out, which
+    #  clashes with PocketOuya's library manifest saying false.)
 
     # 5. App resources override library ones of the same name: drop WPR's launcher icon so
     #    @mipmap/ic_launcher is PocketOuya's.
