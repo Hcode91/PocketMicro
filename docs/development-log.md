@@ -1291,3 +1291,14 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   errors instead of crashing), added in each ARM ABI the game ships (both v7a and arm64 for games
   without native code). /proc/self/mem remains the desktop-test fallback. Host test passes through
   both paths.
+
+- **2026-11-05 — Windows Phone edition, stage 1:** owner wants WPR (Bubbleshum/WPR, MIT, C#/.NET 10
+  on CoreCLR) inside PocketOuya, not a separate app. NativeAOT is impossible (WPR JIT-loads
+  patched game IL), so the edition's APK is built by WPR's .NET Android head with PocketOuya as an
+  Android library: Gradle -PpocketouyaLibrary + :app:collectWinPhoneLibraries, then
+  winphone/prepare-wpr.py adapts the pinned submodule (package/label/icon, MainLauncher off, WPR
+  game process :wpgame, Guava ListenableFuture opt-outs, bridge compiled in). Bridge
+  (WinPhoneBridgeActivity.cs) does install/launch/uninstall/export-logs; WinPhone.java shows games
+  from files/winphone/games.json in PLAY and logs launches to the global log. Owner asked for
+  logs: export zip has summary, WPR session logs, last_game_error.txt and per-game debug logs
+  (Play with logging). Not yet built: the first CI run will surface .NET/merge errors.

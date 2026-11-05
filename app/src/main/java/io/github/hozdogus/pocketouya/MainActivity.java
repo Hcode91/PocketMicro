@@ -43,7 +43,8 @@ public class MainActivity extends Activity {
     static final String ACTION_REFRESH = "io.github.hozdogus.pocketouya.REFRESH";
     static final String ACTION_IMPORT_STORE = "io.github.hozdogus.pocketouya.IMPORT_STORE_APK";
     private static final String OUYA_GAME = "tv.ouya.intent.category.GAME";
-    private static final int PICK_APK = 1, PICK_OBB = 2;
+    private static final int PICK_APK = 1, PICK_OBB = 2, WP_INSTALL = 30, WP_LAUNCH = 31, WP_UNINSTALL = 32;
+    private WinPhone.Game wpRunning;
     private String obbFor;
 
     static final int BG = 0xFF161616;
@@ -62,6 +63,8 @@ public class MainActivity extends Activity {
         android.graphics.drawable.Drawable icon;
         /** The game's own OUYA tile (drawable "ouya_icon"), else its Android TV banner, else null. */
         android.graphics.drawable.Drawable tile;
+        /** Set for a Windows Phone game run by the built-in WPR runtime (pkg is then "wp:" + product id). */
+        WinPhone.Game wp;
     }
 
     private final BroadcastReceiver refresh = new BroadcastReceiver() {
@@ -207,6 +210,10 @@ public class MainActivity extends Activity {
         LinearLayout manage = new LinearLayout(this);
         manage.setOrientation(LinearLayout.VERTICAL);
         manageRow(manage, "Add game", "Convert an OUYA game's .apk so it installs on this phone", this::pickApk);
+        if (WinPhone.available(this)) {
+            manageRow(manage, "Add Windows Phone game", "Install a Windows Phone 7/8 game (.xap). XNA games work best", () -> WinPhone.install(this, WP_INSTALL));
+            manageRow(manage, "Export Windows Phone logs", "WPR's session logs, crash reasons and game logs, as one .zip", () -> WinPhone.exportLogs(this, null));
+        }
         manageRow(manage, "APK compatibility doctor", "Scan an APK, see known fixes and prepare a repaired copy",
                 () -> startActivity(new Intent(this, ApkDoctorActivity.class)));
         manageRow(manage, "Virtual controller test", "Check the Shizuku virtual controller on this phone",
@@ -391,6 +398,16 @@ public class MainActivity extends Activity {
         Set<String> imported = new HashSet<>(prefs().getStringSet("imported", new HashSet<>()));
         for (String pkg : imported) addGame(found, pm, pkg);
 
+        if (WinPhone.available(this)) for (WinPhone.Game w : WinPhone.games(this)) {
+            Game g = new Game();
+            g.pkg = "wp:" + w.productId;
+            g.label = w.name;
+            g.wp = w;
+            g.tile = w.tile;
+            g.icon = getDrawable(android.R.drawable.sym_def_app_icon);
+            found.put(g.pkg, g);
+        }
+
         games.clear();
         games.addAll(found.values());
         games.sort((a, b) -> a.label.toString().compareToIgnoreCase(b.label.toString()));
@@ -419,6 +436,7 @@ public class MainActivity extends Activity {
     }
 
     private void launch(Game g) {
+        if (g.wp != null) { wpRunning = g.wp; WinPhone.launch(this, g.wp, false, WP_LAUNCH); return; }
         LaunchLogging.begin(this,g.label.toString(),g.pkg,g.pkg,"Installed Android game");
         Intent i = getPackageManager().getLaunchIntentForPackage(g.pkg);
         if (i == null) {
@@ -437,6 +455,21 @@ public class MainActivity extends Activity {
     }
 
     private void gameOptions(Game g) {
+        if (g.wp != null) {
+            new AlertDialog.Builder(this)
+                    .setTitle(g.label)
+                    .setItems(new String[] { "Play", "Play with logging", "Export Windows Phone logs", "Remove" }, (d, which) -> {
+                        if (which == 0) launch(g);
+                        else if (which == 1) { wpRunning = g.wp; WinPhone.launch(this, g.wp, true, WP_LAUNCH); }
+                        else if (which == 2) WinPhone.exportLogs(this, g.wp);
+                        else new AlertDialog.Builder(this).setTitle("Remove " + g.label + "?")
+                                .setMessage("Deletes the installed game and its saves from PocketOuya.")
+                                .setPositiveButton("Remove", (d2, w2) -> WinPhone.uninstall(this, g.wp, WP_UNINSTALL))
+                                .setNegativeButton("Cancel", null).show();
+                    })
+                    .show();
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle(g.label)
                 .setItems(new String[] { "Play", "App info", "Uninstall", "Engine test (developer)",
@@ -547,6 +580,8 @@ public class MainActivity extends Activity {
             assessImport(data.getData());
         if (requestCode == PICK_OBB && resultCode == RESULT_OK && data != null && data.getData() != null && obbFor != null)
             copyObb(obbFor, data.getData());
+        if (requestCode == WP_INSTALL || requestCode == WP_UNINSTALL) loadGames();
+        if (requestCode == WP_LAUNCH) { WinPhone.logResult(this, wpRunning, resultCode, data); wpRunning = null; }
     }
 
     /** Some games (for example Gameloft's) keep their data in a separate .obb file in Android/obb/<package>/. */

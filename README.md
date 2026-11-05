@@ -65,6 +65,10 @@ More: [touch controls](docs/touch-controls.md).
   memory for a value (exact, or unknown and narrowed by increased/decreased), then edits or
   freezes it, and saves cheats per game. No root: it only reads the game's own process. Meant for
   offline single-player play; don't use it on purchases or paid content.
+- **Windows Phone edition (in progress):** a second APK from the same build, with the
+  [WPR](https://github.com/Bubbleshum/WPR) runtime built in, for Windows Phone 7/8 games (XNA
+  works best). Games are added under MANAGE and play from the same library, with their own log
+  export. See [Windows Phone edition](winphone/README.md).
 - **GameMaker engine (beta):** a built-in translated engine for some GameMaker games.
 
 ## Building

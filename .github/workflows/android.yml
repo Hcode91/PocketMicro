@@ -84,3 +84,70 @@ jobs:
             --title "PocketOuya build ${GITHUB_RUN_NUMBER}" \
             --notes "Automatic build from ${GITHUB_SHA::7}." \
             --prerelease --target "$GITHUB_SHA"
+
+  # Windows Phone edition: PocketOuya with the WPR runtime built in (see winphone/README.md).
+  # Same run number as the APK job, so either APK installs over the other.
+  winphone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check out WPR (pinned)
+        run: git submodule update --init --depth 1 winphone/wpr
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: '8.12'
+      - name: Build PocketOuya as a library
+        run: gradle :app:collectWinPhoneLibraries -PpocketouyaLibrary --no-daemon
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: winphone/wpr/global.json
+      - name: Install .NET Android workload
+        run: dotnet workload install android
+      - name: Ensure Android SDK platform 36
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" >/dev/null'
+      - name: Prepare WPR as PocketOuya
+        run: python3 winphone/prepare-wpr.py winphone/wpr "$GITHUB_WORKSPACE" build/winphone-libs
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.POCKETOUYA_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+            { echo "SIGN_STORE=$RUNNER_TEMP/release.p12"; echo "SIGN_ALIAS=pocketouya"; echo "SIGN_PASS=$KEYSTORE_PASSWORD"; } >> "$GITHUB_ENV"
+          else
+            echo "::warning::POCKETOUYA_KEYSTORE_B64 is not set; signing with the public test key"
+            { echo "SIGN_STORE=$GITHUB_WORKSPACE/app/ci.keystore"; echo "SIGN_ALIAS=app"; echo "SIGN_PASS=android"; } >> "$GITHUB_ENV"
+          fi
+      - name: Build the Windows Phone edition
+        run: |
+          set +e
+          dotnet build winphone/wpr/Src/Platforms/WPR.Platform.Android/WPR.Platform.Android.csproj \
+            -c Release -f net10.0-android36.0 -t:SignAndroidPackage \
+            -p:SolutionDir="$GITHUB_WORKSPACE/winphone/wpr/Src/" \
+            -p:IncludeAndroidTargets=true -p:EmbedAssembliesIntoApk=true \
+            -p:RuntimeIdentifiers=android-arm64 \
+            -p:ApplicationVersion="$GITHUB_RUN_NUMBER" -p:ApplicationDisplayVersion="0.1.$GITHUB_RUN_NUMBER-wp" \
+            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$SIGN_STORE" -p:AndroidSigningKeyAlias="$SIGN_ALIAS" \
+            -p:AndroidSigningStorePass="$SIGN_PASS" -p:AndroidSigningKeyPass="$SIGN_PASS" \
+            -maxcpucount:1 -nodeReuse:false --nologo 2>&1 | tee build.log
+          rc=${PIPESTATUS[0]}
+          if [ $rc -ne 0 ]; then
+            grep -E "error|What went wrong" build.log | sort -u | tail -n 40 \
+              | python3 -c "import sys;d=sys.stdin.read()[-6000:];print('::error title=build errors::'+d.replace('%','%25').replace('\n','%0A'))"
+          fi
+          exit $rc
+      - name: Name APK
+        run: |
+          mkdir -p out
+          APK=$(ls winphone/wpr/Src/Platforms/WPR.Platform.Android/bin/Release/net10.0-android36.0/*-Signed.apk | head -1)
+          cp "$APK" "out/PocketOuya-WindowsPhone-${GITHUB_RUN_NUMBER}.apk"
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketOuya-WindowsPhone-apk
+          path: out/*.apk

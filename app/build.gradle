@@ -1,17 +1,20 @@
-plugins {
-    id 'com.android.application'
-}
+// -PpocketouyaLibrary builds PocketOuya as an Android library (.aar) for the Windows Phone
+// edition, whose APK is assembled by WPR's .NET build (see winphone/README.md).
+def asLibrary = project.hasProperty('pocketouyaLibrary')
+apply plugin: asLibrary ? 'com.android.library' : 'com.android.application'
 
 android {
     namespace 'io.github.hozdogus.pocketouya'
     compileSdk 35
 
     defaultConfig {
-        applicationId 'io.github.hozdogus.pocketouya'
         minSdk 29
-        targetSdk 35
-        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
-        versionName "0.1." + (System.getenv('GITHUB_RUN_NUMBER') ?: 'dev')
+        if (!asLibrary) {
+            applicationId 'io.github.hozdogus.pocketouya'
+            targetSdk 35
+            versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
+            versionName "0.1." + (System.getenv('GITHUB_RUN_NUMBER') ?: 'dev')
+        }
         ndk { abiFilters 'arm64-v8a' }
         externalNativeBuild {
             cmake {
@@ -36,7 +39,7 @@ android {
     }
 
     // Fixed key in the repo so each CI build installs over the last one.
-    signingConfigs {
+    if (!asLibrary) signingConfigs {
         // Official builds: the private release key from CI secrets (see docs/signing.md).
         // Without it (forks, local builds) the public test key in the repo is used.
         ci {
@@ -50,7 +53,7 @@ android {
         }
     }
 
-    buildTypes {
+    if (!asLibrary) buildTypes {
         debug { signingConfig signingConfigs.ci }
         release { signingConfig signingConfigs.ci; minifyEnabled false }
     }
@@ -309,5 +312,19 @@ tasks.register('auditNativeProfileMatrix', JavaExec) {
         if (!project.hasProperty('nativeFixtureIndex')) throw new GradleException('Supply -PnativeFixtureIndex=/private/fixture-index.json; missing fixtures never count as passes')
         def out=layout.buildDirectory.file('reports/structural/native-matrix.json').get().asFile; out.parentFile.mkdirs()
         args rootProject.file('tests/native-profile-matrix.json').path, project.property('nativeFixtureIndex'), out.path
+    }
+}
+
+// Windows Phone edition: PocketOuya's library plus every runtime dependency (.aar/.jar), in one
+// folder for winphone/prepare-wpr.py to hand to the .NET build.
+if (asLibrary) {
+    tasks.register('collectWinPhoneLibraries', Copy) {
+        dependsOn 'assembleRelease'
+        from(layout.buildDirectory.file('outputs/aar/app-release.aar')) { rename { 'pocketouya.aar' } }
+        from(configurations.named('releaseRuntimeClasspath'))
+        into rootProject.layout.buildDirectory.dir('winphone-libs')
+        // Empty placeholder artifact Guava uses to avoid a conflict; nothing to ship.
+        exclude '**/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar'
+        doLast { println "Windows Phone edition libraries: " + destinationDir.list().sort().join(', ') }
     }
 }
