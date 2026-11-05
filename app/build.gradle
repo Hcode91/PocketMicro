@@ -332,6 +332,20 @@ if (asLibrary) {
         // annotations whose classes are missing) and the .NET side may already ship some of them.
         exclude '**/error_prone_annotations-*.jar', '**/j2objc-annotations-*.jar',
                 '**/checker-qual-*.jar', '**/jsr305-*.jar'
-        doLast { println "Windows Phone edition libraries: " + destinationDir.list().sort().join(', ') }
+        doLast {
+            // WPR's NuGet packages bring Xamarin.Google.Guava.ListenableFuture, which holds the same
+            // single interface Guava ships (com.google.common.util.concurrent.ListenableFuture), so
+            // D8 sees it twice. Keep the NuGet copy and strip ours out of the Guava jar.
+            destinationDir.listFiles().findAll { it.name ==~ /guava-.*\.jar/ }.each { jar ->
+                def stripped = new File(temporaryDir, jar.name)
+                stripped.delete()
+                ant.zip(destfile: stripped) {
+                    zipfileset(src: jar) { exclude(name: 'com/google/common/util/concurrent/ListenableFuture.class') }
+                }
+                ant.move(file: stripped, tofile: jar, overwrite: true)
+                println "Removed ListenableFuture from ${jar.name}"
+            }
+            println "Windows Phone edition libraries: " + destinationDir.list().sort().join(', ')
+        }
     }
 }

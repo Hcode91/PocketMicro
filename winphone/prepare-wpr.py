@@ -54,8 +54,9 @@ def main():
     <AndroidManifestPlaceholders>applicationId=io.github.hozdogus.pocketouya</AndroidManifestPlaceholders>
     <!-- PocketOuya's own minimum; its library manifest declares it too. -->
     <SupportedOSPlatformVersion>29.0</SupportedOSPlatformVersion>
-    <!-- PocketOuya ships the full Guava (dexlib2 needs it), which already contains
-         ListenableFuture: two copies would be a duplicate class. -->
+    <!-- PocketOuya ships the full Guava (dexlib2 needs it). These opt-outs do not stop
+         Xamarin.Google.Guava.ListenableFuture coming in, so app/build.gradle also strips
+         ListenableFuture.class from PocketOuya's Guava jar. -->
     <XamarinGoogleGuavaListenableFutureOptOut>true</XamarinGoogleGuavaListenableFutureOptOut>
     <XamarinGoogleGuavaOptOut>true</XamarinGoogleGuavaOptOut>
     <!-- arm64 only. Set here, never as -p:RuntimeIdentifiers on the command line: a global
