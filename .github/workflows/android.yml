@@ -130,7 +130,6 @@ jobs:
             -c Release -f net10.0-android36.0 -t:SignAndroidPackage \
             -p:SolutionDir="$GITHUB_WORKSPACE/winphone/wpr/Src/" \
             -p:IncludeAndroidTargets=true -p:EmbedAssembliesIntoApk=true \
-            -p:RuntimeIdentifiers=android-arm64 \
             -p:ApplicationVersion="$GITHUB_RUN_NUMBER" -p:ApplicationDisplayVersion="0.1.$GITHUB_RUN_NUMBER-wp" \
             -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$SIGN_STORE" -p:AndroidSigningKeyAlias="$SIGN_ALIAS" \
             -p:AndroidSigningStorePass="$SIGN_PASS" -p:AndroidSigningKeyPass="$SIGN_PASS" \

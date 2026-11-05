@@ -58,6 +58,10 @@ def main():
          ListenableFuture: two copies would be a duplicate class. -->
     <XamarinGoogleGuavaListenableFutureOptOut>true</XamarinGoogleGuavaListenableFutureOptOut>
     <XamarinGoogleGuavaOptOut>true</XamarinGoogleGuavaOptOut>
+    <!-- arm64 only. Set here, never as -p:RuntimeIdentifiers on the command line: a global
+         property flows into every referenced library, which then look for their output under
+         obj/.../android-arm64/ and fail with MSB3030 "Could not copy the file". -->
+    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="{repo.as_posix()}/winphone/Bridge/*.cs" />
