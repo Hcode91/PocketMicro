@@ -56,7 +56,13 @@ public final class CheatMenu {
     private Spinner typeSpinner,compareSpinner;
     private EditText valueField;
     private AlertDialog dialog;
-    private final Runnable refresh=new Runnable(){public void run(){if(dialog==null||!dialog.isShowing())return;if(!busy){showResults();showCheats();}handler.postDelayed(this,800);}};
+    private ScrollView scroll;
+    // Rows on screen, so the periodic refresh only changes their text: rebuilding them made the
+    // window jump back to the top every refresh.
+    private final List<TextView> resultRows=new ArrayList<>();
+    private final List<long[]> resultAddresses=new ArrayList<>();
+    private final Map<Cheat,TextView> cheatRows=new LinkedHashMap<>();
+    private final Runnable refresh=new Runnable(){public void run(){if(dialog==null||!dialog.isShowing())return;if(!busy)refreshValues();handler.postDelayed(this,800);}};
 
     private CheatMenu(Activity activity){this.activity=activity;}
 
@@ -107,7 +113,9 @@ public final class CheatMenu {
                 +"For single-player play. Don't use it on purchases or anything paid.");
         content.addView(help);
 
-        ScrollView scroll=new ScrollView(activity);scroll.addView(content);
+        scroll=new ScrollView(activity);scroll.addView(content);
+        // Typing in the value box shouldn't pull the list back up when rows change.
+        content.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
         dialog=new AlertDialog.Builder(activity).setTitle("Cheats").setView(scroll).setPositiveButton("Close",null).create();
         dialog.setOnDismissListener(d->handler.removeCallbacks(refresh));
         dialog.show();
@@ -180,18 +188,41 @@ public final class CheatMenu {
 
     private void showResults(){
         if(results==null)return;
-        results.removeAllViews();
-        int n=scanner.count();if(n==0||n>SHOWN||busy)return;
-        MemoryScanner.Type type=scanner.type();
-        for(int i=0;i<n;i++){
-            final long address=scanner.address(i);
-            Double current=scanner.read(address,type);
-            TextView row=new TextView(activity);row.setPadding(0,dp(8),0,dp(8));
-            row.setText(String.format(Locale.US,"%08X  =  %s",address,current==null?"(gone)":MemoryScanner.format(current,type)));
-            row.setOnClickListener(v->saveDialog(address,type,current));
-            results.addView(row);
+        int y=scroll==null?0:scroll.getScrollY();
+        results.removeAllViews();resultRows.clear();resultAddresses.clear();
+        int n=scanner.count();
+        if(n>0&&n<=SHOWN&&!busy){
+            MemoryScanner.Type type=scanner.type();
+            for(int i=0;i<n;i++){
+                final long address=scanner.address(i);
+                TextView row=new TextView(activity);row.setPadding(0,dp(8),0,dp(8));
+                row.setText(resultText(address,type));
+                row.setOnClickListener(v->saveDialog(address,type,scanner.read(address,type)));
+                results.addView(row);resultRows.add(row);resultAddresses.add(new long[]{address});
+            }
         }
+        keepScroll(y);
     }
+
+    private String resultText(long address,MemoryScanner.Type type){
+        Double current=scanner.read(address,type);
+        return String.format(Locale.US,"%08X  =  %s",address,current==null?"(gone)":MemoryScanner.format(current,type));
+    }
+
+    private String cheatText(Cheat c){
+        Double current=scanner.read(c.address,c.type);
+        return c.label+"  =  "+(current==null?"(not found)":MemoryScanner.format(current,c.type))
+                +"\n"+c.type.label+(c.frozen?" · frozen at "+MemoryScanner.format(c.value,c.type):"");
+    }
+
+    /** Updates the numbers shown without rebuilding the rows. */
+    private void refreshValues(){
+        MemoryScanner.Type type=scanner.type();
+        for(int i=0;i<resultRows.size();i++){String t=resultText(resultAddresses.get(i)[0],type);if(!t.contentEquals(resultRows.get(i).getText()))resultRows.get(i).setText(t);}
+        for(Map.Entry<Cheat,TextView> e:cheatRows.entrySet()){String t=cheatText(e.getKey());if(!t.contentEquals(e.getValue().getText()))e.getValue().setText(t);}
+    }
+
+    private void keepScroll(int y){if(scroll!=null)scroll.post(()->scroll.scrollTo(0,y));}
 
     private void saveDialog(long address,MemoryScanner.Type type,Double current){
         EditText name=new EditText(activity);name.setHint("Name, e.g. Coins");name.setSingleLine(true);
@@ -206,25 +237,26 @@ public final class CheatMenu {
 
     private void showCheats(){
         if(saved==null)return;
-        saved.removeAllViews();
-        if(cheats.isEmpty()){TextView none=new TextView(activity);none.setText("None yet.");saved.addView(none);return;}
+        int y=scroll==null?0:scroll.getScrollY();
+        saved.removeAllViews();cheatRows.clear();
+        if(cheats.isEmpty()){TextView none=new TextView(activity);none.setText("None yet.");saved.addView(none);keepScroll(y);return;}
         List<Cheat> copy;synchronized(cheats){copy=new ArrayList<>(cheats);}
         for(final Cheat c:copy){
             LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);
-            Double current=scanner.read(c.address,c.type);
             TextView text=new TextView(activity);
-            text.setText(c.label+"  =  "+(current==null?"(not found)":MemoryScanner.format(current,c.type))
-                    +"\n"+c.type.label+(c.frozen?" · frozen at "+MemoryScanner.format(c.value,c.type):""));
+            text.setText(cheatText(c));cheatRows.put(c,text);
             text.setOnClickListener(v->editDialog(c));
             row.addView(text,new LinearLayout.LayoutParams(0,-2,1));
             CheckBox freeze=new CheckBox(activity);freeze.setText("Freeze");freeze.setChecked(c.frozen);
             freeze.setOnCheckedChangeListener((b,on)->{
                 if(on){Double now=scanner.read(c.address,c.type);if(now==null){b.setChecked(false);Toast.makeText(activity,"That value isn't in memory now",Toast.LENGTH_SHORT).show();return;}if(!c.frozen)c.value=now;}
                 c.frozen=on;store();startFreezer();
+                TextView shown=cheatRows.get(c);if(shown!=null)shown.setText(cheatText(c));
             });
             row.addView(freeze);
             saved.addView(row);
         }
+        keepScroll(y);
     }
 
     private void editDialog(Cheat c){
