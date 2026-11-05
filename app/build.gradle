@@ -186,6 +186,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/io/github/hozdogus/pocketouya/TvLandscapeRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/TvScreenSizeRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/WideScreenRule.java',
+            'src/main/java/io/github/hozdogus/pocketouya/InputConfigRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/ObbImport.java',
             'src/main/java/io/github/hozdogus/pocketouya/LowAddressRule.java',
             'src/main/java/io/github/hozdogus/pocketouya/LaunchHook.java',

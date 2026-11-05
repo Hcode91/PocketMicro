@@ -393,3 +393,16 @@ full width keep Android's letterbox. Every `<activity>` without its own `android
 (0x01010521, float) in the binary manifest, using the same attribute writer as
 `ouya.tv-layouts.landscape`. Activities that set a ratio keep it. Matches N.O.V.A. 3's 11 activities and the manifest still parses (package, target, launcher).
 Samsung's per-app "Full screen apps" switch is the manual equivalent.
+
+## android.input-config-changes
+
+On an OUYA the controllers were connected before a game started. On a phone, PocketOuya's
+virtual controller (or a Bluetooth pad) appears while the game is running; Android reports a
+keyboard/navigation configuration change and destroys and recreates every activity that doesn't
+declare it handles one. Whack'em was relaunched 24 ms after the virtual controller appeared and
+crashed in its own onStop (ResourceManager.unloadMenuTextures on menu textures not loaded yet).
+
+Every `<activity>` gets `keyboard|keyboardHidden|navigation` (0x70) in `android:configChanges`:
+OR-ed into an existing integer value, or added with the shared activity-attribute writer.
+Rotation and other configuration changes are unchanged. Applied to every conversion with touch
+controls (all of them), not only with Startup repairs, because the controller is PocketOuya's own.

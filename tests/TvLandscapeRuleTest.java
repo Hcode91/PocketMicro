@@ -131,6 +131,18 @@ public final class TvLandscapeRuleTest {
             check(ManifestPatcher.patch(both.manifest).packageName.equals("com.afksoft.WordShakerOuya"), "manifest still parses");
             check(WideScreenRule.repair(wide.manifest).status == CompatibilityEvidence.Status.SKIPPED, "wide second pass unchanged");
         }
+        // android.input-config-changes: keyboard|keyboardHidden|navigation (0x70) OR-ed into an existing configChanges, added elsewhere.
+        for (boolean utf8 : new boolean[]{false, true}) {
+            byte[] in = manifest(utf8, false);
+            TvLandscapeRule.Result input = InputConfigRule.repair(in);
+            check(input.status == CompatibilityEvidence.Status.VERIFIED && input.reason.startsWith("3 activities") && input.reason.contains("1 widened") && input.reason.contains("2 new"), "input: " + input.reason);
+            List<List<String>> acts = activities(input.manifest);
+            check(acts.get(1).contains("configChanges#101001f=" + (0xa0 | 0x70)), "existing value widened: " + acts.get(1));
+            check(acts.get(0).contains("configChanges#101001f=" + 0x70) && acts.get(2).contains("configChanges#101001f=" + 0x70), "added: " + acts);
+            check(ManifestPatcher.patch(input.manifest).launcherActivities.equals(Set.of("Lcom/afksoft/WordShakerBase/ShakerSplashActivity;")), "manifest still parses");
+            check(InputConfigRule.repair(input.manifest).status == CompatibilityEvidence.Status.SKIPPED, "input second pass unchanged");
+            check(Arrays.equals(in, manifest(utf8, false)), "input array untouched");
+        }
         TvLandscapeRule.Result bad = TvLandscapeRule.repair(new byte[]{1, 2, 3, 4, 5, 6, 7, 8});
         check(bad.status == CompatibilityEvidence.Status.UNKNOWN && bad.manifest == null, "malformed manifest left alone");
         System.out.println("TvLandscapeRuleTest OK");
