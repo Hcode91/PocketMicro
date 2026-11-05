@@ -209,7 +209,10 @@ namespace WPR.Platform.Android.Native
                 AddFile(zip, System.IO.Path.Combine(root, "last_game_error.txt"), "last_game_error.txt");
                 string logs = Configuration.Current!.DataPath(SessionLog.FolderName);
                 if (Directory.Exists(logs))
-                    foreach (string f in Directory.GetFiles(logs)) AddFile(zip, f, "Logs/" + System.IO.Path.GetFileName(f));
+                    // Subfolders too: a logging run of a WP8 title writes its GPU trace dumps
+                    // (render-target PNGs, shader bytecode) under Logs/wp8-debug/.
+                    foreach (string f in Directory.GetFiles(logs, "*", SearchOption.AllDirectories))
+                        AddFile(zip, f, "Logs/" + System.IO.Path.GetRelativePath(logs, f).Replace('\\', '/'));
 
                 // Per-game log: written in "Play with logging" runs.
                 string installs = Configuration.Current!.DataPath(WprApplication.DataStoreFolder);
