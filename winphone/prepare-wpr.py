@@ -82,7 +82,11 @@ def main():
     edit(head / "MainActivity.cs", "MainLauncher = true", "MainLauncher = false")
 
     # 3. PocketOuya already uses :game for its own engine.
-    edit(head / "GameActivity.cs", 'Process = ":game"', 'Process = ":wpgame"')
+    # Every occurrence: the class comment mentions it before the [Activity] attribute does.
+    game = head / "GameActivity.cs"
+    edit(game, 'Process = ":game"', 'Process = ":wpgame"', count=-1)
+    if not re.search(r'\[Activity\([^\]]*Process = ":wpgame"', game.read_text(encoding="utf-8")):
+        fail("GameActivity's [Activity] attribute was not moved to :wpgame")
     exits = head / "Online/AndroidProcessExits.cs"
     if exits.is_file():
         edit(exits, 'EndsWith(":game"', 'EndsWith(":wpgame"')
