@@ -3,13 +3,21 @@
 // Android stops apps opening /proc/self/mem, but process_vm_readv/process_vm_writev on the
 // app's own pid are always allowed (the kernel skips its ptrace checks for the same process).
 // A bad address returns an error instead of crashing the game, unlike reading it directly.
-#define _GNU_SOURCE
 #include <jni.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+
+// Called through syscall(): bionic only declares the wrappers from API 23, and the helper targets API 21.
+static ssize_t vm_read(struct iovec *local, struct iovec *remote) {
+    return (ssize_t)syscall(__NR_process_vm_readv, (long)getpid(), local, 1UL, remote, 1UL, 0UL);
+}
+static ssize_t vm_write(struct iovec *local, struct iovec *remote) {
+    return (ssize_t)syscall(__NR_process_vm_writev, (long)getpid(), local, 1UL, remote, 1UL, 0UL);
+}
 
 #define EXPORT __attribute__((visibility("default")))
 
@@ -19,7 +27,7 @@ static jint copy_out(uint64_t address, void *buffer, jint length) {
     while (done < length) {
         struct iovec local = {(char *)buffer + done, (size_t)(length - done)};
         struct iovec remote = {(void *)(uintptr_t)(address + (uint64_t)done), (size_t)(length - done)};
-        ssize_t n = process_vm_readv(getpid(), &local, 1, &remote, 1, 0);
+        ssize_t n = vm_read(&local, &remote);
         if (n <= 0) break;
         done += (jint)n;
     }
@@ -46,5 +54,5 @@ Java_io_github_hcode91_pocketouya_bridge_MemoryScanner_nativeWrite(JNIEnv *env, 
     (*env)->GetByteArrayRegion(env, source, 0, length, bytes);
     struct iovec local = {bytes, (size_t)length};
     struct iovec remote = {(void *)(uintptr_t)(uint64_t)address, (size_t)length};
-    return process_vm_writev(getpid(), &local, 1, &remote, 1, 0) == length ? JNI_TRUE : JNI_FALSE;
+    return vm_write(&local, &remote) == length ? JNI_TRUE : JNI_FALSE;
 }
