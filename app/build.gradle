@@ -325,6 +325,13 @@ if (asLibrary) {
         into rootProject.layout.buildDirectory.dir('winphone-libs')
         // Empty placeholder artifact Guava uses to avoid a conflict; nothing to ship.
         exclude '**/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar'
+        // androidx.annotation already comes from WPR's NuGet packages (Xamarin.AndroidX.Annotation.Jvm);
+        // a second copy makes D8 fail with "Type androidx.annotation.AnimRes is defined multiple times".
+        exclude '**/annotation-1.*.jar'
+        // Compile-time annotation jars pulled in by Guava. They are not needed at run time (ART skips
+        // annotations whose classes are missing) and the .NET side may already ship some of them.
+        exclude '**/error_prone_annotations-*.jar', '**/j2objc-annotations-*.jar',
+                '**/checker-qual-*.jar', '**/jsr305-*.jar'
         doLast { println "Windows Phone edition libraries: " + destinationDir.list().sort().join(', ') }
     }
 }
