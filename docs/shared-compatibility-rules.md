@@ -378,3 +378,17 @@ Freedom Edition, right after the splash screen). Inside `com.google.android.gms.
 only, `Resources.getDrawable(int)` goes through a helper that returns null when the resource is
 missing, which is what the library already returns when Play Services is absent. Part of
 `CallGuardRules`; runs with Startup repairs. Matches 3 calls in N.O.V.A. 3's DEX.
+
+## android.wide-screen
+
+Android letterboxes apps built for Android 7.1 or older (converted games target 6.0) to at most
+1.86:1 unless they declare otherwise. On a 19.5:9 phone (S23: 2340 x 1080) that leaves the game
+in a 2009 px window at x = 134..2143. Games that read raw screen touch positions then register
+every tap ~134 px to the right (N.O.V.A. 3's fire button only reacted when tapped to its left);
+the full-screen window flags from the touch controls can't override this compat letterbox.
+
+Every `<activity>` without its own `android:maxAspectRatio` gets `maxAspectRatio="3.0"`
+(0x01010521, float) in the binary manifest, using the same attribute writer as
+`ouya.tv-layouts.landscape`. Activities that set a ratio keep it. Runs with Startup repairs;
+matches N.O.V.A. 3's 11 activities and the manifest still parses (package, target, launcher).
+Samsung's per-app "Full screen apps" switch is the manual equivalent.

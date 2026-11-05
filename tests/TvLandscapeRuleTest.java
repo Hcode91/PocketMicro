@@ -117,6 +117,20 @@ public final class TvLandscapeRuleTest {
 
     public static void main(String[] args) {
         roundTrip(false, false); roundTrip(true, false); roundTrip(false, true); roundTrip(true, true);
+        // android.wide-screen reuses the same writer with maxAspectRatio (0x01010521, float 3.0), after the landscape pass too.
+        for (boolean utf8 : new boolean[]{false, true}) {
+            byte[] in = manifest(utf8, false);
+            TvLandscapeRule.Result wide = WideScreenRule.repair(in);
+            check(wide.status == CompatibilityEvidence.Status.VERIFIED && wide.reason.startsWith("3 activities"), "wide: " + wide.reason);
+            String ratio = "maxAspectRatio#1010521=" + Float.floatToIntBits(3.0f);
+            for (List<String> a : activities(wide.manifest)) check(a.get(a.size() - 1).equals(ratio) || a.contains(ratio), "ratio added: " + a);
+            check(activities(wide.manifest).get(0).get(activities(wide.manifest).get(0).size() - 1).equals(ratio), "highest id sorts last");
+            TvLandscapeRule.Result both = WideScreenRule.repair(TvLandscapeRule.repair(in).manifest);
+            List<String> splash = activities(both.manifest).get(0);
+            check(splash.indexOf("screenOrientation#101001e=6") >= 0 && splash.indexOf(ratio) > splash.indexOf("screenOrientation#101001e=6"), "both attributes, sorted: " + splash);
+            check(ManifestPatcher.patch(both.manifest).packageName.equals("com.afksoft.WordShakerOuya"), "manifest still parses");
+            check(WideScreenRule.repair(wide.manifest).status == CompatibilityEvidence.Status.SKIPPED, "wide second pass unchanged");
+        }
         TvLandscapeRule.Result bad = TvLandscapeRule.repair(new byte[]{1, 2, 3, 4, 5, 6, 7, 8});
         check(bad.status == CompatibilityEvidence.Status.UNKNOWN && bad.manifest == null, "malformed manifest left alone");
         System.out.println("TvLandscapeRuleTest OK");

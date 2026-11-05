@@ -27,6 +27,7 @@ public final class TvLandscapeRule {
         public CompatibilityEvidence.Status status = CompatibilityEvidence.Status.SKIPPED;
         public String reason = "no activities";
         public byte[] manifest;
+        int added, kept;
     }
 
     private TvLandscapeRule() {}
@@ -34,6 +35,20 @@ public final class TvLandscapeRule {
     public static Result repair(byte[] axml) { return run(axml, true); }
 
     private static Result run(byte[] axml, boolean apply) {
+        Result r = addToActivities(axml, apply, ATTR_SCREEN_ORIENTATION, "screenOrientation", TYPE_INT_DEC, SENSOR_LANDSCAPE);
+        if (r.status == CompatibilityEvidence.Status.SKIPPED)
+            r.reason = r.kept > 0 ? "all " + r.kept + " activities already set their own orientation; unchanged" : "no activities";
+        else if (r.status != CompatibilityEvidence.Status.UNKNOWN)
+            r.reason = r.added + " activit" + (r.added == 1 ? "y" : "ies") + " now open in landscape (sensorLandscape), as on the OUYA's TV, so the TV screens apply"
+                    + (r.kept > 0 ? "; " + r.kept + " kept their own orientation" : "") + ".";
+        return r;
+    }
+
+    /**
+     * Adds android:&lt;attrName&gt; (resource ID attrId, given type and data) to every &lt;activity&gt;
+     * that doesn't already have it. Shared by the activity-attribute manifest rules.
+     */
+    static Result addToActivities(byte[] axml, boolean apply, int attrId, String attrLabel, int dataType, int data) {
         Result r = new Result();
         try {
             ByteBuffer b = ByteBuffer.wrap(axml).order(ByteOrder.LITTLE_ENDIAN);
@@ -57,7 +72,7 @@ public final class TvLandscapeRule {
             if (mapAt >= 0) { ids = new int[(b.getInt(mapAt + 4) - 8) / 4]; for (int i = 0; i < ids.length; i++) ids[i] = b.getInt(mapAt + 8 + 4 * i); }
 
             int attrName = -1;
-            for (int i = 0; i < ids.length && i < strings.size(); i++) if (ids[i] == ATTR_SCREEN_ORIENTATION) { attrName = i; break; }
+            for (int i = 0; i < ids.length && i < strings.size(); i++) if (ids[i] == attrId) { attrName = i; break; }
             int ns = strings.indexOf(ANDROID_NS);
             if (ns < 0) throw new IllegalStateException("no android namespace");
 
@@ -71,19 +86,15 @@ public final class TvLandscapeRule {
                 for (int i = 0; i < count; i++) {
                     int a = at + 16 + attrStart + 20 * i, name = b.getInt(a + 4);
                     int id = name >= 0 && name < ids.length ? ids[name] : 0;
-                    if (id == ATTR_SCREEN_ORIENTATION) has = true;
+                    if (id == attrId) has = true;
                     // aapt keeps resource attributes sorted by ID, unresolved names after them.
-                    if (slot == count && (id == 0 || (id & 0xffffffffL) > ATTR_SCREEN_ORIENTATION)) slot = i;
+                    if (slot == count && (id == 0 || (id & 0xffffffffL) > (attrId & 0xffffffffL))) slot = i;
                 }
                 if (has) kept++; else targets.put(at, slot);
             }
-            if (targets.isEmpty()) {
-                r.reason = kept > 0 ? "all " + kept + " activities already set their own orientation; unchanged" : "no activities";
-                return r;
-            }
+            r.added = targets.size(); r.kept = kept;
+            if (targets.isEmpty()) return r;
             r.status = apply ? CompatibilityEvidence.Status.VERIFIED : CompatibilityEvidence.Status.SUPPORTED;
-            r.reason = targets.size() + " activit" + (targets.size() == 1 ? "y" : "ies") + " now open in landscape (sensorLandscape), as on the OUYA's TV, so the TV screens apply"
-                    + (kept > 0 ? "; " + kept + " kept their own orientation" : "") + ".";
             if (!apply) return r;
 
             // A new attribute-name string must sit inside the resource-mapped prefix of the pool,
@@ -92,8 +103,8 @@ public final class TvLandscapeRule {
             if (attrName < 0) {
                 if (strings.size() < ids.length) throw new IllegalStateException("resource map longer than string pool");
                 if (b.getInt(poolAt + 12) != 0) throw new IllegalStateException("styled manifest string pool");
-                strings.add(insert, "screenOrientation");
-                ids = Arrays.copyOf(ids, ids.length + 1); ids[insert] = ATTR_SCREEN_ORIENTATION;
+                strings.add(insert, attrLabel);
+                ids = Arrays.copyOf(ids, ids.length + 1); ids[insert] = attrId;
                 attrName = insert; if (ns >= insert) ns++;
             }
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -120,7 +131,7 @@ public final class TvLandscapeRule {
                     if (slot != null) {
                         int cut = 16 + attrStart + 20 * slot;
                         ByteBuffer attr = ByteBuffer.allocate(20).order(ByteOrder.LITTLE_ENDIAN);
-                        attr.putInt(ns).putInt(attrName).putInt(-1).putShort((short) 8).put((byte) 0).put((byte) TYPE_INT_DEC).putInt(SENSOR_LANDSCAPE);
+                        attr.putInt(ns).putInt(attrName).putInt(-1).putShort((short) 8).put((byte) 0).put((byte) dataType).putInt(data);
                         byte[] grown = new byte[size + 20];
                         System.arraycopy(node, 0, grown, 0, cut); System.arraycopy(attr.array(), 0, grown, cut, 20); System.arraycopy(node, cut, grown, cut + 20, size - cut);
                         ByteBuffer g = ByteBuffer.wrap(grown).order(ByteOrder.LITTLE_ENDIAN);
