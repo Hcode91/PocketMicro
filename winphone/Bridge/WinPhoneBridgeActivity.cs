@@ -7,6 +7,7 @@
 //   LAUNCH       start an installed game in WPR's game process (GameLauncher), report how it ended
 //   UNINSTALL    remove a game (ApplicationInstaller.UninstallAsync), refresh games.json
 //   EXPORT_LOGS  save WPR's logs as one .zip wherever the player picks
+//   ACHIEVEMENTS open WPR's achievements page (every game, or one game with productId)
 //
 // games.json and the tile images live in PocketOuya's files/winphone folder, which the Java side
 // (WinPhone.java) reads to show Windows Phone games in the library.
@@ -29,6 +30,9 @@ using Android.Graphics;
 using Android.OS;
 using Android.Runtime;
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Xna.Framework.GamerServices;
+
 using Newtonsoft.Json;
 
 using WPR.Common;
@@ -47,7 +51,8 @@ namespace WPR.Platform.Android.Native
     {
         const string Prefix = "io.github.hozdogus.pocketouya.winphone.";
         const string ActionInstall = Prefix + "INSTALL", ActionLaunch = Prefix + "LAUNCH",
-            ActionUninstall = Prefix + "UNINSTALL", ActionExportLogs = Prefix + "EXPORT_LOGS";
+            ActionUninstall = Prefix + "UNINSTALL", ActionExportLogs = Prefix + "EXPORT_LOGS",
+            ActionAchievements = Prefix + "ACHIEVEMENTS";
         const string ExtraProduct = "productId", ExtraLogging = "logging";
         const string ExtraOutcome = "outcome", ExtraDetail = "detail";
         const int RequestSaveLogs = 4401;
@@ -93,6 +98,9 @@ namespace WPR.Platform.Android.Native
                 case ActionExportLogs:
                     StartLogExport();
                     break;
+                case ActionAchievements:
+                    OpenAchievements();
+                    break;
                 default:
                     WriteIndex();
                     Complete(Result.Ok, "Game list refreshed", null);
@@ -120,6 +128,8 @@ namespace WPR.Platform.Android.Native
             // GameLauncher.HandleGameResult also does WPR Hub reporting and rating prompts, which
             // PocketOuya leaves out; these are the parts of it that matter here.
             try { Directory.SetCurrentDirectory(WprStartup.PatchAssembliesDirectory(this)); } catch (Exception) { }
+            // New unlocks, and a catalogue the launch may have generated, for the library tiles.
+            WriteIndex();
             if (_ProductId != null) WPR.Shell.DiagnosticRun.Take(_ProductId);
 
             if (resultCode == Result.Ok)
@@ -135,6 +145,46 @@ namespace WPR.Platform.Android.Native
             try { File.WriteAllText(System.IO.Path.Combine(GetExternalFilesDir(null)!.AbsolutePath, "last_game_error.txt"), error); }
             catch (Exception) { }
             Complete(Result.Canceled, "Game stopped with an error", Trim(error!, 6000));
+        }
+
+        // ------------------------------------------------------------ achievements
+
+        /// <summary>
+        /// WPR's own achievements page: every game with a catalogue, or one game's list when a
+        /// product id is given. Unlocks are recorded by the game process into achievements.db,
+        /// which the page reads fresh, so it is current as soon as a game has exited.
+        /// </summary>
+        void OpenAchievements()
+        {
+            Intent page = new Intent(this, typeof(AchievementsActivity));
+            WprApplication? app = Find(_ProductId);
+            if (app != null)
+            {
+                page.PutExtra(AchievementsActivity.ExtraProductId, app.ProductId);
+                page.PutExtra(AchievementsActivity.ExtraGameName, app.Name);
+            }
+            StartActivity(page);
+            SetResult(Result.Ok);
+            Finish();
+        }
+
+        /// <summary>Earned/total counts and gamerscore per product id, for the library tiles.</summary>
+        static Dictionary<string, WPR.Shell.AchievementTotals> AchievementTotalsByProduct()
+        {
+            try
+            {
+                return AchievementContext.Current!.Achievements!
+                    .AsNoTracking()
+                    .ToList()
+                    .Where(a => !string.IsNullOrEmpty(a.OwnProductId))
+                    .GroupBy(a => a.OwnProductId!, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => WPR.Shell.AchievementRollup.Totalise(g), StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn(LogCategory.AppList, $"[pocketouya] achievement totals unreadable: {ex.Message}");
+                return new Dictionary<string, WPR.Shell.AchievementTotals>(StringComparer.OrdinalIgnoreCase);
+            }
         }
 
         // ----------------------------------------------------------------- install
@@ -287,6 +337,7 @@ namespace WPR.Platform.Android.Native
                 string tiles = System.IO.Path.Combine(folder, "tiles");
                 Directory.CreateDirectory(tiles);
                 var list = new List<Dictionary<string, string>>();
+                Dictionary<string, WPR.Shell.AchievementTotals> totals = AchievementTotalsByProduct();
                 foreach (WprApplication a in Installed())
                 {
                     if (string.IsNullOrWhiteSpace(a.ProductId)) continue;
@@ -302,13 +353,21 @@ namespace WPR.Platform.Android.Native
                         else tileName = "";
                     }
                     catch (Exception ex) { tileName = ""; Log.Warn(LogCategory.AppList, $"[pocketouya] no tile for {a.Name}: {ex.Message}"); }
-                    list.Add(new Dictionary<string, string>
+                    var entry = new Dictionary<string, string>
                     {
                         ["productId"] = a.ProductId,
                         ["name"] = string.IsNullOrWhiteSpace(a.Name) ? a.ProductId : a.Name,
                         ["type"] = a.ApplicationType.ToString(),
                         ["tile"] = tileName,
-                    });
+                    };
+                    if (totals.TryGetValue(a.ProductId, out WPR.Shell.AchievementTotals t) && t.Total > 0)
+                    {
+                        entry["achEarned"] = t.Earned.ToString();
+                        entry["achTotal"] = t.Total.ToString();
+                        entry["gsEarned"] = t.EarnedScore.ToString();
+                        entry["gsTotal"] = t.TotalScore.ToString();
+                    }
+                    list.Add(entry);
                 }
                 string tmp = System.IO.Path.Combine(folder, "games.json.tmp");
                 File.WriteAllText(tmp, JsonConvert.SerializeObject(list));

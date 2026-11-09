@@ -212,6 +212,7 @@ public class MainActivity extends Activity {
         manageRow(manage, "Add game", "Convert an OUYA game's .apk so it installs on this phone", this::pickApk);
         if (WinPhone.available(this)) {
             manageRow(manage, "Add Windows Phone game", "Install a Windows Phone 7/8 game (.xap). XNA games work best", () -> WinPhone.install(this, WP_INSTALL));
+            manageRow(manage, "Windows Phone achievements", "Unlocks and gamerscore for every Windows Phone game", () -> WinPhone.achievements(this, null));
             manageRow(manage, "Export Windows Phone logs", "WPR's session logs, crash reasons and game logs, as one .zip", () -> WinPhone.exportLogs(this, null));
         }
         manageRow(manage, "APK compatibility doctor", "Scan an APK, see known fixes and prepare a repaired copy",
@@ -390,6 +391,21 @@ public class MainActivity extends Activity {
                 android.widget.FrameLayout.LayoutParams at = new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
                 at.setMargins(0, dp(6), dp(6), 0);
                 tile.addView(badge, at);
+                String trophies = g.wp.achievementSummary();
+                if (trophies != null) {
+                    TextView ach = new TextView(MainActivity.this);
+                    ach.setText("\uD83C\uDFC6 " + trophies);
+                    ach.setTextColor(Color.WHITE);
+                    ach.setTextSize(10);
+                    ach.setPadding(dp(6), dp(2), dp(6), dp(2));
+                    GradientDrawable achChip = new GradientDrawable();
+                    achChip.setColor(0xCC107C10);
+                    achChip.setCornerRadius(dp(4));
+                    ach.setBackground(achChip);
+                    android.widget.FrameLayout.LayoutParams achAt = new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.START);
+                    achAt.setMargins(dp(6), dp(6), 0, 0);
+                    tile.addView(ach, achAt);
+                }
             }
             return tile;
         }
@@ -472,10 +488,11 @@ public class MainActivity extends Activity {
         if (g.wp != null) {
             new AlertDialog.Builder(this)
                     .setTitle(g.label)
-                    .setItems(new String[] { "Play", "Play with logging", "Export Windows Phone logs", "Remove" }, (d, which) -> {
+                    .setItems(new String[] { "Play", "Play with logging", "Achievements", "Export Windows Phone logs", "Remove" }, (d, which) -> {
                         if (which == 0) launch(g);
                         else if (which == 1) { wpRunning = g.wp; WinPhone.launch(this, g.wp, true, WP_LAUNCH); }
-                        else if (which == 2) WinPhone.exportLogs(this, g.wp);
+                        else if (which == 2) WinPhone.achievements(this, g.wp);
+                        else if (which == 3) WinPhone.exportLogs(this, g.wp);
                         else new AlertDialog.Builder(this).setTitle("Remove " + g.label + "?")
                                 .setMessage("Deletes the installed game and its saves from PocketOuya.")
                                 .setPositiveButton("Remove", (d2, w2) -> WinPhone.uninstall(this, g.wp, WP_UNINSTALL))
@@ -595,7 +612,7 @@ public class MainActivity extends Activity {
         if (requestCode == PICK_OBB && resultCode == RESULT_OK && data != null && data.getData() != null && obbFor != null)
             copyObb(obbFor, data.getData());
         if (requestCode == WP_INSTALL || requestCode == WP_UNINSTALL) loadGames();
-        if (requestCode == WP_LAUNCH) { WinPhone.logResult(this, wpRunning, resultCode, data); wpRunning = null; }
+        if (requestCode == WP_LAUNCH) { WinPhone.logResult(this, wpRunning, resultCode, data); wpRunning = null; loadGames(); }
     }
 
     /** Some games (for example Gameloft's) keep their data in a separate .obb file in Android/obb/<package>/. */

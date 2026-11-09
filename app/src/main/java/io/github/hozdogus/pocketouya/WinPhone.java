@@ -29,6 +29,7 @@ final class WinPhone {
     static final String ACTION_LAUNCH = "io.github.hozdogus.pocketouya.winphone.LAUNCH";
     static final String ACTION_UNINSTALL = "io.github.hozdogus.pocketouya.winphone.UNINSTALL";
     static final String ACTION_EXPORT_LOGS = "io.github.hozdogus.pocketouya.winphone.EXPORT_LOGS";
+    static final String ACTION_ACHIEVEMENTS = "io.github.hozdogus.pocketouya.winphone.ACHIEVEMENTS";
     static final String EXTRA_PRODUCT = "productId";
     static final String EXTRA_LOGGING = "logging";
     /** Set by the bridge on its result: what happened, for PocketOuya's global log. */
@@ -37,6 +38,14 @@ final class WinPhone {
     static final class Game {
         String productId, name, type;
         Drawable tile;
+        /** Achievements from WPR's database; achTotal is 0 when the game has none listed. */
+        int achEarned, achTotal, gsEarned, gsTotal;
+
+        /** Short tile text, e.g. "8/20 · 120G", or null when the game has no achievements. */
+        String achievementSummary() {
+            if (achTotal <= 0) return null;
+            return achEarned + "/" + achTotal + (gsTotal > 0 ? " · " + gsEarned + "G" : "");
+        }
     }
 
     private WinPhone() {}
@@ -73,6 +82,10 @@ final class WinPhone {
                 g.productId = o.getString("productId");
                 g.name = o.optString("name", g.productId);
                 g.type = o.optString("type", "");
+                g.achEarned = o.optInt("achEarned", 0);
+                g.achTotal = o.optInt("achTotal", 0);
+                g.gsEarned = o.optInt("gsEarned", 0);
+                g.gsTotal = o.optInt("gsTotal", 0);
                 String tile = o.optString("tile", "");
                 if (!tile.isEmpty()) {
                     File f = new File(folder(context), tile);
@@ -105,6 +118,13 @@ final class WinPhone {
 
     static void exportLogs(Activity host, Game game) {
         Intent i = bridge(host, ACTION_EXPORT_LOGS);
+        if (game != null) i.putExtra(EXTRA_PRODUCT, game.productId);
+        host.startActivity(i);
+    }
+
+    /** WPR's achievements page: every game when game is null, else that game's list. */
+    static void achievements(Activity host, Game game) {
+        Intent i = bridge(host, ACTION_ACHIEVEMENTS);
         if (game != null) i.putExtra(EXTRA_PRODUCT, game.productId);
         host.startActivity(i);
     }
