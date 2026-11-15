@@ -221,6 +221,7 @@ public class MainActivity extends Activity {
                 () -> startActivity(new Intent(this, VirtualPadTestActivity.class)));
         manageRow(manage, "Global log and export", "Every game launch and crash, saved on this phone",
                 () -> startActivity(new Intent(this, GlobalLogActivity.class)));
+        manageRow(manage, "Licences", "PocketOuya's licence and the open-source software it includes", this::showLicences);
         TextView version = new TextView(this);
         version.setText("PocketOuya " + ConversionRecord.converterVersion);
         version.setTextColor(0xFF777777);
@@ -233,6 +234,33 @@ public class MainActivity extends Activity {
 
         selectSection(section == DISCOVER ? PLAY : section, false);
         return root;
+    }
+
+    /** notices/THIRD_PARTY_NOTICES.txt, packaged as an asset (scripts/make-notices.py writes it). */
+    private void showLicences() {
+        String text;
+        try (java.io.InputStream in = getAssets().open("THIRD_PARTY_NOTICES.txt")) {
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[16384];
+            for (int n; (n = in.read(buffer)) > 0; ) out.write(buffer, 0, n);
+            text = out.toString("UTF-8");
+        } catch (java.io.IOException missing) {
+            text = "PocketOuya is free software under the GNU General Public License, version 3.\n"
+                    + "Source and licence notices: https://github.com/Hcode91/PocketOuya";
+        }
+        TextView body = new TextView(this);
+        body.setText(text);
+        body.setTextSize(11);
+        body.setTypeface(android.graphics.Typeface.MONOSPACE);
+        body.setTextIsSelectable(true);
+        body.setPadding(dp(16), dp(8), dp(16), dp(8));
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(body);
+        new AlertDialog.Builder(this)
+                .setTitle("Licences")
+                .setView(scroll)
+                .setPositiveButton("Close", null)
+                .show();
     }
 
     private void manageRow(LinearLayout parent, String title, String detail, Runnable action) {

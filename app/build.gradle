@@ -109,6 +109,10 @@ def dexBridge = tasks.register('dexPurchaseBridge', JavaExec) {
     }
 }
 android.sourceSets.main.res.srcDir bridgeRes
+
+// Licence notices (scripts/make-notices.py), shown under Manage -> Licences. The folder holds only
+// that file, so nothing else from it is packaged.
+android.sourceSets.main.assets.srcDir rootProject.file('notices')
 tasks.named('preBuild').configure { dependsOn dexBridge }
 
 // Opt-in low-address helper (pocketouya.low-addresses): one small 32-bit ARM library that the
@@ -312,6 +316,29 @@ tasks.register('auditNativeProfileMatrix', JavaExec) {
         if (!project.hasProperty('nativeFixtureIndex')) throw new GradleException('Supply -PnativeFixtureIndex=/private/fixture-index.json; missing fixtures never count as passes')
         def out=layout.buildDirectory.file('reports/structural/native-matrix.json').get().asFile; out.parentFile.mkdirs()
         args rootProject.file('tests/native-profile-matrix.json').path, project.property('nativeFixtureIndex'), out.path
+    }
+}
+
+// Per-phone game signing (ApkSigning) checked with apksig's own verifier on the host JVM.
+// Needs any APK: gradle :app:testApkSigning -PsigningTestApk=path/to.apk
+configurations { signingHostTests }
+dependencies { signingHostTests 'com.android.tools.build:apksig:8.7.3' }
+def signingTestClasses = layout.buildDirectory.dir('signing-tests/classes')
+def compileSigningTests = tasks.register('compileApkSigningTest', JavaCompile) {
+    source files('src/main/java/io/github/hozdogus/pocketouya/ApkSigning.java',
+                 rootProject.file('tests/ApkSigningTest.java'))
+    classpath = configurations.signingHostTests
+    destinationDirectory = signingTestClasses
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+tasks.register('testApkSigning', JavaExec) {
+    dependsOn compileSigningTests
+    classpath = files(signingTestClasses) + configurations.signingHostTests
+    mainClass = 'io.github.hozdogus.pocketouya.ApkSigningTest'
+    doFirst {
+        if (!project.hasProperty('signingTestApk')) throw new GradleException('Supply -PsigningTestApk=any.apk')
+        args project.property('signingTestApk'), file('src/main/assets/games.p12').path
     }
 }
 

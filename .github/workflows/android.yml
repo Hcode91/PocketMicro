@@ -64,6 +64,9 @@ jobs:
           fi
           exit $rc
 
+      - name: Test per-phone game signing
+        run: gradle :app:testApkSigning -PsigningTestApk=app/build/outputs/apk/debug/app-debug.apk --no-daemon
+
       - name: Name APK
         run: |
           mkdir -p out

@@ -63,6 +63,9 @@ def main():
          property flows into every referenced library, which then look for their output under
          obj/.../android-arm64/ and fail with MSB3030 "Could not copy the file". -->
     <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+    <!-- WPR-droid leaves WPR Hub out of this build (AndroidPlatform.cs): PocketOuya sends nothing
+         to any server. -->
+    <DefineConstants>$(DefineConstants);POCKETOUYA</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="{repo.as_posix()}/winphone/Bridge/*.cs" />
