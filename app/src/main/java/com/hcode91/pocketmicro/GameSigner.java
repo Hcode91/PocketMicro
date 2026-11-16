@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import android.content.Context;
 
@@ -11,8 +11,10 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 
-/** Signs patched games with PocketOuya's own key (bundled, so updates keep working). */
+/** Signs patched games with PocketMicro's own key (bundled, so updates keep working). */
 final class GameSigner {
+    // The password of the bundled games.p12. It predates the rename and stays as it is: a new key
+    // would give converted games a different signature, so they could no longer be updated.
     private static final char[] PASS = "pocketouya".toCharArray();
 
     private GameSigner() {}

@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -25,7 +25,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Runs an Ouya game's 32-bit engine through the PocketOuya translator.
+ * Runs an Ouya game's 32-bit engine through the PocketMicro translator.
  * Lives in its own process (":game") so each launch starts from a clean engine.
  */
 public class GameActivity extends Activity {

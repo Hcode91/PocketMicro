@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "usage: %s game.apk [save_dir] [--trace]\n", argv[0]);
         return 2;
     }
-    std::string save = argc > 2 && argv[2][0] != '-' ? argv[2] : "/tmp/pocketouya-save";
+    std::string save = argc > 2 && argv[2][0] != '-' ? argv[2] : "/tmp/pocketmicro-save";
     po::YoyoGame game(argv[1], save);
     int frames = 3;
     for (int i = 2; i < argc; i++) {

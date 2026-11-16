@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

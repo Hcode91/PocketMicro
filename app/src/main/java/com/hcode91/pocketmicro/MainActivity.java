@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -40,13 +40,13 @@ import java.util.Set;
 
 /** The game library: Ouya games on this phone, plus "Add game" to import an APK. */
 public class MainActivity extends Activity {
-    static final String ACTION_REFRESH = "io.github.hozdogus.pocketouya.REFRESH";
+    static final String ACTION_REFRESH = "com.hcode91.pocketmicro.REFRESH";
     private static final String OUYA_GAME = "tv.ouya.intent.category.GAME";
     private static final int PICK_APK = 1;
 
     static final int BG = 0xFF161616;
     static final int CARD = 0xFF242424;
-    static final int ACCENT = 0xFFE8432E;
+    static final int ACCENT = 0xFF14B8A6;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final List<Game> games = new ArrayList<>();
@@ -98,7 +98,7 @@ public class MainActivity extends Activity {
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = new TextView(this);
-        title.setText("PocketOuya");
+        title.setText("PocketMicro");
         title.setTextColor(Color.WHITE);
         title.setTextSize(28);
         title.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
 
         empty = new TextView(this);
         empty.setText("No Ouya games yet.\n\nTap ADD GAME and choose an Ouya game's .apk file. "
-                + "PocketOuya updates it so it installs on modern Android, then it shows up here.\n\n"
+                + "PocketMicro updates it so it installs on modern Android, then it shows up here.\n\n"
                 + "Tip: a Bluetooth controller works best – most Ouya games were made for one.");
         empty.setTextColor(0xFFAAAAAA);
         empty.setTextSize(15);
@@ -242,7 +242,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle(g.label)
                 .setItems(new String[] { "Play", "App info", "Uninstall", "Engine test (developer)",
-                        "Play with PocketOuya engine (beta)" }, (d, which) -> {
+                        "Play with PocketMicro engine (beta)" }, (d, which) -> {
                     if (which == 0) launch(g);
                     else if (which == 3) engineTest(g);
                     else if (which == 4) playWithEngine(g);
@@ -257,7 +257,7 @@ public class MainActivity extends Activity {
 
     // -------------------------------------------------------- engine test
 
-    /** Runs the game's 32-bit engine through PocketOuya's translator (game screen). */
+    /** Runs the game's 32-bit engine through PocketMicro's translator (game screen). */
     private void playWithEngine(Game g) {
         try {
             String apk = getPackageManager().getApplicationInfo(g.pkg, 0).sourceDir;
@@ -317,7 +317,7 @@ public class MainActivity extends Activity {
         if (!getPackageManager().canRequestPackageInstalls()) {
             new AlertDialog.Builder(this)
                     .setTitle("Allow installing games")
-                    .setMessage("PocketOuya needs permission to install apps so it can install your "
+                    .setMessage("PocketMicro needs permission to install apps so it can install your "
                             + "updated games. Turn on \"Allow from this source\" on the next screen, then come back.")
                     .setPositiveButton("Open settings", (d, w) -> startActivity(new Intent(
                             Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))))

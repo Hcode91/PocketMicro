@@ -33,19 +33,19 @@ jobs:
 
       - name: Use the release signing key if set
         env:
-          KEYSTORE_B64: ${{ secrets.POCKETOUYA_KEYSTORE_B64 }}
+          KEYSTORE_B64: ${{ secrets.POCKETMICRO_KEYSTORE_B64 || secrets.POCKETOUYA_KEYSTORE_B64 }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
-            echo "POCKETOUYA_KEYSTORE=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+            echo "POCKETMICRO_KEYSTORE=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
             echo "Signing with the release key"
           else
-            echo "::warning::POCKETOUYA_KEYSTORE_B64 is not set; this APK is signed with the public test key"
+            echo "::warning::POCKETMICRO_KEYSTORE_B64 is not set; this APK is signed with the public test key"
           fi
 
       - name: Build APK
         env:
-          POCKETOUYA_KEYSTORE_PASSWORD: ${{ secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
+          POCKETMICRO_KEYSTORE_PASSWORD: ${{ secrets.POCKETMICRO_KEYSTORE_PASSWORD || secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
         run: |
           set +e
           gradle assembleDebug --no-daemon 2>&1 | tee build.log
@@ -59,11 +59,11 @@ jobs:
       - name: Name APK
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/debug/app-debug.apk "out/PocketOuya-${GITHUB_RUN_NUMBER}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "out/PocketMicro-${GITHUB_RUN_NUMBER}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PocketOuya-apk
+          name: PocketMicro-apk
           path: out/*.apk
 
       - name: Publish to the "latest" release
@@ -72,6 +72,6 @@ jobs:
         run: |
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
           gh release create latest out/*.apk \
-            --title "PocketOuya build ${GITHUB_RUN_NUMBER}" \
+            --title "PocketMicro build ${GITHUB_RUN_NUMBER}" \
             --notes "Automatic build from ${GITHUB_SHA::7}." \
             --prerelease --target "$GITHUB_SHA"

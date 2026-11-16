@@ -1,4 +1,4 @@
-# PocketOuya – plan & progress
+# PocketMicro – plan & progress
 
 Goal: play Ouya games on a modern 64-bit-only Android phone (owner's device: Samsung Galaxy S23,
 Snapdragon 8 Gen 2, One UI 6+ → **no 32-bit app support**).
@@ -11,7 +11,7 @@ This file is the hand-off between sessions. **Read it first, update the Progress
 
 ### Why Ouya games don't run as-is
 1. **Old target SDK.** Ouya games target Android 4.1 (API 16). Android 14+ refuses to install
-   apps targeting < 23. → **Solved** by PocketOuya v1 (patches `targetSdkVersion` to 23 in the
+   apps targeting < 23. → **Solved** by PocketMicro v1 (patches `targetSdkVersion` to 23 in the
    binary manifest, re-signs with apksig, installs via PackageInstaller).
 2. **32-bit native code.** Ouya = Tegra 3 (ARMv7). Game engines ship only `armeabi`/`armeabi-v7a`
    `.so` files. The S23 has dropped 32-bit support (system dialog: *"This app isn't compatible with
@@ -25,7 +25,7 @@ This file is the hand-off between sessions. **Read it first, update the Progress
 - Game data: `assets/game.droid` (49 MB), IFF `FORM` file. **GEN8 bytecode version = 13** (early GMS 1.x).
 - Manifest: minSdk 7, targetSdk 16, GLES 2.0 required, declares `tv.ouya.intent.category.GAME`.
   Uses no Ouya SDK classes at all.
-- PocketOuya v1 installs it fine on the S23; it then fails with the 32-bit dialog.
+- PocketMicro v1 installs it fine on the S23; it then fails with the 32-bit dialog.
 
 ### Approaches considered
 | | Approach | Verdict |
@@ -82,9 +82,9 @@ plain function pointers. Here guest code runs in dynarmic with a **32-bit addres
 into the 64-bit host, so every host shim must translate pointers (guest addr + base) and convert
 struct layouts (32-bit `long`/pointers, bionic32 `FILE`, `stat`, etc.).
 
-Architecture (native lib `libpocketyoyo.so` inside PocketOuya, arm64):
+Architecture (native lib `libpocketyoyo.so` inside PocketMicro, arm64):
 ```
-PocketOuya GameActivity (Java, SurfaceView/GLSurfaceView, input, audio)
+PocketMicro GameActivity (Java, SurfaceView/GLSurfaceView, input, audio)
    │ JNI
    ▼
 Host core (C++, arm64)
@@ -107,7 +107,7 @@ Milestones (each ends with a pushed, testable build):
 - **M3 Picture**: GLES2 shims + EGL surface from Android `SurfaceView` → title screen visible.
 - **M4 Input**: keyboard/gamepad (Ouya O/U/Y/A mapping) + optional touch overlay.
 - **M5 Sound**: OpenAL (host OpenAL-soft) or OpenSL.
-- **M6 Polish**: saves (redirect to app storage), performance (JIT cache, fastmem), PocketOuya integration
+- **M6 Polish**: saves (redirect to app storage), performance (JIT cache, fastmem), PocketMicro integration
   (library detects GameMaker games: `assets/game.droid` + `libyoyo.so` and launches them in the engine).
 
 Build: add CMake/NDK to the Gradle project (`externalNativeBuild`), dynarmic as a git submodule or
@@ -127,7 +127,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
 - Don't bypass Ouya/IAP purchase checks.
 
 ## Progress log
-- **2026-10-30** – PocketOuya v1: APK patcher (targetSdk → 23), apksig re-signing, installer, console-style
+- **2026-10-30** – PocketMicro v1: APK patcher (targetSdk → 23), apksig re-signing, installer, console-style
   library. Confirmed S23 is 64-bit-only. Analysed Maldita Castilla (GMS1, BC13, 32-bit only). Wrote this plan.
   Researched Approach A → high-risk (see "Research result"); chose **Approach B**.
 - **2026-10-30 (later)** – **M1 part 1 done**: `engine/` (C++20, CMake) with a 4 GiB guest address
@@ -155,7 +155,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     `glGetError`** (log: `docs/m2-boot-log.md`). Only JNI gap so far: `GetStaticObjectField`.
   **Next (M3):** GLES2 + EGL shims (pointer translation for glVertexAttribPointer/glBufferData/glTexImage2D…,
   string returns for glGetString), run on Android with a GLSurfaceView; Android build of the engine
-  (NDK arm64, CMake via Gradle `externalNativeBuild`) and a GameActivity in PocketOuya. Then verify
+  (NDK arm64, CMake via Gradle `externalNativeBuild`) and a GameActivity in PocketMicro. Then verify
   dynarmic's arm64 backend on the S23.
 - **2026-10-30 (night)** – **M3a done: engine runs on the Galaxy S23.** Gradle builds the engine for
   arm64-v8a (NDK = runner's newest, `ANDROID_NDK_LATEST_HOME`; force-included `<cstdlib>/<cstring>` for

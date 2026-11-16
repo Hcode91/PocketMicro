@@ -1,9 +1,9 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
-/** The native PocketOuya engine (runs 32-bit Ouya game code on 64-bit phones). */
+/** The native PocketMicro engine (runs 32-bit Ouya game code on 64-bit phones). */
 final class Engine {
     static {
-        System.loadLibrary("pocketouya_engine");
+        System.loadLibrary("pocketmicro_engine");
     }
 
     private Engine() {}

@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -103,7 +103,7 @@ public final class ManifestPatcher {
                 r.changed = true;
             }
         } else {
-            throw new IllegalArgumentException("This APK has no <uses-sdk> entry PocketOuya can update.");
+            throw new IllegalArgumentException("This APK has no <uses-sdk> entry PocketMicro can update.");
         }
         r.manifest = data;
         return r;

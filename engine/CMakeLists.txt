@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(pocketouya_engine C CXX)
+project(pocketmicro_engine C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
@@ -66,8 +66,8 @@ if(NOT ANDROID)
 endif()
 
 if(ANDROID)
-    add_library(pocketouya_engine SHARED android/jni_bridge.cpp src/shims_gl.cpp src/shims_gl_generated.cpp)
-    target_link_libraries(pocketouya_engine po_engine GLESv2 log)
+    add_library(pocketmicro_engine SHARED android/jni_bridge.cpp src/shims_gl.cpp src/shims_gl_generated.cpp)
+    target_link_libraries(pocketmicro_engine po_engine GLESv2 log)
 endif()
 
 if(NOT ANDROID)

@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'io.github.hozdogus.pocketouya'
+    namespace 'com.hcode91.pocketmicro'
     compileSdk 35
 
     defaultConfig {
-        applicationId 'io.github.hozdogus.pocketouya'
+        applicationId 'com.hcode91.pocketmicro'
         minSdk 29
         targetSdk 35
         versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
@@ -16,7 +16,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static', '-DCMAKE_BUILD_TYPE=Release'
-                targets 'pocketouya_engine'
+                targets 'pocketmicro_engine'
             }
         }
     }
@@ -40,12 +40,12 @@ android {
         // Official builds: the private release key from CI secrets (see docs/signing.md).
         // Without it (forks, local builds) the public test key in the repo is used.
         ci {
-            def releaseStore = System.getenv('POCKETOUYA_KEYSTORE')
-            def releasePassword = System.getenv('POCKETOUYA_KEYSTORE_PASSWORD')
+            def releaseStore = System.getenv('POCKETMICRO_KEYSTORE')
+            def releasePassword = System.getenv('POCKETMICRO_KEYSTORE_PASSWORD')
             boolean useRelease = releaseStore && releasePassword
             storeFile useRelease ? file(releaseStore) : file('ci.keystore')
             storePassword useRelease ? releasePassword : 'android'
-            keyAlias useRelease ? 'pocketouya' : 'app'
+            keyAlias useRelease ? 'pocketouya' : 'app' // alias inside the existing release key; unchanged by the rename
             keyPassword useRelease ? releasePassword : 'android'
         }
     }
@@ -54,6 +54,8 @@ android {
         debug { signingConfig signingConfigs.ci }
         release { signingConfig signingConfigs.ci; minifyEnabled false }
     }
+
+    testOptions { unitTests { includeAndroidResources = true } }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -68,4 +70,7 @@ android {
 dependencies {
     // Google's APK signing library (same code as the apksigner tool).
     implementation 'com.android.tools.build:apksig:8.7.3'
+    // Only for rendering the tutorial screenshots (gradle :app:testDebugUnitTest --tests '*Screenshots*').
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
 }

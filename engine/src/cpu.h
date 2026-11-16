@@ -1,4 +1,4 @@
-// PocketOuya engine – one emulated 32-bit ARM CPU (dynarmic JIT).
+// PocketMicro engine – one emulated 32-bit ARM CPU (dynarmic JIT).
 // Each guest thread owns one Cpu; nested guest calls from host code use a child Cpu.
 #pragma once
 #include "runtime.h"

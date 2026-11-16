@@ -109,7 +109,7 @@ void Runtime::dispatch(Cpu &cpu, uint32_t id) {
         return;
     }
     if (stop_on_missing) {
-        stop(StopReason::MissingFunction, "the game called a function PocketOuya doesn't provide yet: " + name);
+        stop(StopReason::MissingFunction, "the game called a function PocketMicro doesn't provide yet: " + name);
         cpu.halt();
     } else {
         static std::set<std::string> seen;

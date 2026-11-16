@@ -1,4 +1,4 @@
-// PocketOuya engine – the runtime: guest memory, CPU threads, host functions
+// PocketMicro engine – the runtime: guest memory, CPU threads, host functions
 // ("shims") that stand in for Android's libraries, and loaded modules.
 #pragma once
 #include "elf32_loader.h"

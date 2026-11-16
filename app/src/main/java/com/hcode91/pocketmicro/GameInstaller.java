@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -12,7 +12,7 @@ import java.io.OutputStream;
 
 /** Hands a signed APK to Android's package installer. */
 final class GameInstaller {
-    static final String ACTION_RESULT = "io.github.hozdogus.pocketouya.INSTALL_RESULT";
+    static final String ACTION_RESULT = "com.hcode91.pocketmicro.INSTALL_RESULT";
 
     private GameInstaller() {}
 
