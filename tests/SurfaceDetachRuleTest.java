@@ -1,6 +1,6 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
-import io.github.hcode91.pocketouya.bridge.SurfaceDrawGuard;
+import com.hcode91.pocketmicro.bridge.SurfaceDrawGuard;
 import java.util.*;
 import org.jf.dexlib2.*;
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;

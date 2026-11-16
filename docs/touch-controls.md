@@ -2,8 +2,8 @@
 
 Choose **Touch controls — OUYA / Android input** when converting an original complete APK, or **Startup repairs + touch — Unity / Marmalade / AIR / Frima** when the game also needs a matching native
 repair. Install the converted result and use ordinary **Play**. Updating
-PocketOuya does not replace helpers already embedded in installed games: reimport
-the original APK after updating PocketOuya. Do not reconvert an already-injected APK.
+PocketMicro does not replace helpers already embedded in installed games: reimport
+the original APK after updating PocketMicro. Do not reconvert an already-injected APK.
 
 The game-owned view has directions, O/U/Y/A, L1/R1, Start, Select and Menu, with
 per-finger held state. Hide, pause, focus loss, cancellation and detachment release
@@ -49,7 +49,7 @@ game consumed it. Game startup, assets, rendering, analog-only input and further
 native failures can still block testing. No game binaries are distributed here.
 
 
-## PocketOuya GameMaker engine pad
+## PocketMicro GameMaker engine pad
 
 **Play with GameMaker engine + touch (beta)** opens the existing translated
 32-bit GameMaker runtime with its own game-owned touch view. It does not inject

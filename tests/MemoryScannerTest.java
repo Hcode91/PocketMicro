@@ -1,4 +1,4 @@
-import io.github.hcode91.pocketouya.bridge.MemoryScanner;
+import com.hcode91.pocketmicro.bridge.MemoryScanner;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 

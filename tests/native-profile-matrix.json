@@ -205,9 +205,9 @@
     }
   ],
   "transformation_source_sha256": {
-    "app/src/main/java/io/github/hozdogus/pocketouya/NativeRuntimeRepair.java": "d96bb97f667b57f9a0aa220d8740c3b20083e6b6690f0e7daeb0c3e691538b43",
-    "app/src/main/java/io/github/hozdogus/pocketouya/ArmRuntimePicRepair.java": "c4bae35f72cc68f8711a1fc2a5b536c71c78802220d6e4e49838bb8e5c40250a",
-    "app/src/main/java/io/github/hozdogus/pocketouya/ArmLiteralPicRepair.java": "b3d21f3dd4d519835a2d10e6dac193eeb048f7b035a39c638006d91499252373",
-    "app/src/main/java/io/github/hozdogus/pocketouya/MarmaladeRuntimeRepair.java": "fcfb435cacac371d8245a7dd7b3db9851fd727102f234a3482c72a96b5db4103"
+    "app/src/main/java/com/hcode91/pocketmicro/NativeRuntimeRepair.java": "d96bb97f667b57f9a0aa220d8740c3b20083e6b6690f0e7daeb0c3e691538b43",
+    "app/src/main/java/com/hcode91/pocketmicro/ArmRuntimePicRepair.java": "c4bae35f72cc68f8711a1fc2a5b536c71c78802220d6e4e49838bb8e5c40250a",
+    "app/src/main/java/com/hcode91/pocketmicro/ArmLiteralPicRepair.java": "b3d21f3dd4d519835a2d10e6dac193eeb048f7b035a39c638006d91499252373",
+    "app/src/main/java/com/hcode91/pocketmicro/MarmaladeRuntimeRepair.java": "fcfb435cacac371d8245a7dd7b3db9851fd727102f234a3482c72a96b5db4103"
   }
 }

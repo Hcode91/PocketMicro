@@ -3,15 +3,15 @@
 The owner's phone crash trace identifies an actual startup error: Android rejects
 `libmono.so` for text relocations while `UnityPlayer` initializes. This investigation
 uses the owner's native files; no game libraries or assets are distributed in
-PocketOuya. **The candidate repair has not yet been tested in a running game.**
+PocketMicro. **The candidate repair has not yet been tested in a running game.**
 
 ## Use on the phone
 
-1. Install the investigation branch's PocketOuya Actions APK.
+1. Install the investigation branch's PocketMicro Actions APK.
 2. Add the **original complete Muffin Knight APK**, including its assets. The
    partial inspection ZIPs are not playable APKs.
 3. Choose **Startup repairs — Unity / Marmalade / AIR / Frima** and review its report.
-4. Install the conversion over the existing PocketOuya-signed copy and use
+4. Install the conversion over the existing PocketMicro-signed copy and use
    ordinary **Play**, not Engine test.
 5. If it still crashes, use **Capture crash log** for a fresh trace.
 
@@ -21,7 +21,7 @@ changes or unlocks. To test embedded controls too, choose **Native runtime repai
 repair option changes purchases.
 The existing signing key remains in use. Preserve saves before uninstalling any
 copy signed by a different key; uninstalling is not required for an update over
-an existing PocketOuya-signed installation.
+an existing PocketMicro-signed installation.
 
 ## What was found
 

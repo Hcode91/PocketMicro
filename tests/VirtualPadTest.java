@@ -1,4 +1,4 @@
-import io.github.hcode91.pocketouya.bridge.VirtualPad;
+import com.hcode91.pocketmicro.bridge.VirtualPad;
 import java.util.*;
 public final class VirtualPadTest {
  static void check(boolean value){if(!value)throw new AssertionError("Virtual pad state regression");}
@@ -38,9 +38,9 @@ public final class VirtualPadTest {
   sticks.releaseAll();check(events.get(events.size()-1).equals("a1:0.0"));
   events.clear();sticks.hold(VirtualPad.L2,first,true);sticks.hold(VirtualPad.R2,first,true);check(events.equals(Arrays.asList("k104:0","k105:0")));sticks.releaseAll();
   try{sticks.leftStick(Float.POSITIVE_INFINITY,0);throw new AssertionError("Infinite stick accepted");}catch(IllegalArgumentException expected){}
-  check(io.github.hcode91.pocketouya.bridge.KeyboardPadMap.key(VirtualPad.O)==62);
-  check(io.github.hcode91.pocketouya.bridge.KeyboardPadMap.key(VirtualPad.START)==66);
-  check(io.github.hcode91.pocketouya.bridge.KeyboardPadMap.key(VirtualPad.LEFT)==VirtualPad.LEFT);
+  check(com.hcode91.pocketmicro.bridge.KeyboardPadMap.key(VirtualPad.O)==62);
+  check(com.hcode91.pocketmicro.bridge.KeyboardPadMap.key(VirtualPad.START)==66);
+  check(com.hcode91.pocketmicro.bridge.KeyboardPadMap.key(VirtualPad.LEFT)==VirtualPad.LEFT);
   System.out.println("Multi-owner buttons, diagonals, opposite directions, release/cancel and failure cleanup tests pass");
  }
 }

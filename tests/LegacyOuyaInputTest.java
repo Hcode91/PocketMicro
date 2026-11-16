@@ -1,6 +1,6 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
-import io.github.hcode91.pocketouya.bridge.*;
+import com.hcode91.pocketmicro.bridge.*;
 import java.util.*;
 import org.json.*;
 import org.jf.dexlib2.*;

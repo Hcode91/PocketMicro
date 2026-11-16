@@ -1,4 +1,4 @@
-// Memory access for PocketOuya's opt-in cheat menu, loaded into the game's own process.
+// Memory access for PocketMicro's opt-in cheat menu, loaded into the game's own process.
 //
 // Android stops apps opening /proc/self/mem, but process_vm_readv/process_vm_writev on the
 // app's own pid are always allowed (the kernel skips its ptrace checks for the same process).
@@ -35,7 +35,7 @@ static jint copy_out(uint64_t address, void *buffer, jint length) {
 }
 
 EXPORT JNIEXPORT jint JNICALL
-Java_io_github_hcode91_pocketouya_bridge_MemoryScanner_nativeRead(JNIEnv *env, jclass cls, jlong address, jbyteArray target, jint length) {
+Java_com_hcode91_pocketmicro_bridge_MemoryScanner_nativeRead(JNIEnv *env, jclass cls, jlong address, jbyteArray target, jint length) {
     (void)cls;
     if (length <= 0 || length > (*env)->GetArrayLength(env, target)) return 0;
     void *buffer = malloc((size_t)length);
@@ -47,7 +47,7 @@ Java_io_github_hcode91_pocketouya_bridge_MemoryScanner_nativeRead(JNIEnv *env, j
 }
 
 EXPORT JNIEXPORT jboolean JNICALL
-Java_io_github_hcode91_pocketouya_bridge_MemoryScanner_nativeWrite(JNIEnv *env, jclass cls, jlong address, jbyteArray source, jint length) {
+Java_com_hcode91_pocketmicro_bridge_MemoryScanner_nativeWrite(JNIEnv *env, jclass cls, jlong address, jbyteArray source, jint length) {
     (void)cls;
     if (length <= 0 || length > 8 || length > (*env)->GetArrayLength(env, source)) return JNI_FALSE;
     jbyte bytes[8];

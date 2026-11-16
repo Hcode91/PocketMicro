@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.util.*;import org.jf.dexlib2.*;import org.jf.dexlib2.dexbacked.DexBackedDexFile;import org.jf.dexlib2.iface.*;import org.jf.dexlib2.iface.instruction.*;import org.jf.dexlib2.immutable.*;import org.jf.dexlib2.immutable.instruction.*;import org.jf.dexlib2.immutable.reference.*;
 public final class UnityCpuStringRuleTest {
  static void check(boolean b){if(!b)throw new AssertionError("CPU string rule regression");}

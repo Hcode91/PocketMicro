@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import java.nio.*;import java.nio.file.*;import java.util.*;import java.util.zip.*;
 import org.jf.dexlib2.*;import org.jf.dexlib2.dexbacked.DexBackedDexFile;import org.jf.dexlib2.iface.*;import org.jf.dexlib2.iface.instruction.*;
@@ -92,7 +92,7 @@ public final class SharedCompatibilityRulesTest {
     check(z.getEntry("classes2.dex")==null&&Arrays.equals(payload,z.getInputStream(z.getEntry("assets/preserve")).readAllBytes()),"no helper injection; assets preserved");
    }
    ApkRebuilder.rebuild(in.toFile(),out.toFile());try(ZipFile z=new ZipFile(out.toFile())){check(Arrays.equals(elf(0),z.getInputStream(z.getEntry("lib/armeabi-v7a/libUnseenName.so")).readAllBytes()),"normal conversion remains isolated");}
-   byte[] helper=GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;","Ljava/lang/Object;",List.of()));
+   byte[] helper=GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lcom/hcode91/pocketmicro/bridge/TestFixture;","Ljava/lang/Object;",List.of()));
    ApkRebuilder.rebuild(in.toFile(),out.toFile(),helper,true,true);try(ZipFile z=new ZipFile(out.toFile())){check(unbindCalls(z.getInputStream(z.getEntry("classes.dex")).readAllBytes(),false)==0,"subsequent touch analysis preserves cleanup guard");}
   }finally{try(var paths=Files.list(dir)){for(Path p:paths.toArray(Path[]::new))Files.delete(p);}Files.delete(dir);}
   System.out.println("Shared rules: relocated layouts/unseen filenames, null/non-null cleanup, immutable inspection, code-write/unknown/packed/truncated rejection, ZIP preservation and option isolation pass");

@@ -1,4 +1,4 @@
-import io.github.hcode91.pocketouya.bridge.OuyaPadSink;
+import com.hcode91.pocketmicro.bridge.OuyaPadSink;
 import tv.ouya.sdk.OuyaUnityActivity;
 public final class OuyaPadSinkTest {
     public static void main(String[] args)throws Exception{

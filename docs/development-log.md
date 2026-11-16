@@ -1,4 +1,4 @@
-# PocketOuya – development log
+# PocketMicro – development log
 
 Goal: play Ouya games on a modern Android phone (owner's device: Samsung Galaxy S23, Snapdragon 8 Gen 2).
 **Correction (2026-11-03):** launch logs show 32-bit (`lib/arm`) games starting on the S23, so the
@@ -16,7 +16,7 @@ This file is the hand-off between sessions. **Read it first, update the Progress
 
 ### Why Ouya games don't run as-is
 1. **Old target SDK.** Ouya games target Android 4.1 (API 16). Android 14+ refuses to install
-   apps targeting < 23. → **Solved** by PocketOuya v1 (patches `targetSdkVersion` to 23 in the
+   apps targeting < 23. → **Solved** by PocketMicro v1 (patches `targetSdkVersion` to 23 in the
    binary manifest, re-signs with apksig, installs via PackageInstaller).
 2. **32-bit native code.** Ouya = Tegra 3 (ARMv7). Game engines ship only `armeabi`/`armeabi-v7a`
    `.so` files. The S23 has dropped 32-bit support (system dialog: *"This app isn't compatible with
@@ -30,7 +30,7 @@ This file is the hand-off between sessions. **Read it first, update the Progress
 - Game data: `assets/game.droid` (49 MB), IFF `FORM` file. **GEN8 bytecode version = 13** (early GMS 1.x).
 - Manifest: minSdk 7, targetSdk 16, GLES 2.0 required, declares `tv.ouya.intent.category.GAME`.
   Uses no Ouya SDK classes at all.
-- PocketOuya v1 installs it fine on the S23; it then fails with the 32-bit dialog.
+- PocketMicro v1 installs it fine on the S23; it then fails with the 32-bit dialog.
 
 ### Approaches considered
 | | Approach | Verdict |
@@ -87,9 +87,9 @@ plain function pointers. Here guest code runs in dynarmic with a **32-bit addres
 into the 64-bit host, so every host shim must translate pointers (guest addr + base) and convert
 struct layouts (32-bit `long`/pointers, bionic32 `FILE`, `stat`, etc.).
 
-Architecture (native lib `libpocketyoyo.so` inside PocketOuya, arm64):
+Architecture (native lib `libpocketyoyo.so` inside PocketMicro, arm64):
 ```
-PocketOuya GameActivity (Java, SurfaceView/GLSurfaceView, input, audio)
+PocketMicro GameActivity (Java, SurfaceView/GLSurfaceView, input, audio)
    │ JNI
    ▼
 Host core (C++, arm64)
@@ -112,7 +112,7 @@ Milestones (each ends with a pushed, testable build):
 - **M3 Picture**: GLES2 shims + EGL surface from Android `SurfaceView` → title screen visible.
 - **M4 Input**: keyboard/gamepad (Ouya O/U/Y/A mapping) + optional touch overlay.
 - **M5 Sound**: OpenAL (host OpenAL-soft) or OpenSL.
-- **M6 Polish**: saves (redirect to app storage), performance (JIT cache, fastmem), PocketOuya integration
+- **M6 Polish**: saves (redirect to app storage), performance (JIT cache, fastmem), PocketMicro integration
   (library detects GameMaker games: `assets/game.droid` + `libyoyo.so` and launches them in the engine).
 
 Build: add CMake/NDK to the Gradle project (`externalNativeBuild`), dynarmic as a git submodule or
@@ -154,7 +154,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     DEX/Java-code reading tools for this game were all stopped by Claude's safety checks.
   - Owner parked it again 2026-11-03.
   - **2026-11-04 (this branch), original-code baseline from `feature/unity-video-surface` (0.1.90):**
-    same crash with every PocketOuya repair off except Unity runtime promotion, so the SDK/DEX
+    same crash with every PocketMicro repair off except Unity runtime promotion, so the SDK/DEX
     repairs are not the cause. Static facts added from the APK the owner supplied:
     the game's C# (`Assembly-CSharp-firstpass`) creates the manager only in
     `TryGfxManager.Awake/OnEnable/get_SFMgr` -> `new SFManager` -> `SF_Init`; `OnDisable` only
@@ -172,7 +172,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   - **2026-11-04: owner chose the low-address experiment.** Added opt-in conversion option
     `pocketouya.low-addresses` (see shared-compatibility-rules.md). Test: convert the original
     Soul Fjord APK with startup repairs and the new box ticked; the global log must show a
-    `PocketOuyaLowAddr: reserved ... MB above 0x80000000` line with low test allocations. If
+    `PocketMicroLowAddr: reserved ... MB above 0x80000000` line with low test allocations. If
     the crash is unchanged and Scaleform's addresses are low, the high-address hypothesis is
     wrong; if it gets further, keep the option and consider auto-suggesting it.
   - **2026-11-04 08:46 result (0.1.94, low-address box ticked):** helper reserved 1034 MB above
@@ -188,7 +188,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     manager at 0x78353050: **high-address hypothesis disproven**; the trigger is Unity's
     pause/resume around full-screen video (consistent with the very first investigation). The
     low-address option stays as an opt-in experiment but is not needed for this. Added
-    `unity.scaleform-skip-video`; next log should show `PocketOuyaUnityVideo` skip lines and
+    `unity.scaleform-skip-video`; next log should show `PocketMicroUnityVideo` skip lines and
     whether the menu appears without a crash.
   - **2026-11-04 09:27 result (0.1.96): video skipped, same crash 0.45 s later.** Root cause
     found: `SaveStateBlock` writes GL_MAX_VERTEX_ATTRIBS (32 on Adreno, 16 on the OUYA) flag bytes
@@ -213,7 +213,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
 - Purchase compatibility must be explicit and title-specific; do not weaken host/device encryption or report success for unimplemented operations.
 
 ## Progress log
-- **2026-10-30** – PocketOuya v1: APK patcher (targetSdk → 23), apksig re-signing, installer, console-style
+- **2026-10-30** – PocketMicro v1: APK patcher (targetSdk → 23), apksig re-signing, installer, console-style
   library. Confirmed S23 is 64-bit-only. Analysed Maldita Castilla (GMS1, BC13, 32-bit only). Wrote this plan.
   Researched Approach A → high-risk (see "Research result"); chose **Approach B**.
 - **2026-10-30 (later)** – **M1 part 1 done**: `engine/` (C++20, CMake) with a 4 GiB guest address
@@ -241,7 +241,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
     `glGetError`** (log: `docs/m2-boot-log.md`). Only JNI gap so far: `GetStaticObjectField`.
   **Next (M3):** GLES2 + EGL shims (pointer translation for glVertexAttribPointer/glBufferData/glTexImage2D…,
   string returns for glGetString), run on Android with a GLSurfaceView; Android build of the engine
-  (NDK arm64, CMake via Gradle `externalNativeBuild`) and a GameActivity in PocketOuya. Then verify
+  (NDK arm64, CMake via Gradle `externalNativeBuild`) and a GameActivity in PocketMicro. Then verify
   dynarmic's arm64 backend on the S23.
 - **2026-10-30 (night)** – **M3a done: engine runs on the Galaxy S23.** Gradle builds the engine for
   arm64-v8a (NDK = runner's newest, `ANDROID_NDK_LATEST_HOME`; force-included `<cstdlib>/<cstring>` for
@@ -800,8 +800,8 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   log on failure. No Android startup/gameplay/input/purchase success claimed.
 
 
-- **2026-11-01 — APK compatibility doctor inside PocketOuya:** owner chose
-  integration into PocketOuya rather than separate app. Added unexported doctor
+- **2026-11-01 — APK compatibility doctor inside PocketMicro:** owner chose
+  integration into PocketMicro rather than separate app. Added unexported doctor
   activity and home button: select original APK without install permission,
   bounded private streaming copy, non-executing preflight, supported-fix preview,
   explicit Prepare, separate signed output with ApkVerifier verification,
@@ -901,7 +901,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   owner asked to return to fixes applicable to other APKs and selected BOTH the
   OUYA cleanup and native families. Branch feature/shared-compatibility-rules
   from1d85252 preserves the detector-only branch. Baseline APK run41421926645
-  succeeded and uploaded PocketOuya-apk; no phone install was executed.
+  succeeded and uploaded PocketMicro-apk; no phone install was executed.
   Added independent WritableRelocationRule: no fingerprints/offsets/instruction
   decoding; only clears stale DT_TEXTREL/DF_TEXTREL after bounded ARM32 REL/PLT
   proof that every supported loader write is aligned RW and avoids metadata.
@@ -945,7 +945,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   Need managed assemblies/current runtime trace for the remaining startup wait.
   No purchase/native/finalizer transformations changed; proprietary DEX not shipped.
 
-- **2026-11-02 — Explicit embedded Unity experiment in PocketOuya:** user
+- **2026-11-02 — Explicit embedded Unity experiment in PocketMicro:** user
   expressly requested the Monocle experiment as an app option after distinguishing
   it from already pushed shared repairs. Added separate Add game experimental
   choice, with confirmation/report before install, isolated from ordinary startup
@@ -963,7 +963,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   call argument/registers/SP/LR/CPSR under original permissions. Whole-program
   reference safety and Android/gameplay remain UNVERIFIED, disclosed in UI/report.
   No game bytes committed. docs/experimental-unity-runtime.md records boundaries.
-  Build new PocketOuya in GitHub; user selects original complete APK and explicit
+  Build new PocketMicro in GitHub; user selects original complete APK and explicit
   experimental option, then normal Play and full runtime log if unsuccessful.
 
 - **2026-11-02 — Monocle phone test reaches new CPU-string crash:** owner supplied
@@ -1117,7 +1117,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   Added independent air.loader.report-hidden-error diagnostic rule. Requires
   matching AIR SDK load/getter/field/register/branch/flag/catch structure; adds
   one call after move-exception and a private helper using Log.w(String,Throwable),
-  tag PocketOuyaAIR. Helper isolates logging failure; original successful/failed
+  tag PocketMicroAIR. Helper isolates logging failure; original successful/failed
   loading, flags, retries and catch continuation retained. Reparse verifies hook
   and helper; unknown shapes/collisions/protected/malformed/budget inputs retained.
   Shared startup/doctor coordinator composes this after OUYA cleanup, preserving
@@ -1145,7 +1145,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
 
 - **2026-11-02 — AIR diagnostic confirmed by phone global log:**
   owner supplied full global journal. Latest Zombie Hearts launch at22:59:29
-  shows STL load ok, then Android linker and PocketOuyaAIR both report Core
+  shows STL load ok, then Android linker and PocketMicroAIR both report Core
   rejected for TEXTREL, followed by nativeSurfaceCreated missing binding.
   Diagnostic executes on the actual Android14 phone; this initial loader cause
   is now VERIFIED. No private-media dependency error is observed at this stage;
@@ -1278,7 +1278,7 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
 
 - **2026-11-05 — N.O.V.A. 3 playable:** genuine Freedom Edition runs past the tutorial after gms.plus-one-missing-drawable (Google+ +1 artwork crash), android.wide-screen (1.86:1 letterbox shifted taps by 134 px) and OBB copies opened to the game (shell-owned OBB gave EACCES; Uncharted: Fortune Hunter confirmed the same fix). Owner confirmed taps line up.
 
-- **2026-11-05 — Opt-in cheat menu:** owner asked for a cheat engine for PocketOuya games
+- **2026-11-05 — Opt-in cheat menu:** owner asked for a cheat engine for PocketMicro games
   (single-player only; modern Play Store games out of scope). New conversion checkbox adds
   assets/pocketouya/cheats; TouchControls then shows a Cheats button opening CheatMenu. The
   MemoryScanner searches the game's own /proc/self/mem (private writable heap/anon/stack/library
@@ -1293,8 +1293,8 @@ passthrough (Android Emulator's gfxstream – huge to port). Revisit only if A a
   both paths.
 
 - **2026-11-05 — Windows Phone edition, stage 1:** owner wants WPR (Bubbleshum/WPR, MIT, C#/.NET 10
-  on CoreCLR) inside PocketOuya, not a separate app. NativeAOT is impossible (WPR JIT-loads
-  patched game IL), so the edition's APK is built by WPR's .NET Android head with PocketOuya as an
+  on CoreCLR) inside PocketMicro, not a separate app. NativeAOT is impossible (WPR JIT-loads
+  patched game IL), so the edition's APK is built by WPR's .NET Android head with PocketMicro as an
   Android library: Gradle -PpocketouyaLibrary + :app:collectWinPhoneLibraries, then
   winphone/prepare-wpr.py adapts the pinned submodule (package/label/icon, MainLauncher off, WPR
   game process :wpgame, Guava ListenableFuture opt-outs, bridge compiled in). Bridge

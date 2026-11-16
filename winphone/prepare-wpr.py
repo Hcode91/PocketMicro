@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Prepare the WPR checkout (winphone/wpr) to build as the Windows Phone edition of PocketOuya.
+"""Prepare the WPR checkout (winphone/wpr) to build as the Windows Phone edition of PocketMicro.
 
 WPR's Android head is a .NET app. Rather than keeping a fork, this script makes the few changes
-needed for it to become PocketOuya, every time CI builds:
+needed for it to become PocketMicro, every time CI builds:
 
-  * PocketOuya's Java app (built by Gradle as an Android library, plus its dependencies) is added
+  * PocketMicro's Java app (built by Gradle as an Android library, plus its dependencies) is added
     to the APK, and its MainActivity becomes the launcher. WPR's own screens are left in the code
     but have no way in.
-  * The package name, label and icon become PocketOuya's, so it installs over PocketOuya.
-  * WPR's game process is renamed :wpgame, because PocketOuya already has a :game process.
-  * PocketOuya's bridge (winphone/Bridge/*.cs) is compiled into WPR's head.
+  * The package name, label and icon become PocketMicro's, so it installs over PocketMicro.
+  * WPR's game process is renamed :wpgame, because PocketMicro already has a :game process.
+  * PocketMicro's bridge (winphone/Bridge/*.cs) is compiled into WPR's head.
 
 Every edit checks its anchor and stops the build with a clear message if WPR's code moved.
 
-Usage: prepare-wpr.py <wpr checkout> <pocketouya repo root> <folder with PocketOuya .aar/.jar files>
+Usage: prepare-wpr.py <wpr checkout> <pocketouya repo root> <folder with PocketMicro .aar/.jar files>
 """
 import pathlib
 import re
@@ -41,29 +41,29 @@ def main():
     if not (head / "WPR.Platform.Android.csproj").is_file():
         fail(f"no WPR Android head under {wpr}")
     if not any(libs.glob("*.aar")):
-        fail(f"no PocketOuya .aar in {libs}")
+        fail(f"no PocketMicro .aar in {libs}")
 
-    # 1. Project: PocketOuya's identity, its Java library and the bridge.
+    # 1. Project: PocketMicro's identity, its Java library and the bridge.
     csproj = head / "WPR.Platform.Android.csproj"
     addition = f"""
-  <!-- PocketOuya (added by winphone/prepare-wpr.py) -->
+  <!-- PocketMicro (added by winphone/prepare-wpr.py) -->
   <PropertyGroup>
-    <ApplicationId>io.github.hozdogus.pocketouya</ApplicationId>
-    <ApplicationTitle>PocketOuya</ApplicationTitle>
-    <!-- PocketOuya's manifest (and Shizuku's provider in it) uses ${{applicationId}}. -->
-    <AndroidManifestPlaceholders>applicationId=io.github.hozdogus.pocketouya</AndroidManifestPlaceholders>
-    <!-- PocketOuya's own minimum; its library manifest declares it too. -->
+    <ApplicationId>com.hcode91.pocketmicro</ApplicationId>
+    <ApplicationTitle>PocketMicro</ApplicationTitle>
+    <!-- PocketMicro's manifest (and Shizuku's provider in it) uses ${{applicationId}}. -->
+    <AndroidManifestPlaceholders>applicationId=com.hcode91.pocketmicro</AndroidManifestPlaceholders>
+    <!-- PocketMicro's own minimum; its library manifest declares it too. -->
     <SupportedOSPlatformVersion>29.0</SupportedOSPlatformVersion>
-    <!-- PocketOuya ships the full Guava (dexlib2 needs it). These opt-outs do not stop
+    <!-- PocketMicro ships the full Guava (dexlib2 needs it). These opt-outs do not stop
          Xamarin.Google.Guava.ListenableFuture coming in, so app/build.gradle also strips
-         ListenableFuture.class from PocketOuya's Guava jar. -->
+         ListenableFuture.class from PocketMicro's Guava jar. -->
     <XamarinGoogleGuavaListenableFutureOptOut>true</XamarinGoogleGuavaListenableFutureOptOut>
     <XamarinGoogleGuavaOptOut>true</XamarinGoogleGuavaOptOut>
     <!-- arm64 only. Set here, never as -p:RuntimeIdentifiers on the command line: a global
          property flows into every referenced library, which then look for their output under
          obj/.../android-arm64/ and fail with MSB3030 "Could not copy the file". -->
     <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
-    <!-- WPR-droid leaves WPR Hub out of this build (AndroidPlatform.cs): PocketOuya sends nothing
+    <!-- WPR-droid leaves WPR Hub out of this build (AndroidPlatform.cs): PocketMicro sends nothing
          to any server. -->
     <DefineConstants>$(DefineConstants);POCKETOUYA</DefineConstants>
   </PropertyGroup>
@@ -81,10 +81,10 @@ def main():
         fail("csproj has no </Project>")
     csproj.write_text(text[:idx] + addition.lstrip("\n") + "\n", encoding="utf-8")
 
-    # 2. PocketOuya's MainActivity is the launcher, not WPR's.
+    # 2. PocketMicro's MainActivity is the launcher, not WPR's.
     edit(head / "MainActivity.cs", "MainLauncher = true", "MainLauncher = false")
 
-    # 3. PocketOuya already uses :game for its own engine.
+    # 3. PocketMicro already uses :game for its own engine.
     # Every occurrence: the class comment mentions it before the [Activity] attribute does.
     game = head / "GameActivity.cs"
     edit(game, 'Process = ":game"', 'Process = ":wpgame"', count=-1)
@@ -94,19 +94,19 @@ def main():
     if exits.is_file():
         edit(exits, 'EndsWith(":game"', 'EndsWith(":wpgame"')
 
-    # 4. Manifest: PocketOuya's package and label; its icon comes from the library.
+    # 4. Manifest: PocketMicro's package and label; its icon comes from the library.
     manifest = head / "Properties/AndroidManifest.xml"
-    edit(manifest, 'package="com.wpr.android"', 'package="io.github.hozdogus.pocketouya"')
+    edit(manifest, 'package="com.wpr.android"', 'package="com.hcode91.pocketmicro"')
     edit(manifest, '<manifest xmlns:android="http://schemas.android.com/apk/res/android"',
          '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"')
     edit(manifest, '<application android:label="WPR" android:icon="@mipmap/ic_launcher"',
-         '<application android:label="PocketOuya" android:icon="@mipmap/ic_launcher" android:allowBackup="false"'
+         '<application android:label="PocketMicro" android:icon="@mipmap/ic_launcher" android:allowBackup="false"'
          ' tools:replace="android:label,android:icon,android:allowBackup"')
     # (.NET Android writes allowBackup="true" when the app manifest leaves it out, which
-    #  clashes with PocketOuya's library manifest saying false.)
+    #  clashes with PocketMicro's library manifest saying false.)
 
     # 5. App resources override library ones of the same name: drop WPR's launcher icon so
-    #    @mipmap/ic_launcher is PocketOuya's.
+    #    @mipmap/ic_launcher is PocketMicro's.
     removed = 0
     for icon in (head / "Resources").glob("mipmap-*/ic_launcher.*"):
         icon.unlink()

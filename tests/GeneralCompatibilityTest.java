@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import java.util.*;
 import java.nio.*;
@@ -98,7 +98,7 @@ public final class GeneralCompatibilityTest {
   GameCompatibilityPatcher.Result noLauncher=GameCompatibilityPatcher.patch(source,Collections.singleton("Lmissing/Activity;"),true);check(!noLauncher.needsBridge()&&noLauncher.dex.isEmpty());
   Map<String,byte[]> fallback=new LinkedHashMap<>();fallback.put("classes.dex",dex(cls(LAUNCHER,"Landroid/app/Activity;",Collections.emptyList())));
   GameCompatibilityPatcher.Result generic=GameCompatibilityPatcher.patch(fallback,launch,true);check(generic.touchEnabled&&generic.report.contains("Android gamepad events"));
-  Map<String,byte[]> already=new LinkedHashMap<>(source);already.put("classes3.dex",dex(cls("Lio/github/hcode91/pocketouya/bridge/TouchControls;","Ljava/lang/Object;",Collections.emptyList())));
+  Map<String,byte[]> already=new LinkedHashMap<>(source);already.put("classes3.dex",dex(cls("Lcom/hcode91/pocketmicro/bridge/TouchControls;","Ljava/lang/Object;",Collections.emptyList())));
   try{GameCompatibilityPatcher.patch(already,launch,true);throw new AssertionError("accepted reinjection");}catch(IOException expected){}
   ClassDef finalBase=cls("Lorg/example/Base;","Landroid/app/Activity;",Collections.singletonList(method("Lorg/example/Base;","onResume",params(),17,false,Collections.singletonList(new ImmutableInstruction10x(Opcode.RETURN_VOID)))));
   Map<String,byte[]> finals=new LinkedHashMap<>();finals.put("classes.dex",dex(finalBase,cls(LAUNCHER,"Lorg/example/Base;",Collections.emptyList())));
@@ -121,7 +121,7 @@ public final class GeneralCompatibilityTest {
   try{
    Path original=temp.resolve("original.apk"),converted=temp.resolve("converted.apk");
    try(ZipOutputStream out=new ZipOutputStream(Files.newOutputStream(original))){out.putNextEntry(new ZipEntry("AndroidManifest.xml"));out.write(manifest(false));out.closeEntry();for(Map.Entry<String,byte[]> e:source.entrySet()){out.putNextEntry(new ZipEntry(e.getKey()));out.write(e.getValue());out.closeEntry();}out.putNextEntry(new ZipEntry("assets/test"));out.write(new byte[]{4,5,6});out.closeEntry();}
-   byte[] helper=dex(cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;","Ljava/lang/Object;",Collections.emptyList()));
+   byte[] helper=dex(cls("Lcom/hcode91/pocketmicro/bridge/TestFixture;","Ljava/lang/Object;",Collections.emptyList()));
    ManifestPatcher.Result result=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,false);check(result.compatibilityReport.contains("enabled"));
    try(ZipFile zip=new ZipFile(converted.toFile())){check(zip.getEntry("classes3.dex")!=null);check(Arrays.equals(helper,ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes3.dex")))));check(Arrays.equals(new byte[]{4,5,6},ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("assets/test")))));}
    ManifestPatcher.Result combined=ApkRebuilder.rebuild(original.toFile(),converted.toFile(),helper,true,true);
@@ -138,7 +138,7 @@ public final class GeneralCompatibilityTest {
     ManifestPatcher.Result prepared=ApkRebuilder.prepareForInstall(original.toFile(),converted.toFile(),helper,startup,false,floor);
     check(prepared.newTarget==floor&&prepared.compatibilityReport.contains("Touch pad: enabled"));
     try(ZipFile zip=new ZipFile(converted.toFile())){
-     byte[] game=zip.getInputStream(zip.getEntry("classes2.dex")).readAllBytes();lifecycle(game);check(bridgeCalls(game,"Lio/github/hcode91/pocketouya/bridge/TouchControls;")>0);
+     byte[] game=zip.getInputStream(zip.getEntry("classes2.dex")).readAllBytes();lifecycle(game);check(bridgeCalls(game,"Lcom/hcode91/pocketmicro/bridge/TouchControls;")>0);
      check(Arrays.equals(helper,zip.getInputStream(zip.getEntry("classes3.dex")).readAllBytes()));
      byte[] purchase=zip.getInputStream(zip.getEntry("classes.dex")).readAllBytes();
      check(Arrays.equals(source.get("classes.dex"),purchase));

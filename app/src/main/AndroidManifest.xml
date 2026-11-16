@@ -62,9 +62,9 @@
             android:configChanges="orientation|screenSize|keyboardHidden" />
         <service android:name=".LaunchLogService" android:exported="false"
             android:foregroundServiceType="dataSync" />
-        <!-- Games imported by PocketOuya ask here for the Shizuku virtual controller; the provider checks the caller. -->
+        <!-- Games imported by PocketMicro ask here for the Shizuku virtual controller; the provider checks the caller. -->
         <provider android:name=".VirtualPadProvider"
-            android:authorities="io.github.hozdogus.pocketouya.virtualpad"
+            android:authorities="com.hcode91.pocketmicro.virtualpad"
             android:exported="true" />
         <provider android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

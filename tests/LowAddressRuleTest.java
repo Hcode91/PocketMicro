@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import java.nio.file.*;
 import java.util.*;
@@ -81,7 +81,7 @@ public final class LowAddressRuleTest {
                 out.putNextEntry(new ZipEntry("classes.dex")); out.write(GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls(MAIN, "Landroid/app/Activity;", List.of(create(MAIN))))); out.closeEntry();
                 out.putNextEntry(new ZipEntry("lib/armeabi-v7a/libunity.so")); out.write(new byte[]{1, 2, 3}); out.closeEntry();
             }
-            byte[] helper = GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lio/github/hcode91/pocketouya/bridge/TestFixture;", "Ljava/lang/Object;", List.of()));
+            byte[] helper = GeneralCompatibilityTest.dex(GeneralCompatibilityTest.cls("Lcom/hcode91/pocketmicro/bridge/TestFixture;", "Ljava/lang/Object;", List.of()));
             ManifestPatcher.Result plain = ApkRebuilder.prepareForInstall(original.toFile(), converted.toFile(), helper, false, false, 23);
             check(!plain.compatibilityReport.contains(LowAddressRule.ID), "not applied unless asked");
             try (ZipFile zip = new ZipFile(converted.toFile())) { check(zip.getEntry("lib/armeabi-v7a/libpocketouya_lowaddr.so") == null, "no helper library unless asked"); }
@@ -91,7 +91,7 @@ public final class LowAddressRuleTest {
             try (ZipFile zip = new ZipFile(converted.toFile())) {
                 ZipEntry lib = zip.getEntry("lib/armeabi-v7a/libpocketouya_lowaddr.so");
                 check(lib != null && lib.getMethod() == ZipEntry.STORED && Arrays.equals(LIB, ApkRebuilder.readAll(zip.getInputStream(lib))), "helper library stored uncompressed");
-                check(Arrays.equals(helper, ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes2.dex")))), "PocketOuya helper DEX appended");
+                check(Arrays.equals(helper, ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes2.dex")))), "PocketMicro helper DEX appended");
                 List<String> body = calls(find(ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex"))), MAIN));
                 check(body.get(0).equals(reserve), "reserve is the first call even with the touch wrapper: " + body);
                 check(body.stream().anyMatch(s -> s.contains("TouchControls;->watch")), "touch hook still present: " + body);

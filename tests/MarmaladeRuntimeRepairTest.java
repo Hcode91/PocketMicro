@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.io.*;import java.nio.*;import java.util.*;
 public final class MarmaladeRuntimeRepairTest {
  static void check(boolean ok){if(!ok)throw new AssertionError("Marmalade PIC repair regression");}

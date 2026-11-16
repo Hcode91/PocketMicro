@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.nio.file.*;import java.util.*;import java.util.zip.*;import org.json.*;
 /** Regression oracle is used only for byte-output comparison, never to classify a new rule. */
 public final class SharedRepairFixtureAudit {

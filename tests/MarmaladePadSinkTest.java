@@ -1,4 +1,4 @@
-import io.github.hcode91.pocketouya.bridge.*;
+import com.hcode91.pocketmicro.bridge.*;
 import com.ideaworks3d.marmalade.LoaderActivity;
 import android.view.KeyEvent;
 public final class MarmaladePadSinkTest {

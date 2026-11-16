@@ -1,6 +1,6 @@
 # APK assessment before conversion
 
-After **Add game** selects an APK, PocketOuya assesses it in the background and
+After **Add game** selects an APK, PocketMicro assesses it in the background and
 shows **APK assessment and suggested fixes**. The screen gives a suggested path,
 rule-level reasons and known limitations. It offers a review action and **All
 conversion options**; selecting a suggestion still opens the existing conversion
@@ -23,9 +23,9 @@ Recommendations are based on inspected structure and actual supported rules:
 The checker does not infer a working purchase/input fix from engine names or
 string markers. A supported nullable CPU getter is reported as a pattern; its
 runtime failure is unverified by the scan and its guard remains coupled to an
-eligible explicit experiment. PocketOuya never changes a game's purchase checks.
+eligible explicit experiment. PocketMicro never changes a game's purchase checks.
 
-Every PocketOuya installation preparation path now requests on-screen controls
+Every PocketMicro installation preparation path now requests on-screen controls
 automatically: suggested/standard conversion, manual conversion,
 startup repairs, the explicit Unity experiment and the APK doctor (including its
 exported APK). The duplicate touch-only menu variants and touch checkboxes have

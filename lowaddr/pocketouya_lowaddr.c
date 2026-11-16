@@ -1,5 +1,5 @@
 /*
- * PocketOuya low-address helper (32-bit ARM, loaded into a converted game on request).
+ * PocketMicro low-address helper (32-bit ARM, loaded into a converted game on request).
  *
  * The OUYA ran a 32-bit kernel, so a game's memory always sat below 3 GB (in practice mostly
  * below 2 GB). On a 64-bit phone a 32-bit process can get memory right up to 4 GB. Some old
@@ -9,7 +9,7 @@
  *
  * It never touches existing mappings (MAP_FIXED_NOREPLACE), leaves room below the main
  * thread's stack, and does nothing if too little space would remain below the limit.
- * It logs what it reserved and where test allocations land, under the tag PocketOuyaLowAddr.
+ * It logs what it reserved and where test allocations land, under the tag PocketMicroLowAddr.
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -85,7 +85,7 @@ int lowaddr_plan(const char *maps, struct lowaddr_plan *plan) {
 #ifndef MAP_FIXED_NOREPLACE
 #define MAP_FIXED_NOREPLACE 0x100000
 #endif
-#define TAG "PocketOuyaLowAddr"
+#define TAG "PocketMicroLowAddr"
 
 static char maps_text[2 * 1024 * 1024];
 

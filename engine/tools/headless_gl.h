@@ -11,7 +11,7 @@ inline void register_headless_gl(Runtime &rt) {
     rt.def("glGetError", [](Cpu &c) { c.ret(0); });
     rt.def("glGetString", [&rt](Cpu &c) {
         static gaddr s = 0;
-        if (!s) s = rt.strdup("OpenGL ES 2.0 (PocketOuya headless)");
+        if (!s) s = rt.strdup("OpenGL ES 2.0 (PocketMicro headless)");
         c.ret(s);
     });
     auto gen = [&rt](Cpu &c) {

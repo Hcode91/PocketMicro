@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.io.*;import java.nio.*;import java.nio.file.*;import java.util.*;import java.util.zip.*;
 public final class NativeRuntimeRepairTest {
  static void check(boolean value){if(!value)throw new AssertionError("PIC runtime repair regression");}

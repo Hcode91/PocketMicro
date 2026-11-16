@@ -1,6 +1,6 @@
 # Global game launch log
 
-Every launch through PocketOuya's Play, GameMaker gameplay, Engine test or manual
+Every launch through PocketMicro's Play, GameMaker gameplay, Engine test or manual
 Capture-and-launch path now appends to **one shared on-device journal**. Each
 entry begins with the game name, timestamp and source, followed by its log text.
 There are no per-game log files. Launch requests, launch failures and session
@@ -12,20 +12,20 @@ for display. **Export full log** opens Android's file picker and streams the ent
 saved journal into one text file, including older entries absent from the preview.
 Choose the destination; nothing is uploaded. Clear log removes the saved journal,
 while an active capture may continue adding new output. The journal survives app
-and device restarts, until cleared, app data is erased, or PocketOuya is uninstalled.
+and device restarts, until cleared, app data is erased, or PocketMicro is uninstalled.
 There is no automatic rotation or historical export truncation: long recordings
 consume storage, and a full disk prevents further writes. Exported copies remain
 where the user saved them and are not deleted by Clear log.
 
 ## Runtime and crash sources
 
-- With Shizuku running and PocketOuya's existing access granted, launch starts a
+- With Shizuku running and PocketMicro's existing access granted, launch starts a
   non-daemon, owner-UID-restricted reader before/as the game opens. Fixed logcat
   commands read main/system output for the target app's UID at all priorities and
   a separate crash-buffer stream. CrashLogFilter retains only Java/native blocks
   identifying that package, including subprocesses. Other apps' normal output is
   not written to the journal. A shared UID can contain more than one package.
-- The built-in engine runs under PocketOuya's UID. Without Shizuku, a local reader
+- The built-in engine runs under PocketMicro's UID. Without Shizuku, a local reader
   can still capture that UID's normal logs, including the existing native engine
   Android log output. GameActivity also saves engine start/stop/quit output, and
   Engine test saves its returned report. Shizuku can add system-native crash output.
@@ -41,7 +41,7 @@ where the user saved them and are not deleted by Clear log.
   screen, then launch again. Existing manual crash capture/import remains available.
 
 An app foreground service saves output while another game is in front. It stops
-when PocketOuya's library is resumed, the capture notification's Stop action is
+when PocketMicro's library is resumed, the capture notification's Stop action is
 used, a new launch replaces it, capture fails, or Android stops/times out the
 service. The notification opens the global viewer. It is subject to Android's
 notification permission and foreground-service limits; target-35 dataSync time

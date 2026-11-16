@@ -1,6 +1,6 @@
-import io.github.hcode91.pocketouya.bridge.VirtualPad;
-import io.github.hcode91.pocketouya.bridge.VirtualPadState;
-import io.github.hozdogus.pocketouya.UhidGamepad;
+import com.hcode91.pocketmicro.bridge.VirtualPad;
+import com.hcode91.pocketmicro.bridge.VirtualPadState;
+import com.hcode91.pocketmicro.UhidGamepad;
 
 /** Touch pad -> Shizuku virtual controller mapping, checked against the bytes the pad sends. */
 public final class VirtualPadStateTest {
