@@ -42,6 +42,11 @@ import java.util.Set;
 public class MainActivity extends Activity {
     static final String ACTION_REFRESH = "io.github.hozdogus.pocketouya.REFRESH";
     static final String ACTION_IMPORT_STORE = "io.github.hozdogus.pocketouya.IMPORT_STORE_APK";
+    /**
+     * The request another app (BacklogQuest's home-screen tiles) sends to start a game straight away.
+     * Extra "game_id": the game's package name, its "wp:" id, or its name as the library shows it.
+     */
+    public static final String ACTION_LAUNCH_GAME = "com.hcode91.pocket.LAUNCH_GAME";
     private static final String OUYA_GAME = "tv.ouya.intent.category.GAME";
     private static final int PICK_APK = 1, PICK_OBB = 2, WP_INSTALL = 30, WP_LAUNCH = 31, WP_UNINSTALL = 32;
     private WinPhone.Game wpRunning;
@@ -78,12 +83,36 @@ public class MainActivity extends Activity {
         setContentView(buildUi());
         registerReceiver(refresh, new IntentFilter(ACTION_REFRESH), Context.RECEIVER_NOT_EXPORTED);
         handleStoreImport(getIntent());
+        if (savedInstanceState == null && launchFrom(getIntent())) finish();
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleStoreImport(intent);
+        if (launchFrom(intent)) finish();
+    }
+
+    /**
+     * Starts the game another app asked for. True when the library can close behind it: an OUYA game
+     * runs as its own app. A Windows Phone game reports back to this screen, so it stays open.
+     */
+    private boolean launchFrom(Intent intent) {
+        if (intent == null || !ACTION_LAUNCH_GAME.equals(intent.getAction())) return false;
+        String wanted = intent.getStringExtra("game_id");
+        intent.setAction(null);
+        if (wanted == null || wanted.trim().isEmpty()) return false;
+        wanted = wanted.trim();
+        loadGames();
+        Game found = null;
+        for (Game g : games) if (g.pkg.equals(wanted)) { found = g; break; }
+        if (found == null) for (Game g : games) if (g.label.toString().equalsIgnoreCase(wanted)) { found = g; break; }
+        if (found == null) {
+            Toast.makeText(this, "\"" + wanted + "\" isn't in your library.", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        launch(found);
+        return found.wp == null;
     }
 
     /** A game downloaded by the Store: only files inside PocketOuya's own store folder are accepted. */

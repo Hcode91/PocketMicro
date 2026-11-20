@@ -90,3 +90,10 @@ Copyright (C) 2026 Hcode91
 Third-party components keep their own licences: Shizuku API (Apache-2.0), dexlib2/smali
 (BSD-3-Clause), apksig (Apache-2.0), Guava (Apache-2.0), dynarmic (0BSD) and Boost (BSL-1.0).
 OUYA is a trademark of its respective owner.
+
+## Starting a game from another app
+
+Launchers and trackers (such as BacklogQuest's home-screen tiles) can start a game directly: send
+`com.hcode91.pocket.LAUNCH_GAME` to the app's launcher activity with the extra `game_id`: the
+game's package name, its `wp:` id for a Windows Phone game, or its name as the library shows it
+(any case).
