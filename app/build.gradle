@@ -338,7 +338,9 @@ tasks.register('testApkSigning', JavaExec) {
     mainClass = 'io.github.hozdogus.pocketouya.ApkSigningTest'
     doFirst {
         if (!project.hasProperty('signingTestApk')) throw new GradleException('Supply -PsigningTestApk=any.apk')
-        args project.property('signingTestApk'), file('src/main/assets/games.p12').path
+        // JavaExec runs in app/, so a relative path (CI passes app/build/outputs/...) is taken from
+        // the root project, where it was written; an absolute path is kept as it is.
+        args rootProject.file(project.property('signingTestApk')).path, file('src/main/assets/games.p12').path
     }
 }
 
