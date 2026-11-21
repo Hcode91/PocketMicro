@@ -4,13 +4,13 @@ def asLibrary = project.hasProperty('pocketouyaLibrary')
 apply plugin: asLibrary ? 'com.android.library' : 'com.android.application'
 
 android {
-    namespace 'io.github.hozdogus.pocketouya'
+    namespace 'com.hcode91.pocketmicro'
     compileSdk 35
 
     defaultConfig {
         minSdk 29
         if (!asLibrary) {
-            applicationId 'io.github.hozdogus.pocketouya'
+            applicationId 'com.hcode91.pocketmicro'
             targetSdk 35
             versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
             versionName "0.1." + (System.getenv('GITHUB_RUN_NUMBER') ?: 'dev')
@@ -196,57 +196,57 @@ dependencies {
 }
 def purchaseTestClasses = layout.buildDirectory.dir('purchase-tests/classes')
 def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCompile) {
-    source files('src/main/java/io/github/hozdogus/pocketouya/GameCompatibilityPatcher.java',
-            'src/main/java/io/github/hozdogus/pocketouya/GameMakerPadPatcher.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ModernApkDoctor.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ApkRepairAssessment.java',
-            'src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java',
-            'src/main/java/io/github/hozdogus/pocketouya/WritableRelocationRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/OuyaServiceCleanupRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/AirLoaderDiagnosticsRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/NdkDependencyPathRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/LegacySdkCrashRules.java',
-            'src/main/java/io/github/hozdogus/pocketouya/DeviceIdRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/CallGuardRules.java',
-            'src/main/java/io/github/hozdogus/pocketouya/StubLibraryWriter.java',
-            'src/main/java/io/github/hozdogus/pocketouya/PrivateLibraryStubs.java',
-            'src/main/java/io/github/hozdogus/pocketouya/UnityEmbeddedRuntimePromotion.java',
-            'src/main/java/io/github/hozdogus/pocketouya/OuyaStoreOfflineRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/OuyaGameDataLocalRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/GlUniformCountRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/TvLayoutRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/TvLandscapeRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/TvScreenSizeRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/WideScreenRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/InputConfigRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ObbImport.java',
-            'src/main/java/io/github/hozdogus/pocketouya/LowAddressRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/LaunchHook.java',
-            'src/main/java/io/github/hozdogus/pocketouya/SurfaceDetachRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ScaleformGlesRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/UhidGamepad.java',
-            'src/main/java/io/github/hozdogus/pocketouya/StoreClient.java',
-            'src/main/java/io/github/hozdogus/pocketouya/OuyaControllerPlayersRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/OuyaAccountRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/AndEngineBase64Rule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ClickteamSurfaceLayoutRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/JavascriptInterfaceRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/WebViewThreadRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/DetectedFinalizerRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/SharedCompatibilityRepairs.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ExperimentalUnityRuntimeRepair.java',
-            'src/main/java/io/github/hozdogus/pocketouya/UnityCpuStringRule.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java',
-            'src/main/java/io/github/hozdogus/pocketouya/NativeStartupChecks.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ArmRuntimePicRepair.java',
-            'src/main/java/io/github/hozdogus/pocketouya/NativeRuntimeRepair.java',
-            'src/main/java/io/github/hozdogus/pocketouya/MarmaladeRuntimeRepair.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ArmLiteralPicRepair.java',
-            'src/main/java/io/github/hozdogus/pocketouya/EngineInput.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ApkRebuilder.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ConversionRecord.java',
-            'src/main/java/io/github/hozdogus/pocketouya/ManifestPatcher.java',
-            'src/main/java/io/github/hozdogus/pocketouya/TombstoneText.java')
+    source files('src/main/java/com/hcode91/pocketmicro/GameCompatibilityPatcher.java',
+            'src/main/java/com/hcode91/pocketmicro/GameMakerPadPatcher.java',
+            'src/main/java/com/hcode91/pocketmicro/ModernApkDoctor.java',
+            'src/main/java/com/hcode91/pocketmicro/ApkRepairAssessment.java',
+            'src/main/java/com/hcode91/pocketmicro/CompatibilityEvidence.java',
+            'src/main/java/com/hcode91/pocketmicro/WritableRelocationRule.java',
+            'src/main/java/com/hcode91/pocketmicro/OuyaServiceCleanupRule.java',
+            'src/main/java/com/hcode91/pocketmicro/AirLoaderDiagnosticsRule.java',
+            'src/main/java/com/hcode91/pocketmicro/NdkDependencyPathRule.java',
+            'src/main/java/com/hcode91/pocketmicro/LegacySdkCrashRules.java',
+            'src/main/java/com/hcode91/pocketmicro/DeviceIdRule.java',
+            'src/main/java/com/hcode91/pocketmicro/CallGuardRules.java',
+            'src/main/java/com/hcode91/pocketmicro/StubLibraryWriter.java',
+            'src/main/java/com/hcode91/pocketmicro/PrivateLibraryStubs.java',
+            'src/main/java/com/hcode91/pocketmicro/UnityEmbeddedRuntimePromotion.java',
+            'src/main/java/com/hcode91/pocketmicro/OuyaStoreOfflineRule.java',
+            'src/main/java/com/hcode91/pocketmicro/OuyaGameDataLocalRule.java',
+            'src/main/java/com/hcode91/pocketmicro/GlUniformCountRule.java',
+            'src/main/java/com/hcode91/pocketmicro/TvLayoutRule.java',
+            'src/main/java/com/hcode91/pocketmicro/TvLandscapeRule.java',
+            'src/main/java/com/hcode91/pocketmicro/TvScreenSizeRule.java',
+            'src/main/java/com/hcode91/pocketmicro/WideScreenRule.java',
+            'src/main/java/com/hcode91/pocketmicro/InputConfigRule.java',
+            'src/main/java/com/hcode91/pocketmicro/ObbImport.java',
+            'src/main/java/com/hcode91/pocketmicro/LowAddressRule.java',
+            'src/main/java/com/hcode91/pocketmicro/LaunchHook.java',
+            'src/main/java/com/hcode91/pocketmicro/SurfaceDetachRule.java',
+            'src/main/java/com/hcode91/pocketmicro/ScaleformGlesRule.java',
+            'src/main/java/com/hcode91/pocketmicro/UhidGamepad.java',
+            'src/main/java/com/hcode91/pocketmicro/StoreClient.java',
+            'src/main/java/com/hcode91/pocketmicro/OuyaControllerPlayersRule.java',
+            'src/main/java/com/hcode91/pocketmicro/OuyaAccountRule.java',
+            'src/main/java/com/hcode91/pocketmicro/AndEngineBase64Rule.java',
+            'src/main/java/com/hcode91/pocketmicro/ClickteamSurfaceLayoutRule.java',
+            'src/main/java/com/hcode91/pocketmicro/JavascriptInterfaceRule.java',
+            'src/main/java/com/hcode91/pocketmicro/WebViewThreadRule.java',
+            'src/main/java/com/hcode91/pocketmicro/DetectedFinalizerRule.java',
+            'src/main/java/com/hcode91/pocketmicro/SharedCompatibilityRepairs.java',
+            'src/main/java/com/hcode91/pocketmicro/ExperimentalUnityRuntimeRepair.java',
+            'src/main/java/com/hcode91/pocketmicro/UnityCpuStringRule.java',
+            'src/main/java/com/hcode91/pocketmicro/ArmFinalizerDetector.java',
+            'src/main/java/com/hcode91/pocketmicro/NativeStartupChecks.java',
+            'src/main/java/com/hcode91/pocketmicro/ArmRuntimePicRepair.java',
+            'src/main/java/com/hcode91/pocketmicro/NativeRuntimeRepair.java',
+            'src/main/java/com/hcode91/pocketmicro/MarmaladeRuntimeRepair.java',
+            'src/main/java/com/hcode91/pocketmicro/ArmLiteralPicRepair.java',
+            'src/main/java/com/hcode91/pocketmicro/EngineInput.java',
+            'src/main/java/com/hcode91/pocketmicro/ApkRebuilder.java',
+            'src/main/java/com/hcode91/pocketmicro/ConversionRecord.java',
+            'src/main/java/com/hcode91/pocketmicro/ManifestPatcher.java',
+            'src/main/java/com/hcode91/pocketmicro/TombstoneText.java')
     source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/CheatMenu.java'; exclude '**/AndroidPadSink.java'; exclude '**/AirPadSink.java'; exclude '**/VirtualDeviceSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
     source rootProject.files(
@@ -294,8 +294,8 @@ tasks.register('testPurchaseProfile', JavaExec) {
 def structuralClasses = layout.buildDirectory.dir('structural-tests/classes')
 def compileStructuralTests = tasks.register('compileStructuralDetectorTests', JavaCompile) {
     dependsOn compilePurchaseTests
-    source files('src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java',
-                 'src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java')
+    source files('src/main/java/com/hcode91/pocketmicro/CompatibilityEvidence.java',
+                 'src/main/java/com/hcode91/pocketmicro/ArmFinalizerDetector.java')
     source rootProject.fileTree('tests/structural') { include '**/*.java' }
     classpath = files(purchaseTestClasses) + configurations.purchaseHostTests
     destinationDirectory = structuralClasses
@@ -305,13 +305,13 @@ def compileStructuralTests = tasks.register('compileStructuralDetectorTests', Ja
 tasks.register('testStructuralDetector', JavaExec) {
     dependsOn compileStructuralTests
     classpath = files(structuralClasses, purchaseTestClasses) + configurations.purchaseHostTests
-    mainClass = 'io.github.hozdogus.pocketouya.ArmFinalizerDetectorTest'
+    mainClass = 'com.hcode91.pocketmicro.ArmFinalizerDetectorTest'
     doFirst { def out=layout.buildDirectory.file('reports/structural/generated.json').get().asFile; out.parentFile.mkdirs(); args out.path }
 }
 tasks.register('auditNativeProfileMatrix', JavaExec) {
     dependsOn compileStructuralTests
     classpath = files(structuralClasses, purchaseTestClasses) + configurations.purchaseHostTests
-    mainClass = 'io.github.hozdogus.pocketouya.NativeProfileMatrixAudit'
+    mainClass = 'com.hcode91.pocketmicro.NativeProfileMatrixAudit'
     doFirst {
         if (!project.hasProperty('nativeFixtureIndex')) throw new GradleException('Supply -PnativeFixtureIndex=/private/fixture-index.json; missing fixtures never count as passes')
         def out=layout.buildDirectory.file('reports/structural/native-matrix.json').get().asFile; out.parentFile.mkdirs()
@@ -325,7 +325,7 @@ configurations { signingHostTests }
 dependencies { signingHostTests 'com.android.tools.build:apksig:8.7.3' }
 def signingTestClasses = layout.buildDirectory.dir('signing-tests/classes')
 def compileSigningTests = tasks.register('compileApkSigningTest', JavaCompile) {
-    source files('src/main/java/io/github/hozdogus/pocketouya/ApkSigning.java',
+    source files('src/main/java/com/hcode91/pocketmicro/ApkSigning.java',
                  rootProject.file('tests/ApkSigningTest.java'))
     classpath = configurations.signingHostTests
     destinationDirectory = signingTestClasses
@@ -335,7 +335,7 @@ def compileSigningTests = tasks.register('compileApkSigningTest', JavaCompile) {
 tasks.register('testApkSigning', JavaExec) {
     dependsOn compileSigningTests
     classpath = files(signingTestClasses) + configurations.signingHostTests
-    mainClass = 'io.github.hozdogus.pocketouya.ApkSigningTest'
+    mainClass = 'com.hcode91.pocketmicro.ApkSigningTest'
     doFirst {
         if (!project.hasProperty('signingTestApk')) throw new GradleException('Supply -PsigningTestApk=any.apk')
         // JavaExec runs in app/, so a relative path (CI passes app/build/outputs/...) is taken from

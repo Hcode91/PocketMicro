@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.nio.*;import java.nio.file.*;import java.util.*;import java.util.zip.*;
 public final class ModernApkDoctorTest {
  static void check(boolean b){if(!b)throw new AssertionError("APK doctor regression");}

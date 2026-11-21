@@ -43,7 +43,7 @@ GlState g_gl;
 
 // Milestone 3a: boot a GameMaker game's 32-bit engine until its first graphics call.
 extern "C" JNIEXPORT jstring JNICALL
-Java_io_github_hozdogus_pocketouya_Engine_bootTest(JNIEnv *env, jclass, jstring apk, jstring save) {
+Java_com_hcode91_pocketmicro_Engine_bootTest(JNIEnv *env, jclass, jstring apk, jstring save) {
     std::string result;
     {
         YoyoGame game(jstr(env, apk), jstr(env, save));
@@ -62,7 +62,7 @@ Java_io_github_hozdogus_pocketouya_Engine_bootTest(JNIEnv *env, jclass, jstring 
 
 // Game screen: called on the GL thread once the surface exists.
 extern "C" JNIEXPORT jboolean JNICALL
-Java_io_github_hozdogus_pocketouya_Engine_start(JNIEnv *env, jclass, jstring apk, jstring save, jstring pkg) {
+Java_com_hcode91_pocketmicro_Engine_start(JNIEnv *env, jclass, jstring apk, jstring save, jstring pkg) {
     g_game = std::make_unique<YoyoGame>(jstr(env, apk), jstr(env, save));
     g_game->package = jstr(env, pkg);
     attach_log(g_game->rt);
@@ -73,18 +73,18 @@ Java_io_github_hozdogus_pocketouya_Engine_start(JNIEnv *env, jclass, jstring apk
 
 // Game screen: one frame (GL thread).
 extern "C" JNIEXPORT jboolean JNICALL
-Java_io_github_hozdogus_pocketouya_Engine_frame(JNIEnv *, jclass, jint w, jint h) {
+Java_com_hcode91_pocketmicro_Engine_frame(JNIEnv *, jclass, jint w, jint h) {
     return g_game && g_game->frame(w, h) ? JNI_TRUE : JNI_FALSE;
 }
 
 // Input: queue a key press (0 = down, 1 = up) with an Android key code. Any thread.
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_hozdogus_pocketouya_Engine_key(JNIEnv *, jclass, jint action, jint keycode) {
+Java_com_hcode91_pocketmicro_Engine_key(JNIEnv *, jclass, jint action, jint keycode) {
     if (g_game) g_game->key_event(action, keycode);
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_io_github_hozdogus_pocketouya_Engine_log(JNIEnv *env, jclass) {
+Java_com_hcode91_pocketmicro_Engine_log(JNIEnv *env, jclass) {
     std::string s;
     if (g_game) {
         StopReason r = g_game->rt.stop_reason.load();

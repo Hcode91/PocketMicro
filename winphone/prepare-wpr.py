@@ -48,10 +48,10 @@ def main():
     addition = f"""
   <!-- PocketOuya (added by winphone/prepare-wpr.py) -->
   <PropertyGroup>
-    <ApplicationId>io.github.hozdogus.pocketouya</ApplicationId>
+    <ApplicationId>com.hcode91.pocketmicro</ApplicationId>
     <ApplicationTitle>PocketOuya</ApplicationTitle>
     <!-- PocketOuya's manifest (and Shizuku's provider in it) uses ${{applicationId}}. -->
-    <AndroidManifestPlaceholders>applicationId=io.github.hozdogus.pocketouya</AndroidManifestPlaceholders>
+    <AndroidManifestPlaceholders>applicationId=com.hcode91.pocketmicro</AndroidManifestPlaceholders>
     <!-- PocketOuya's own minimum; its library manifest declares it too. -->
     <SupportedOSPlatformVersion>29.0</SupportedOSPlatformVersion>
     <!-- PocketOuya ships the full Guava (dexlib2 needs it). These opt-outs do not stop
@@ -96,7 +96,7 @@ def main():
 
     # 4. Manifest: PocketOuya's package and label; its icon comes from the library.
     manifest = head / "Properties/AndroidManifest.xml"
-    edit(manifest, 'package="com.wpr.android"', 'package="io.github.hozdogus.pocketouya"')
+    edit(manifest, 'package="com.wpr.android"', 'package="com.hcode91.pocketmicro"')
     edit(manifest, '<manifest xmlns:android="http://schemas.android.com/apk/res/android"',
          '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"')
     edit(manifest, '<application android:label="WPR" android:icon="@mipmap/ic_launcher"',

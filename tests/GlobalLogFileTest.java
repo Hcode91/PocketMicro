@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.io.*;import java.nio.file.*;import java.nio.charset.StandardCharsets;import java.util.*;import java.util.concurrent.*;
 public final class GlobalLogFileTest {
  static void check(boolean value){if(!value)throw new AssertionError("Global journal/export regression");}

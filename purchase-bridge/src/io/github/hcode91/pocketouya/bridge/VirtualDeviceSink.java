@@ -16,8 +16,8 @@ import android.util.Log;
  */
 public final class VirtualDeviceSink implements VirtualPad.Sink {
     static final String TAG = "PocketOuyaControls";
-    static final Uri PROVIDER = Uri.parse("content://io.github.hozdogus.pocketouya.virtualpad");
-    static final String DESCRIPTOR = "io.github.hozdogus.pocketouya.VIRTUAL_PAD";
+    static final Uri PROVIDER = Uri.parse("content://com.hcode91.pocketmicro.virtualpad");
+    static final String DESCRIPTOR = "com.hcode91.pocketmicro.VIRTUAL_PAD";
     static final int CREATE = 1, INPUT = 2;
     private static final IBinder TOKEN = new Binder(); // lives as long as this process
     private final VirtualPad.Sink fallback;

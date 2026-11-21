@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import java.util.*;
 import org.jf.dexlib2.*;
@@ -9,7 +9,7 @@ import org.jf.dexlib2.iface.reference.*;
 import org.jf.dexlib2.immutable.*;
 import org.jf.dexlib2.immutable.instruction.*;
 import org.jf.dexlib2.immutable.reference.*;
-import static io.github.hozdogus.pocketouya.PlatformCrashRulesTest.*;
+import static com.hcode91.pocketmicro.PlatformCrashRulesTest.*;
 
 public final class LegacyServiceStartTest {
  static final String COMPONENT="Landroid/content/ComponentName;";

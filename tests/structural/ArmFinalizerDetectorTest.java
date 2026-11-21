@@ -1,8 +1,8 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.util.*;
 import java.nio.file.*;
 import org.json.*;
-import static io.github.hozdogus.pocketouya.CompatibilityEvidence.Status.*;
+import static com.hcode91.pocketmicro.CompatibilityEvidence.Status.*;
 public final class ArmFinalizerDetectorTest {
  static int tp,tn,fp,fn;static JSONArray cases=new JSONArray();
  static void check(boolean b){if(!b)throw new AssertionError("Structural detector regression");}

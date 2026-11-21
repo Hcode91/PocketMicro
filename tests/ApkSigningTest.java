@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 
 import com.android.apksig.ApkVerifier;
 import com.android.apksig.SigningCertificateLineage;
@@ -12,7 +12,7 @@ import java.security.cert.X509Certificate;
 /**
  * Per-phone game signing with a handover from the shared key (ApkSigning), checked with apksig's
  * own verifier. Run on a plain JVM with apksig on the classpath:
- *   java -cp apksig.jar:out io.github.hozdogus.pocketouya.ApkSigningTest any.apk app/src/main/assets/games.p12
+ *   java -cp apksig.jar:out com.hcode91.pocketmicro.ApkSigningTest any.apk app/src/main/assets/games.p12
  */
 public final class ApkSigningTest {
     static void check(boolean ok, String why) { if (!ok) throw new AssertionError(why); }

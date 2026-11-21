@@ -363,7 +363,7 @@ soon as its banner loads (Grave Defense Holidays), even with its original target
 
 Each `loadUrl`, `loadData`, `loadDataWithBaseURL` and `stopLoading` call on a WebView (or a
 subclass) becomes a static call into a small class added to the game's DEX
-(`io.github.hozdogus.pocketouya.compat.WebViewOnMain`). On the main thread it makes the same
+(`com.hcode91.pocketmicro.compat.WebViewOnMain`). On the main thread it makes the same
 call straight away, so behaviour is unchanged; on any other thread it posts the call to the main
 thread. Ads are not removed or blocked. Runs with Startup repairs. Confirmed on the owner's phone with Grave Defense Holidays (2026-11-04); host-tested on synthetic DEX
 (subclass and range calls, other WebView calls untouched, idempotent).

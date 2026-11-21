@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.nio.file.*;import java.util.*;import java.util.zip.*;import java.io.*;import org.json.*;
 /** Offline evidence runner. Fixture paths come from a private index, never the detector. */
 public final class NativeProfileMatrixAudit {

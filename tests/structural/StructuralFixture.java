@@ -1,4 +1,4 @@
-package io.github.hozdogus.pocketouya;
+package com.hcode91.pocketmicro;
 import java.nio.*;
 import java.nio.charset.StandardCharsets;
 /** Generated ELF test layouts. No proprietary bytes; no offsets shared with production detector. */

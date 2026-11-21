@@ -4,8 +4,8 @@ on:
     branches: [feature/compat-evidence-detector, feature/shared-compatibility-rules]
   pull_request:
     paths:
-      - 'app/src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java'
-      - 'app/src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java'
+      - 'app/src/main/java/com/hcode91/pocketmicro/ArmFinalizerDetector.java'
+      - 'app/src/main/java/com/hcode91/pocketmicro/CompatibilityEvidence.java'
       - 'tests/structural/**'
       - 'tests/native-profile-matrix.json'
       - '.github/workflows/compatibility-evidence.yml'
@@ -32,7 +32,7 @@ jobs:
               assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==expected, name
           PYCODE
           mkdir -p /tmp/standalone-detector
-          javac -d /tmp/standalone-detector app/src/main/java/io/github/hozdogus/pocketouya/CompatibilityEvidence.java app/src/main/java/io/github/hozdogus/pocketouya/ArmFinalizerDetector.java
+          javac -d /tmp/standalone-detector app/src/main/java/com/hcode91/pocketmicro/CompatibilityEvidence.java app/src/main/java/com/hcode91/pocketmicro/ArmFinalizerDetector.java
       - name: Existing compatibility regression suites
         run: |
           bash scripts/test-compatibility.sh

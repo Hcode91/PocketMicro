@@ -46,10 +46,10 @@ namespace WPR.Platform.Android.Native
         Theme = "@style/WprTheme",
         Exported = false,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
-    [Register("io.github.hozdogus.pocketouya.winphone.WinPhoneBridge")]
+    [Register("com.hcode91.pocketmicro.winphone.WinPhoneBridge")]
     public class WinPhoneBridgeActivity : Activity
     {
-        const string Prefix = "io.github.hozdogus.pocketouya.winphone.";
+        const string Prefix = "com.hcode91.pocketmicro.winphone.";
         const string ActionInstall = Prefix + "INSTALL", ActionLaunch = Prefix + "LAUNCH",
             ActionUninstall = Prefix + "UNINSTALL", ActionExportLogs = Prefix + "EXPORT_LOGS",
             ActionAchievements = Prefix + "ACHIEVEMENTS";
