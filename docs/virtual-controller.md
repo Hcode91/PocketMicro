@@ -1,6 +1,6 @@
 # Shizuku virtual controller
 
-Goal: let PocketOuya's touch pad drive a real Android input device named "OUYA Game Controller",
+Goal: let PocketMicro's touch pad drive a real Android input device named "OUYA Game Controller",
 so every engine sees a genuine controller (Unity 4 only lists real `InputDevice`s as joysticks;
 OUYA-era scripts such as Soul Fjord's OuyaInput also pick button layouts by controller name).
 
@@ -39,7 +39,7 @@ LTRIGGER RTRIGGER BRAKE GAS HAT_X HAT_Y; the kernel started and opened it; A arr
 - `VirtualDeviceSink` (helper DEX): asks `content://com.hcode91.pocketmicro.virtualpad`
   `call("connect")` with a per-process token, sends `CREATE`, then one-way `INPUT` states. Until
   connected, or if Shizuku is unavailable, input goes to the in-game route.
-- `VirtualPadProvider` (PocketOuya): answers only packages in PocketOuya's imported list, waits
+- `VirtualPadProvider` (PocketMicro): answers only packages in PocketMicro's imported list, waits
   up to 3 s for Shizuku's binder in a cold process, requires Shizuku permission already granted,
   binds `VirtualPadService` as a daemon (tag `virtual_pad_game`) and calls owner-only `ALLOW(uid,
   token)`. The service accepts input from that uid and removes the pad when the token dies.

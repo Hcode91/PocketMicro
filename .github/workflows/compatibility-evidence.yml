@@ -36,7 +36,7 @@ jobs:
       - name: Existing compatibility regression suites
         run: |
           bash scripts/test-compatibility.sh
-          gradle :app:testPurchaseProfile --no-daemon
+          gradle :app:testHost --no-daemon
       - name: Generated structural detector cases
         run: gradle :app:testStructuralDetector --no-daemon
       - name: Compile Android sources without building an APK

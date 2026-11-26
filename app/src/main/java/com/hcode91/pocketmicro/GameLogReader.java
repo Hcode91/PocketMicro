@@ -22,8 +22,8 @@ public final class GameLogReader extends Binder {
     @Override protected boolean onTransact(int code,Parcel data,Parcel reply,int flags)throws RemoteException{
         if(code==INTERFACE_TRANSACTION){reply.writeString(DESCRIPTOR);return true;}
         if(code==PING_TRANSACTION)return true;
-        if(code==DESTROY){if(Binder.getCallingUid()!=owner&&Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("Log belongs to PocketOuya");stop();System.exit(0);return true;}
-        if(Binder.getCallingUid()!=owner)throw new SecurityException("Log belongs to PocketOuya");data.enforceInterface(DESCRIPTOR);
+        if(code==DESTROY){if(Binder.getCallingUid()!=owner&&Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("Log belongs to PocketMicro");stop();System.exit(0);return true;}
+        if(Binder.getCallingUid()!=owner)throw new SecurityException("Log belongs to PocketMicro");data.enforceInterface(DESCRIPTOR);
         if(code==START){String pkg=data.readString();long since=data.readLong();try{start(pkg,since);}catch(Exception error){throw new IllegalArgumentException("Cannot start game log: "+error);}reply.writeNoException();return true;}
         if(code==STOP){stop();reply.writeNoException();return true;}
         if(code==EXIT_TRACE){String pkg=data.readString();long since=data.readLong();reply.writeNoException();exitTrace(pkg,since,reply);return true;}

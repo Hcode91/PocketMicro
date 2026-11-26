@@ -16,7 +16,7 @@ import org.jf.dexlib2.writer.pool.DexPool;
 
 /** Logs a structurally verified, swallowed AIR load error. Never repairs native bytes. */
 public final class AirLoaderDiagnosticsRule {
-    public static final String ID="air.loader.report-hidden-error", TAG="PocketOuyaAIR";
+    public static final String ID="air.loader.report-hidden-error", TAG="PocketMicroAIR";
     private static final String TYPE="Lcom/adobe/air/AndroidActivityWrapper;";
     private static final String HELPER="pocketouyaReportAirLoadFailure";
     private static final String ERROR="Ljava/lang/UnsatisfiedLinkError;";

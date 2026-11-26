@@ -1,4 +1,4 @@
-// PocketOuya engine – "thunks": guest addresses that stand in for host functions.
+// PocketMicro engine – "thunks": guest addresses that stand in for host functions.
 //
 // Each imported function the game calls (malloc, glDrawArrays, …) gets a tiny
 // ARM stub in guest memory:   svc #<id> ; bx lr

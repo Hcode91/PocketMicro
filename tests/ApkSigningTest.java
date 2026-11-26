@@ -28,13 +28,13 @@ public final class ApkSigningTest {
         ApkSigning.Keys device = ApkSigning.createDeviceKeys();
         device.cert.checkValidity();
         device.cert.verify(device.cert.getPublicKey());
-        check(device.cert.getSubjectX500Principal().getName().contains("PocketOuya games on this device"),
+        check(device.cert.getSubjectX500Principal().getName().contains("PocketMicro games on this device"),
                 "certificate subject: " + device.cert.getSubjectX500Principal());
 
         File out = File.createTempFile("signed", ".apk");
         ApkSigning.signWithHandover(shared, device, in, out);
 
-        // Android 10 (PocketOuya's minimum) reads v3: the phone's key, with the handover.
+        // Android 10 (PocketMicro's minimum) reads v3: the phone's key, with the handover.
         ApkVerifier.Result r = new ApkVerifier.Builder(out).setMinCheckedPlatformVersion(29).build().verify();
         check(r.isVerified(), "verifies on Android 10+: " + r.getErrors());
         check(r.isVerifiedUsingV3Scheme(), "signed with v3");

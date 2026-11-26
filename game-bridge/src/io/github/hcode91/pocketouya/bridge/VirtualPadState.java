@@ -1,7 +1,7 @@
 package io.github.hcode91.pocketouya.bridge;
 
 /**
- * Touch pad state for PocketOuya's Shizuku virtual controller. Two layouts, because stock
+ * Touch pad state for PocketMicro's Shizuku virtual controller. Two layouts, because stock
  * Android has no OUYA key layout file (the virtual pad always gets Generic.kl):
  *
  * - OUYA scan order, for Unity games: Unity 4 numbers joystick buttons by Linux scan code, and

@@ -67,7 +67,7 @@ public final class TvScreenSizeRuleTest {
 
         TvScreenSizeRule.Result inspect = TvScreenSizeRule.inspect(input);
         check(inspect.status == CompatibilityEvidence.Status.SUPPORTED && inspect.replacements.isEmpty(), "inspect is read-only: " + inspect.reason);
-        check(inspect.reason.startsWith("1 "), "PocketOuya's own classes are not counted: " + inspect.reason);
+        check(inspect.reason.startsWith("1 "), "PocketMicro's own classes are not counted: " + inspect.reason);
 
         TvScreenSizeRule.Result r = TvScreenSizeRule.repair(input);
         check(r.status == CompatibilityEvidence.Status.VERIFIED, r.reason);
@@ -75,7 +75,7 @@ public final class TvScreenSizeRuleTest {
         Method game = find(repaired, GAME);
         check(run(game, phone) == 1, "phone now reads as large");
         check(run(game, 0x11) == 1 && run(game, 0x14) == 1, "small and xlarge also read as large");
-        check(run(find(repaired, OURS), phone) == 0, "PocketOuya's own code still sees the real size");
+        check(run(find(repaired, OURS), phone) == 0, "PocketMicro's own code still sees the real size");
 
         List<Instruction> code = new ArrayList<>(); for (Instruction i : game.getImplementation().getInstructions()) code.add(i);
         check(code.get(1).getOpcode() == Opcode.AND_INT_LIT8 && ((NarrowLiteralInstruction) code.get(1)).getNarrowLiteral() == -16, "size bits cleared");

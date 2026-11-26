@@ -1,6 +1,6 @@
 # Capture game crashes on the phone
 
-PocketOuya's game menu now has **Capture crash log**. Long-press a game in the
+PocketMicro's game menu now has **Capture crash log**. Long-press a game in the
 library to open it. This screen has two independent ways to collect evidence;
 neither requires a computer. It does not repair a crash automatically.
 
@@ -10,10 +10,10 @@ Android does not let an ordinary app read other installed games' logs. Install
 [Shizuku](https://shizuku.rikka.app/download/) and follow its
 [wireless debugging setup](https://shizuku.rikka.app/guide/setup/). Android 11+
 can start it on the phone without root or a computer. Shizuku typically needs
-starting again after the phone reboots. PocketOuya requires Shizuku 13 or later.
+starting again after the phone reboots. PocketMicro requires Shizuku 13 or later.
 
-1. In PocketOuya, long-press the game and select **Capture crash log**.
-2. Tap **Shizuku access**, then authorize PocketOuya when Shizuku asks.
+1. In PocketMicro, long-press the game and select **Capture crash log**.
+2. Tap **Shizuku access**, then authorize PocketMicro when Shizuku asks.
 3. Tap **Capture and launch**. The game opens while a short capture runs.
 4. Let the game crash, then return to the capture screen through Recent apps.
 5. Tap **Stop / show log**. Review the result and use **Copy** or **Save**.
@@ -40,7 +40,7 @@ log access, timing, process matching or available buffers were insufficient.
 2. Reproduce the game crash and immediately choose **Developer options > Take
    bug report > Interactive report**. Samsung labels and availability can vary.
 3. Save the completed report ZIP through its notification to My Files.
-4. Open the game's **Capture crash log** screen in PocketOuya and tap
+4. Open the game's **Capture crash log** screen in PocketMicro and tap
    **Import bug report**. Select that ZIP, or a previously extracted text file.
 5. Review the extracted details, then copy/save those instead of sharing the
    whole device report.
@@ -61,13 +61,13 @@ Only matching groups are displayed/exported; unrelated tags and identified
 other-app crashes are excluded. Crash blocks may still contain private data
 from the selected game, so review the output before sharing it.
 
-PocketOuya uploads nothing. **Copy** places the extracted text on Android's
+PocketMicro uploads nothing. **Copy** places the extracted text on Android's
 clipboard; **Save** writes it only to the destination selected in Android's
 file picker. A standalone capture report is not automatically persisted across
 closing the screen or killing the launcher process.
 
 No READ_LOGS grant, accessibility service, root installation, global input
-permission or device-security change is added by PocketOuya. Shizuku authorization
+permission or device-security change is added by PocketMicro. Shizuku authorization
 is optional and only needed for automatic capture; the existing game conversion
 and imported-bug-report path work without it. The dependency uses Shizuku API and
 provider 13.1.5, with the provider protected by INTERACT_ACROSS_USERS_FULL as

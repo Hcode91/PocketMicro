@@ -51,7 +51,7 @@ public final class ApkRepairAssessment {
             if(androidApi>36)add(findings,CompatibilityEvidence.Status.UNKNOWN,"Android policy","Installation changes after API 36 are not modeled.");
             if(!names.contains("classes.dex")&&!abis.isEmpty())add(findings,CompatibilityEvidence.Status.UNKNOWN,"Package completeness","No primary DEX; may be native-only or an incomplete split. Split-set installation is unsupported.");
             if(!names.contains("classes.dex")&&abis.isEmpty()){blocker=true;add(findings,CompatibilityEvidence.Status.UNSUPPORTED,"Package completeness","No application DEX or packaged native libraries; a resource-only split cannot be converted to a complete game.");}
-            if(names.contains("assets/game.droid")&&(names.contains("lib/armeabi-v7a/libyoyo.so")||names.contains("lib/armeabi/libyoyo.so")))add(findings,CompatibilityEvidence.Status.UNKNOWN,"GameMaker runtime","32-bit GameMaker structure detected. PocketOuya's separate GameMaker engine may be tested after import; this does not prove it can run this game.");
+            if(names.contains("assets/game.droid")&&(names.contains("lib/armeabi-v7a/libyoyo.so")||names.contains("lib/armeabi/libyoyo.so")))add(findings,CompatibilityEvidence.Status.UNKNOWN,"GameMaker runtime","32-bit GameMaker structure detected. PocketMicro's separate GameMaker engine may be tested after import; this does not prove it can run this game.");
             try{
                 NativeRuntimeRepair.Plan legacy=NativeRuntimeRepair.plan(zip);
                 if(!legacy.replacements.isEmpty()){startup=true;add(findings,CompatibilityEvidence.Status.SUPPORTED,"Exact native repair",legacy.replacements.size()+" runtime replacement(s) matched the existing catalog.\n"+legacy.report);}

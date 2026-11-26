@@ -67,11 +67,11 @@ public final class AirPadSink implements VirtualPad.Sink {
             for (int axis : AXES) controls.add(control.newInstance(axisKind, axis, -1f, 1f));
             Field count = deviceType.getDeclaredField("mNumControls"); count.setAccessible(true); count.setInt(created, controls.size());
             Method added = managerType.getDeclaredMethod("OnDeviceAdded", long.class, deviceType, String.class); added.setAccessible(true);
-            added.invoke(manager, reference, created, "PocketOuya touch pad");
+            added.invoke(manager, reference, created, "PocketMicro touch pad");
             device = created;
             return true;
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-            android.util.Log.w("PocketOuyaControls", "AIR GameInput device not registered yet", e);
+            android.util.Log.w("PocketMicroControls", "AIR GameInput device not registered yet", e);
             return false;
         }
     }

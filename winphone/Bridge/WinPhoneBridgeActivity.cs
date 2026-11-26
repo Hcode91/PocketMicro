@@ -1,6 +1,6 @@
-// PocketOuya <-> WPR bridge (Windows Phone edition of PocketOuya).
+// PocketMicro <-> WPR bridge (Windows Phone edition of PocketMicro).
 //
-// PocketOuya's Java launcher never shows WPR's own screens. Everything it needs from WPR goes
+// PocketMicro's Java launcher never shows WPR's own screens. Everything it needs from WPR goes
 // through this one activity, started with an explicit component and one of the actions below:
 //
 //   INSTALL      pick a .xap, run WPR's installer (XapInstallFlow), refresh games.json
@@ -9,10 +9,10 @@
 //   EXPORT_LOGS  save WPR's logs as one .zip wherever the player picks
 //   ACHIEVEMENTS open WPR's achievements page (every game, or one game with productId)
 //
-// games.json and the tile images live in PocketOuya's files/winphone folder, which the Java side
+// games.json and the tile images live in PocketMicro's files/winphone folder, which the Java side
 // (WinPhone.java) reads to show Windows Phone games in the library.
 //
-// This file is compiled into WPR's Android head by winphone/prepare-wpr.py; it is PocketOuya's
+// This file is compiled into WPR's Android head by winphone/prepare-wpr.py; it is PocketMicro's
 // code (GPL-3.0), the rest of WPR is MIT.
 
 using System;
@@ -56,7 +56,7 @@ namespace WPR.Platform.Android.Native
         const string ExtraProduct = "productId", ExtraLogging = "logging";
         const string ExtraOutcome = "outcome", ExtraDetail = "detail";
         const int RequestSaveLogs = 4401;
-        const string Tag = "PocketOuyaWinPhone";
+        const string Tag = "PocketMicroWinPhone";
 
         /// <summary>Work is over; finish as soon as no WPR dialog is covering this window.</summary>
         bool _Done;
@@ -116,7 +116,7 @@ namespace WPR.Platform.Android.Native
             if (app == null)
             {
                 WriteIndex();
-                Complete(Result.Canceled, "Not installed", "This Windows Phone game is no longer installed in PocketOuya.");
+                Complete(Result.Canceled, "Not installed", "This Windows Phone game is no longer installed in PocketMicro.");
                 return;
             }
             Log.Info(LogCategory.AppLaunch, $"[pocketouya] launching {app.Name} ({app.ProductId}, {app.ApplicationType}, patched v{app.PatchedVersion}){(_Logging ? " with logging" : "")}");
@@ -126,7 +126,7 @@ namespace WPR.Platform.Android.Native
         void OnGameResult(Result resultCode, Intent? data)
         {
             // GameLauncher.HandleGameResult also does WPR Hub reporting and rating prompts, which
-            // PocketOuya leaves out; these are the parts of it that matter here.
+            // PocketMicro leaves out; these are the parts of it that matter here.
             try { Directory.SetCurrentDirectory(WprStartup.PatchAssembliesDirectory(this)); } catch (Exception) { }
             // New unlocks, and a catalogue the launch may have generated, for the library tiles.
             WriteIndex();
@@ -242,7 +242,7 @@ namespace WPR.Platform.Android.Native
             Intent pick = new Intent(Intent.ActionCreateDocument);
             pick.AddCategory(Intent.CategoryOpenable);
             pick.SetType("application/zip");
-            pick.PutExtra(Intent.ExtraTitle, $"PocketOuya-WindowsPhone-logs-{DateTime.Now:yyyyMMdd-HHmm}.zip");
+            pick.PutExtra(Intent.ExtraTitle, $"PocketMicro-WindowsPhone-logs-{DateTime.Now:yyyyMMdd-HHmm}.zip");
             StartActivityForResult(pick, RequestSaveLogs);
         }
 
@@ -285,7 +285,7 @@ namespace WPR.Platform.Android.Native
         string Summary()
         {
             var s = new StringBuilder();
-            s.AppendLine($"PocketOuya Windows Phone logs, {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            s.AppendLine($"PocketMicro Windows Phone logs, {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             s.AppendLine($"Device: {Build.Manufacturer} {Build.Model}, Android {Build.VERSION.Release} (API {(int)Build.VERSION.SdkInt}), ABIs {string.Join(",", Build.SupportedAbis ?? new List<string>())}");
             s.AppendLine($"Patcher version: {ApplicationPatcher.Version}");
             s.AppendLine();
@@ -328,7 +328,7 @@ namespace WPR.Platform.Android.Native
             string.IsNullOrWhiteSpace(productId) ? null
                 : Installed().FirstOrDefault(a => string.Equals(a.ProductId, productId, StringComparison.OrdinalIgnoreCase));
 
-        /// <summary>Writes files/winphone/games.json (and a tile per game) for PocketOuya's library.</summary>
+        /// <summary>Writes files/winphone/games.json (and a tile per game) for PocketMicro's library.</summary>
         void WriteIndex()
         {
             try

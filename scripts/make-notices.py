@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes notices/THIRD_PARTY_NOTICES.txt: the licence notices for everything PocketOuya ships.
+"""Writes notices/THIRD_PARTY_NOTICES.txt: the licence notices for everything PocketMicro ships.
 
 The app shows that file under Manage -> Licences (it is packaged as an asset). Rerun this after
 adding or removing a dependency, and commit the output.
@@ -226,17 +226,17 @@ def section(lines, entries):
 
 def main():
     lines = [
-        "PocketOuya - third-party notices",
+        "PocketMicro - third-party notices",
         "=" * 72,
         "",
-        "PocketOuya is free software under the GNU General Public License, version 3",
-        "(full text at the end). Source: https://github.com/Hcode91/PocketOuya",
+        "PocketMicro is free software under the GNU General Public License, version 3",
+        "(full text at the end). Source: https://github.com/Hcode91/PocketMicro",
         "",
         "It includes the components below, each under its own licence. Where a",
         "licence's full text is not given with the component, it is at the end of",
         "this file.",
         "",
-        "PocketOuya is an independent project. It is not affiliated with, endorsed",
+        "PocketMicro is an independent project. It is not affiliated with, endorsed",
         "by or connected to Razer, OUYA, Microsoft or any game publisher. No games",
         "are included.",
         "",

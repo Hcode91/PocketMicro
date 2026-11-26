@@ -26,7 +26,7 @@ known AIR SDK API, independent of game package, filename, hashes or code offsets
 
 The rule inserts a call immediately after the handler's `move-exception`, using
 the original exception register and no new registers in the loader. A private
-static helper calls `Log.w(String, Throwable)` with tag `PocketOuyaAIR`. A separate
+static helper calls `Log.w(String, Throwable)` with tag `PocketMicroAIR`. A separate
 Throwable handler isolates logging failures. Original loads, exception handling,
 success flag, return path and native files remain unchanged. The helper is in the
 existing SDK class; no additional helper DEX is needed for diagnostics.
@@ -41,13 +41,13 @@ a native repair merely because this hook is available.
 
 ## Phone test
 
-1. Install the updated PocketOuya build.
+1. Install the updated PocketMicro build.
 2. Convert the **original complete APK** using **Startup repairs + touch**.
    Previously converted APKs with embedded touch helpers should be reimported
    from the original, as usual.
-3. With Shizuku running and PocketOuya authorized, launch the game and reproduce
+3. With Shizuku running and PocketMicro authorized, launch the game and reproduce
    the failure.
-4. Export the **full global game log**. Find `PocketOuyaAIR` and the preceding
+4. Export the **full global game log**. Find `PocketMicroAIR` and the preceding
    native loader output. Crash-buffer-only reports may omit this warning.
 
 The diagnostic does not make Android accept text relocations, supply missing
@@ -102,7 +102,7 @@ The owner's subsequent full global log confirms that the diagnostic runs in the
 game process on Android 14. Within the same launch and class-loader namespace,
 `libstlport_shared.so` loads successfully at 22:59:29.563. At 22:59:29.566 the
 Android linker rejects `libCore.so` with `has text relocations`. The diagnostic
-logs that original `UnsatisfiedLinkError` under `PocketOuyaAIR`, including the
+logs that original `UnsatisfiedLinkError` under `PocketMicroAIR`, including the
 AIR loader stack. The later missing `nativeSurfaceCreated` binding occurs at
 22:59:29.722. Core's text-relocation rejection is now a **verified device loading
 failure**, rather than an inference from that later exception. No missing-media

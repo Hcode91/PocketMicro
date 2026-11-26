@@ -1,4 +1,4 @@
-// JNI entry points used by PocketOuya's Java code (64-bit side of the app).
+// JNI entry points used by PocketMicro's Java code (64-bit side of the app).
 #include "shims_gl.h"
 #include "yoyo.h"
 
@@ -22,7 +22,7 @@ std::string g_log_head, g_log_tail;
 constexpr size_t kHead = 48 * 1024, kTail = 32 * 1024;
 void attach_log(Runtime &rt) {
     rt.log_sink = [](const std::string &line) {
-        __android_log_print(ANDROID_LOG_INFO, "PocketOuya", "%s", line.c_str());
+        __android_log_print(ANDROID_LOG_INFO, "PocketMicro", "%s", line.c_str());
         std::lock_guard<std::mutex> lk(g_log_mutex);
         std::string &dst = g_log_head.size() < kHead ? g_log_head : g_log_tail;
         dst += line;

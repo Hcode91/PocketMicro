@@ -29,7 +29,7 @@ jobs:
         with:
           gradle-version: '8.12'
       - name: Test compatibility profiles and read-only detector
-        run: gradle :app:testPurchaseProfile :app:testStructuralDetector --no-daemon
+        run: gradle :app:testHost :app:testStructuralDetector --no-daemon
       - name: Check Android Java and bridge packaging
         run: gradle :app:compileDebugJavaWithJavac --no-daemon
       - name: Build engine host tools (milestone checks)
@@ -41,19 +41,19 @@ jobs:
 
       - name: Use the release signing key if set
         env:
-          KEYSTORE_B64: ${{ secrets.POCKETOUYA_KEYSTORE_B64 }}
+          KEYSTORE_B64: ${{ secrets.POCKETMICRO_KEYSTORE_B64 || secrets.POCKETOUYA_KEYSTORE_B64 }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
-            echo "POCKETOUYA_KEYSTORE=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+            echo "POCKETMICRO_KEYSTORE=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
             echo "Signing with the release key"
           else
-            echo "::warning::POCKETOUYA_KEYSTORE_B64 is not set; this APK is signed with the public test key"
+            echo "::warning::POCKETMICRO_KEYSTORE_B64 is not set; this APK is signed with the public test key"
           fi
 
       - name: Build APK
         env:
-          POCKETOUYA_KEYSTORE_PASSWORD: ${{ secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
+          POCKETMICRO_KEYSTORE_PASSWORD: ${{ secrets.POCKETMICRO_KEYSTORE_PASSWORD || secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
         run: |
           set +e
           gradle assembleDebug --no-daemon 2>&1 | tee build.log
@@ -70,11 +70,11 @@ jobs:
       - name: Name APK
         run: |
           mkdir -p out
-          cp app/build/outputs/apk/debug/app-debug.apk "out/PocketOuya-${GITHUB_RUN_NUMBER}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "out/PocketMicro-${GITHUB_RUN_NUMBER}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PocketOuya-apk
+          name: PocketMicro-apk
           path: out/*.apk
 
       - name: Publish to the "latest" release
@@ -84,11 +84,11 @@ jobs:
         run: |
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
           gh release create latest out/*.apk \
-            --title "PocketOuya build ${GITHUB_RUN_NUMBER}" \
+            --title "PocketMicro build ${GITHUB_RUN_NUMBER}" \
             --notes "Automatic build from ${GITHUB_SHA::7}." \
             --prerelease --target "$GITHUB_SHA"
 
-  # Windows Phone edition: PocketOuya with the WPR runtime built in (see winphone/README.md).
+  # Windows Phone edition: PocketMicro with the WPR runtime built in (see winphone/README.md).
   # Same run number as the APK job, so either APK installs over the other.
   winphone:
     runs-on: ubuntu-latest
@@ -103,7 +103,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '8.12'
-      - name: Build PocketOuya as a library
+      - name: Build PocketMicro as a library
         run: gradle :app:collectWinPhoneLibraries -PpocketouyaLibrary --no-daemon
       - uses: actions/setup-dotnet@v4
         with:
@@ -112,10 +112,10 @@ jobs:
         run: dotnet workload install android
       - name: Ensure Android SDK platform 36
         run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" >/dev/null'
-      - name: Prepare WPR as PocketOuya
+      - name: Prepare WPR as PocketMicro
         run: python3 winphone/prepare-wpr.py winphone/wpr "$GITHUB_WORKSPACE" build/winphone-libs
-      # D8 stops at the first class it finds twice, so find every Java class PocketOuya's
-      # libraries share with WPR's NuGet packages and remove PocketOuya's copy up front.
+      # D8 stops at the first class it finds twice, so find every Java class PocketMicro's
+      # libraries share with WPR's NuGet packages and remove PocketMicro's copy up front.
       - name: Remove duplicate Java classes
         run: |
           dotnet restore winphone/wpr/Src/Platforms/WPR.Platform.Android/WPR.Platform.Android.csproj \
@@ -125,14 +125,14 @@ jobs:
             winphone/wpr build/winphone-libs
       - name: Signing key
         env:
-          KEYSTORE_B64: ${{ secrets.POCKETOUYA_KEYSTORE_B64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
+          KEYSTORE_B64: ${{ secrets.POCKETMICRO_KEYSTORE_B64 || secrets.POCKETOUYA_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.POCKETMICRO_KEYSTORE_PASSWORD || secrets.POCKETOUYA_KEYSTORE_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
             { echo "SIGN_STORE=$RUNNER_TEMP/release.p12"; echo "SIGN_ALIAS=pocketouya"; echo "SIGN_PASS=$KEYSTORE_PASSWORD"; } >> "$GITHUB_ENV"
           else
-            echo "::warning::POCKETOUYA_KEYSTORE_B64 is not set; signing with the public test key"
+            echo "::warning::POCKETMICRO_KEYSTORE_B64 is not set; signing with the public test key"
             { echo "SIGN_STORE=$GITHUB_WORKSPACE/app/ci.keystore"; echo "SIGN_ALIAS=app"; echo "SIGN_PASS=android"; } >> "$GITHUB_ENV"
           fi
       - name: Build the Windows Phone edition
@@ -156,9 +156,9 @@ jobs:
         run: |
           mkdir -p out
           APK=$(ls winphone/wpr/Src/Platforms/WPR.Platform.Android/bin/Release/net10.0-android36.0/*-Signed.apk | head -1)
-          cp "$APK" "out/PocketOuya-WindowsPhone-${GITHUB_RUN_NUMBER}.apk"
+          cp "$APK" "out/PocketMicro-WindowsPhone-${GITHUB_RUN_NUMBER}.apk"
           ls -la out
       - uses: actions/upload-artifact@v4
         with:
-          name: PocketOuya-WindowsPhone-apk
+          name: PocketMicro-WindowsPhone-apk
           path: out/*.apk

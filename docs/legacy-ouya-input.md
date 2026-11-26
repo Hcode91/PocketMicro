@@ -41,7 +41,7 @@ No purchase/developer identity, SDK initialization or receipt logic is changed.
 
 The first use of this newly matched route resets an old Android/Keyboard pad
 selection to **Auto (legacy OUYA JSON)** once. Later manual mode selections remain
-respected. The selected route is logged with `PocketOuyaControls`.
+respected. The selected route is logged with `PocketMicroControls`.
 
 ## Look control and cleanup
 
@@ -73,10 +73,10 @@ app compilation and host/generated suites pass. Phone touch response, View
 multitouch dispatch and gameplay remain unverified until the owner tests them.
 All 17 legacy native profiles/four frozen native algorithm sources are unchanged.
 
-Install the updated PocketOuya, then reconvert the **complete original Monocle
+Install the updated PocketMicro, then reconvert the **complete original Monocle
 APK** with **Experimental Unity embedded-runtime repair + touch**. Updating
-PocketOuya alone cannot replace code already embedded in an installed game. The
+PocketMicro alone cannot replace code already embedded in an installed game. The
 conversion report should say **1 use the legacy OUYA JSON controller route**.
 Use Auto, arrows for movement, O for jump and Look / RS for the camera. Existing
 native repairs and the CPU guard remain part of this conversion. If input still
-fails, capture the game's runtime/global log including `PocketOuyaControls`.
+fails, capture the game's runtime/global log including `PocketMicroControls`.

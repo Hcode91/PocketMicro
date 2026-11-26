@@ -2,7 +2,7 @@
 
 Open a game's menu → **Capture log + export APK**. This opens its log screen and
 starts capture/launch when Shizuku access is ready. After the game crashes or you
-return, PocketOuya stops the capture and displays the package-filtered crash log.
+return, PocketMicro stops the capture and displays the package-filtered crash log.
 You can also use **Capture and launch** to retry, or import a bug report without
 Shizuku. This is the existing crash-buffer capture (up to 60 seconds), not proof
 that a game ran successfully and not a capture of all runtime output.

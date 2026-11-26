@@ -160,7 +160,7 @@ public final class StoreClient {
             if (!(u.getProtocol().equals("http") || u.getProtocol().equals("https"))) throw new IOException("Unsupported address " + u.getProtocol());
             HttpURLConnection c = connections.open(u);
             c.setInstanceFollowRedirects(false); c.setConnectTimeout(timeoutMs); c.setReadTimeout(timeoutMs);
-            c.setRequestProperty("User-Agent", "PocketOuya-store/1");
+            c.setRequestProperty("User-Agent", "PocketMicro-store/1");
             int code = c.getResponseCode();
             if (code >= 300 && code < 400 && code != 304) {
                 String next = c.getHeaderField("Location"); c.disconnect();

@@ -91,7 +91,7 @@ public final class OuyaControllerPlayersRuleTest {
         deviceSources.put(12, 0x1000511);      // Bluetooth gamepad
         deviceSources.put(13, 0x1000010);      // joystick-only device
         check((int) call("playerFor", 7) == -1, "touchscreen/keyboard not a player");
-        check((int) call("playerFor", -1) == 0, "PocketOuya touch pad becomes player 1 (index 0)");
+        check((int) call("playerFor", -1) == 0, "PocketMicro touch pad becomes player 1 (index 0)");
         check((int) call("playerFor", 12) == 1 && (int) call("playerFor", 12) == 1, "gamepad becomes player 2 and keeps it");
         check((int) call("playerFor", -1) == 0, "touch pad keeps its slot");
         check((int) call("deviceFor", 1) == 12 && (int) call("deviceFor", 0) == -1 && (int) call("deviceFor", 3) == -1 && (int) call("deviceFor", 9) == -1, "reverse lookup");

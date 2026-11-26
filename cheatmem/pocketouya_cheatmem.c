@@ -1,4 +1,4 @@
-// Memory access for PocketOuya's opt-in cheat menu, loaded into the game's own process.
+// Memory access for PocketMicro's opt-in cheat menu, loaded into the game's own process.
 //
 // Android stops apps opening /proc/self/mem, but process_vm_readv/process_vm_writev on the
 // app's own pid are always allowed (the kernel skips its ptrace checks for the same process).

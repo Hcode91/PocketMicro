@@ -1,6 +1,6 @@
 # APK compatibility doctor
 
-Open **APK COMPATIBILITY DOCTOR** in PocketOuya. This is separate from Add game
+Open **APK COMPATIBILITY DOCTOR** in PocketMicro. This is separate from Add game
 and the GameMaker engine test; it accepts ordinary original APKs as well as games.
 
 1. **SELECT APK AND SCAN** copies the chosen file to private temporary storage
@@ -10,15 +10,15 @@ and the GameMaker engine test; it accepts ordinary original APKs as well as game
    preview and remaining native loading warnings. A matching ABI is only a
    structural indication; it does not establish CPU/API compatibility.
 3. **PREPARE SUPPORTED FIXES** asks for confirmation, patches a separate copy,
-   applies fingerprinted native repairs, signs it with PocketOuya's game key and
+   applies fingerprinted native repairs, signs it with PocketMicro's game key and
    verifies the resulting signature. A post-conversion scan is included in the
    report, alongside original findings and applied actions. Unresolved warnings
    stay visible. Nothing is installed automatically.
 4. **EXPORT APK** saves the prepared file through Android's document picker.
    **EXPORT REPORT** saves the full report, including after preparation.
 5. **INSTALL** explicitly hands the prepared copy to Android's package installer.
-   If needed, enable installation from PocketOuya and tap Install again. The
-   package is remembered for PocketOuya's library so normal launch/global logging
+   If needed, enable installation from PocketMicro and tap Install again. The
+   package is remembered for PocketMicro's library so normal launch/global logging
    can be used. Installation dispatch does not establish that the app runs.
 
 Export before leaving this screen. Working copies use app cache and are removed
@@ -40,7 +40,7 @@ have separate bounds. No APK contents or report is uploaded.
   builds. Unknown binary fingerprints stay unchanged. All remaining relocation
   writes must pass the existing repair checks; no broad TEXTREL flag removal.
 - Strip old APK signature metadata and sign a separate output using the same
-  key used by PocketOuya conversions. The original file is unchanged.
+  key used by PocketMicro conversions. The original file is unchanged.
 
 The doctor never changes a game's purchase checks.
 

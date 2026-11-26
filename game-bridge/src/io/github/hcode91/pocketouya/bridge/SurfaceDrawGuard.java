@@ -17,7 +17,7 @@ import android.util.Log;
  * transparent area in a parent that no longer exists. Every other failure is rethrown.
  */
 public final class SurfaceDrawGuard {
-    static final String TAG = "PocketOuyaSurfaceGuard";
+    static final String TAG = "PocketMicroSurfaceGuard";
     private static boolean installed;
 
     private SurfaceDrawGuard() {}

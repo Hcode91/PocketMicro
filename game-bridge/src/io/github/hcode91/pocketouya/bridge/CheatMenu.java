@@ -25,7 +25,7 @@ import java.util.*;
  */
 public final class CheatMenu {
     static final String MARKER="pocketouya/cheats";
-    private static final String TAG="PocketOuyaCheats";
+    private static final String TAG="PocketMicroCheats";
     private static final String PREFS="pocketouya_cheats_v1";
     private static final int SHOWN=50;
     private static Boolean enabled;
@@ -68,7 +68,7 @@ public final class CheatMenu {
 
     public static void open(Activity activity){
         try{new CheatMenu(activity).show();}
-        catch(RuntimeException|LinkageError error){Log.e(TAG,"Cheat menu unavailable",error);Toast.makeText(activity,"Cheat menu could not open. See the PocketOuyaCheats log.",Toast.LENGTH_LONG).show();}
+        catch(RuntimeException|LinkageError error){Log.e(TAG,"Cheat menu unavailable",error);Toast.makeText(activity,"Cheat menu could not open. See the PocketMicroCheats log.",Toast.LENGTH_LONG).show();}
     }
 
     private void show(){

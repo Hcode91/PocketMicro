@@ -4,7 +4,7 @@ import java.nio.*;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Linux /dev/uhid messages for PocketOuya's virtual gamepad (struct uhid_event, packed,
+ * Linux /dev/uhid messages for PocketMicro's virtual gamepad (struct uhid_event, packed,
  * little-endian). The device describes itself as a standard HID game pad: 16 buttons,
  * two sticks (X/Y, Z/Rz), two analog triggers (Simulation Brake/Accelerator, which Android
  * reports as BRAKE/GAS and LTRIGGER/RTRIGGER), and the d-pad and Menu as keys (DPAD_* and MENU,
@@ -82,7 +82,7 @@ public final class UhidGamepad {
     static byte stick(float v) { float c = Math.max(-1f, Math.min(1f, v)); return (byte) Math.round((c + 1f) * 127.5f); }
     static byte trigger(float v) { float c = Math.max(0f, Math.min(1f, v)); return (byte) Math.round(c * 255f); }
 
-    /** Kernel → PocketOuya events: type, and request id for GET/SET_REPORT. */
+    /** Kernel → PocketMicro events: type, and request id for GET/SET_REPORT. */
     static int type(byte[] e, int length) { return length >= 4 ? ByteBuffer.wrap(e).order(ByteOrder.LITTLE_ENDIAN).getInt(0) : -1; }
     static int requestId(byte[] e) { return ByteBuffer.wrap(e).order(ByteOrder.LITTLE_ENDIAN).getInt(4); }
 }

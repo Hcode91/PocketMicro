@@ -91,7 +91,7 @@ public final class LowAddressRuleTest {
             try (ZipFile zip = new ZipFile(converted.toFile())) {
                 ZipEntry lib = zip.getEntry("lib/armeabi-v7a/libpocketouya_lowaddr.so");
                 check(lib != null && lib.getMethod() == ZipEntry.STORED && Arrays.equals(LIB, ApkRebuilder.readAll(zip.getInputStream(lib))), "helper library stored uncompressed");
-                check(Arrays.equals(helper, ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes2.dex")))), "PocketOuya helper DEX appended");
+                check(Arrays.equals(helper, ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes2.dex")))), "PocketMicro helper DEX appended");
                 List<String> body = calls(find(ApkRebuilder.readAll(zip.getInputStream(zip.getEntry("classes.dex"))), MAIN));
                 check(body.get(0).equals(reserve), "reserve is the first call even with the touch wrapper: " + body);
                 check(body.stream().anyMatch(s -> s.contains("TouchControls;->watch")), "touch hook still present: " + body);

@@ -9,13 +9,13 @@ import android.os.Parcel;
 import android.util.Log;
 
 /**
- * Drives PocketOuya's Shizuku virtual controller ("OUYA Game Controller", a real Android input
- * device) from the touch pad. PocketOuya's provider checks this game was imported by it, starts
+ * Drives PocketMicro's Shizuku virtual controller ("OUYA Game Controller", a real Android input
+ * device) from the touch pad. PocketMicro's provider checks this game was imported by it, starts
  * the Shizuku service and allows this process; the pad is removed when this process dies.
  * Until it is connected, or if Shizuku is unavailable, input goes to the fallback sink.
  */
 public final class VirtualDeviceSink implements VirtualPad.Sink {
-    static final String TAG = "PocketOuyaControls";
+    static final String TAG = "PocketMicroControls";
     static final Uri PROVIDER = Uri.parse("content://com.hcode91.pocketmicro.virtualpad");
     static final String DESCRIPTOR = "com.hcode91.pocketmicro.VIRTUAL_PAD";
     static final int CREATE = 1, INPUT = 2;
@@ -39,7 +39,7 @@ public final class VirtualDeviceSink implements VirtualPad.Sink {
         try {
             Bundle extras = new Bundle(); extras.putBinder("client", TOKEN);
             Bundle result = activity.getContentResolver().call(PROVIDER, "connect", null, extras);
-            String status = result == null ? "PocketOuya did not answer" : result.getString("status", "no status");
+            String status = result == null ? "PocketMicro did not answer" : result.getString("status", "no status");
             IBinder binder = result == null ? null : result.getBinder("pad");
             if (binder == null || !"OK".equals(status)) { failed = true; Log.w(TAG, "Virtual controller unavailable (" + status + "); using the in-game route"); return; }
             Parcel data = Parcel.obtain(), reply = Parcel.obtain();

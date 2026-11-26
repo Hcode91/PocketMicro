@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
 
     static final int BG = 0xFF161616;
     static final int CARD = 0xFF242424;
-    static final int ACCENT = 0xFFE8432E;
+    static final int ACCENT = 0xFF14B8A6;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final List<Game> games = new ArrayList<>();
@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
         return found.wp == null;
     }
 
-    /** A game downloaded by the Store: only files inside PocketOuya's own store folder are accepted. */
+    /** A game downloaded by the Store: only files inside PocketMicro's own store folder are accepted. */
     private void handleStoreImport(Intent intent) {
         if (intent == null || !ACTION_IMPORT_STORE.equals(intent.getAction())) return;
         String path = intent.getStringExtra("apk");
@@ -168,10 +168,10 @@ public class MainActivity extends Activity {
             final int which = i;
             TextView item = new TextView(this);
             item.setText(names[i]);
-            item.setTextSize(landscape ? 30 : 22);
+            item.setTextSize(landscape ? 30 : 19); // portrait: all three fit across a phone
             item.setLetterSpacing(0.08f);
             item.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
-            item.setPadding(dp(10), dp(6), dp(14), dp(6));
+            item.setPadding(landscape || i > 0 ? dp(10) : 0, dp(6), landscape ? dp(14) : dp(8), dp(6));
             item.setFocusable(true);
             item.setClickable(true);
             item.setOnClickListener(v -> selectSection(which, true));
@@ -183,7 +183,7 @@ public class MainActivity extends Activity {
             View spacer = new View(this);
             menu.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
             TextView brand = new TextView(this);
-            brand.setText("PocketOuya");
+            brand.setText("PocketMicro");
             brand.setTextColor(0xFF8A8A8A);
             brand.setTextSize(13);
             brand.setPadding(dp(12), 0, 0, dp(4));
@@ -250,9 +250,9 @@ public class MainActivity extends Activity {
                 () -> startActivity(new Intent(this, VirtualPadTestActivity.class)));
         manageRow(manage, "Global log and export", "Every game launch and crash, saved on this phone",
                 () -> startActivity(new Intent(this, GlobalLogActivity.class)));
-        manageRow(manage, "Licences", "PocketOuya's licence and the open-source software it includes", this::showLicences);
+        manageRow(manage, "Licences", "PocketMicro's licence and the open-source software it includes", this::showLicences);
         TextView version = new TextView(this);
-        version.setText("PocketOuya " + ConversionRecord.converterVersion);
+        version.setText("PocketMicro " + ConversionRecord.converterVersion);
         version.setTextColor(0xFF777777);
         version.setTextSize(12);
         version.setPadding(dp(14), dp(14), 0, dp(8));
@@ -274,8 +274,8 @@ public class MainActivity extends Activity {
             for (int n; (n = in.read(buffer)) > 0; ) out.write(buffer, 0, n);
             text = out.toString("UTF-8");
         } catch (java.io.IOException missing) {
-            text = "PocketOuya is free software under the GNU General Public License, version 3.\n"
-                    + "Source and licence notices: https://github.com/Hcode91/PocketOuya";
+            text = "PocketMicro is free software under the GNU General Public License, version 3.\n"
+                    + "Source and licence notices: https://github.com/Hcode91/PocketMicro";
         }
         TextView body = new TextView(this);
         body.setText(text);
@@ -551,7 +551,7 @@ public class MainActivity extends Activity {
                         else if (which == 2) WinPhone.achievements(this, g.wp);
                         else if (which == 3) WinPhone.exportLogs(this, g.wp);
                         else new AlertDialog.Builder(this).setTitle("Remove " + g.label + "?")
-                                .setMessage("Deletes the installed game and its saves from PocketOuya.")
+                                .setMessage("Deletes the installed game and its saves from PocketMicro.")
                                 .setPositiveButton("Remove", (d2, w2) -> WinPhone.uninstall(this, g.wp, WP_UNINSTALL))
                                 .setNegativeButton("Cancel", null).show();
                     })
@@ -578,7 +578,7 @@ public class MainActivity extends Activity {
 
     // -------------------------------------------------------- engine test
 
-    /** Runs the game's 32-bit engine through PocketOuya's translator (game screen). */
+    /** Runs the game's 32-bit engine through PocketMicro's translator (game screen). */
     private void playWithEngine(Game g) {
         LaunchLogging.begin(this,g.label.toString(),g.pkg,getPackageName(),"Translated GameMaker engine");
         try {
@@ -645,7 +645,7 @@ public class MainActivity extends Activity {
         if (!getPackageManager().canRequestPackageInstalls()) {
             new AlertDialog.Builder(this)
                     .setTitle("Allow installing games")
-                    .setMessage("PocketOuya needs permission to install apps so it can install your "
+                    .setMessage("PocketMicro needs permission to install apps so it can install your "
                             + "updated games. Turn on \"Allow from this source\" on the next screen, then come back.")
                     .setPositiveButton("Open settings", (d, w) -> startActivity(new Intent(
                             Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))))
@@ -805,7 +805,7 @@ public class MainActivity extends Activity {
         low.setText("Experiment: keep the game's memory below 2 GB");
         low.setChecked(false);content.addView(low);
         TextView lowInfo=new TextView(this);
-        lowInfo.setText("For 32-bit games that crash inside their own engine on modern phones (being tested with Soul Fjord). The OUYA kept a game's memory below 3 GB; on a 64-bit phone it can reach 4 GB, which some old engines mishandle. When ticked, a small PocketOuya helper starts first and blocks the unused memory range above 2 GB (3 GB if room is short). The game's own code and libraries are not changed. Its result appears in the global game log under PocketOuyaLowAddr. Leave unticked unless testing.\n");
+        lowInfo.setText("For 32-bit games that crash inside their own engine on modern phones (being tested with Soul Fjord). The OUYA kept a game's memory below 3 GB; on a 64-bit phone it can reach 4 GB, which some old engines mishandle. When ticked, a small PocketMicro helper starts first and blocks the unused memory range above 2 GB (3 GB if room is short). The game's own code and libraries are not changed. Its result appears in the global game log under PocketMicroLowAddr. Leave unticked unless testing.\n");
         content.addView(lowInfo);
         new Thread(()->{
             String needs=textRelocationLibrary(uri);
@@ -873,7 +873,7 @@ public class MainActivity extends Activity {
 
                 showProgress("Updating it for this version of Android…");
                 byte[] bridge=null;
-                try(java.io.InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)) {
+                try(java.io.InputStream input=getResources().openRawResource(R.raw.game_bridge)) {
                     bridge=ApkRebuilder.readAll(input);
                 }
                 byte[] lowAddressLibrary=null;

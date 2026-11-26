@@ -10,7 +10,7 @@ import org.jf.dexlib2.immutable.reference.ImmutableMethodReference;
 
 /**
  * Wraps the six static controller-polling methods of GameMaker 1.x's
- * com.yoyogames.runner.RunnerJNILib so the PocketOuya touch pad can appear as a connected
+ * com.yoyogames.runner.RunnerJNILib so the PocketMicro touch pad can appear as a connected
  * controller (bridge class GameMakerPad). Each original is kept as a private
  * pocketouyaOriginal_* method and is still used for every slot the touch pad does not own.
  */

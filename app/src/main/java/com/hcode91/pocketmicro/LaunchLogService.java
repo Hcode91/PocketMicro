@@ -24,7 +24,7 @@ public final class LaunchLogService extends Service {
         super.onCreate();NotificationManager manager=getSystemService(NotificationManager.class);manager.createNotificationChannel(new NotificationChannel("game_logs","Game log recording",NotificationManager.IMPORTANCE_LOW));
         Intent view=new Intent(this,GlobalLogActivity.class);PendingIntent open=PendingIntent.getActivity(this,0,view,PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent stop=PendingIntent.getService(this,1,new Intent(this,LaunchLogService.class).setAction("stop"),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        startForeground(NOTIFICATION,new Notification.Builder(this,"game_logs").setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("PocketOuya global game log").setContentText("Recording game output locally. Tap to view or export.").setContentIntent(open).addAction(new Notification.Action.Builder(null,"Stop recording",stop).build()).setOngoing(true).build());
+        startForeground(NOTIFICATION,new Notification.Builder(this,"game_logs").setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("PocketMicro global game log").setContentText("Recording game output locally. Tap to view or export.").setContentIntent(open).addAction(new Notification.Action.Builder(null,"Stop recording",stop).build()).setOngoing(true).build());
     }
     @Override public int onStartCommand(Intent intent,int flags,int startId){
         latestStartId=startId;
@@ -45,7 +45,7 @@ public final class LaunchLogService extends Service {
         return START_NOT_STICKY;
     }
     private void fallback(Session session,int startId){
-        if(session.target.equals(getPackageName())){local=true;remote=new GameLogReader(this);LaunchLogging.append(this,session.game,"Log source","Shizuku unavailable; capturing PocketOuya's own engine output. Native system tombstones may only be available after returning.");startReader();}
+        if(session.target.equals(getPackageName())){local=true;remote=new GameLogReader(this);LaunchLogging.append(this,session.game,"Log source","Shizuku unavailable; capturing PocketMicro's own engine output. Native system tombstones may only be available after returning.");startReader();}
         else{LaunchLogging.append(this,session.game,"Game output unavailable","Shizuku is not running or access is not granted. This launch is recorded, but Android prevents reading this other app's runtime/crash logs. Enable Shizuku access from the global log screen for future launches.");end(startId);}
     }
     private Parcel call(IBinder binder,int code,Session start)throws RemoteException{

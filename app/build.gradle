@@ -1,4 +1,4 @@
-// -PpocketouyaLibrary builds PocketOuya as an Android library (.aar) for the Windows Phone
+// -PpocketouyaLibrary builds PocketMicro as an Android library (.aar) for the Windows Phone
 // edition, whose APK is assembled by WPR's .NET build (see winphone/README.md).
 def asLibrary = project.hasProperty('pocketouyaLibrary')
 apply plugin: asLibrary ? 'com.android.library' : 'com.android.application'
@@ -43,8 +43,8 @@ android {
         // Official builds: the private release key from CI secrets (see docs/signing.md).
         // Without it (forks, local builds) the public test key in the repo is used.
         ci {
-            def releaseStore = System.getenv('POCKETOUYA_KEYSTORE')
-            def releasePassword = System.getenv('POCKETOUYA_KEYSTORE_PASSWORD')
+            def releaseStore = System.getenv('POCKETMICRO_KEYSTORE') ?: System.getenv('POCKETOUYA_KEYSTORE')
+            def releasePassword = System.getenv('POCKETMICRO_KEYSTORE_PASSWORD') ?: System.getenv('POCKETOUYA_KEYSTORE_PASSWORD')
             boolean useRelease = releaseStore && releasePassword
             storeFile useRelease ? file(releaseStore) : file('ci.keystore')
             storePassword useRelease ? releasePassword : 'android'
@@ -68,36 +68,36 @@ android {
     }
 }
 
-def purchaseGuavaVersion = '33.3.1-android'
+def hostGuavaVersion = '33.3.1-android'
 dependencies {
     // Google's APK signing library (same code as the apksigner tool).
     implementation 'com.android.tools.build:apksig:8.7.3'
     implementation 'org.smali:dexlib2:2.5.2'
     // dexlib2 exposes Guava types in public signatures but declares Guava at
     // runtime scope. Our compiler also needs it when resolving overloads.
-    implementation "com.google.guava:guava:${purchaseGuavaVersion}"
+    implementation "com.google.guava:guava:${hostGuavaVersion}"
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
 }
 
 // Compile our own bridge into a separate DEX resource for the optional game profile.
 // Game/vendor code is never copied into this project.
-def bridgeClasses = layout.buildDirectory.dir('purchase-bridge/classes')
-def bridgeDex = layout.buildDirectory.dir('purchase-bridge/dex')
-def bridgeRes = layout.buildDirectory.dir('generated/purchase-bridge/res')
-def compileBridge = tasks.register('compilePurchaseBridge', JavaCompile) {
-    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java' }
+def bridgeClasses = layout.buildDirectory.dir('game-bridge/classes')
+def bridgeDex = layout.buildDirectory.dir('game-bridge/dex')
+def bridgeRes = layout.buildDirectory.dir('generated/game-bridge/res')
+def compileBridge = tasks.register('compileGameBridge', JavaCompile) {
+    source rootProject.fileTree('game-bridge/src') { include '**/*.java' }
     classpath = files(android.bootClasspath)
     destinationDirectory = bridgeClasses
     sourceCompatibility = '8'
     targetCompatibility = '8'
 }
-def dexBridge = tasks.register('dexPurchaseBridge', JavaExec) {
+def dexBridge = tasks.register('dexGameBridge', JavaExec) {
     dependsOn compileBridge
     classpath = files(new File(android.sdkDirectory, "build-tools/${android.buildToolsVersion}/lib/d8.jar"))
     mainClass = 'com.android.tools.r8.D8'
     inputs.dir bridgeClasses
-    outputs.file bridgeRes.map { it.file('raw/ouya_purchase_bridge.dex') }
+    outputs.file bridgeRes.map { it.file('raw/game_bridge.dex') }
     doFirst {
         def output = bridgeDex.get().asFile
         output.mkdirs()
@@ -105,7 +105,7 @@ def dexBridge = tasks.register('dexPurchaseBridge', JavaExec) {
                 '--output', output.path] + fileTree(bridgeClasses.get().asFile).matching { include '**/*.class' }.files.collect { it.path }
     }
     doLast {
-        copy { from new File(bridgeDex.get().asFile, 'classes.dex'); into new File(bridgeRes.get().asFile, 'raw'); rename { 'ouya_purchase_bridge.dex' } }
+        copy { from new File(bridgeDex.get().asFile, 'classes.dex'); into new File(bridgeRes.get().asFile, 'raw'); rename { 'game_bridge.dex' } }
     }
 }
 android.sourceSets.main.res.srcDir bridgeRes
@@ -188,14 +188,14 @@ tasks.named('preBuild').configure { dependsOn buildGles }
 
 // Pure JVM protocol/DEX tests. The fake Android/Unity classes are test-only and
 // never enter the app APK or the injected bridge resource.
-configurations { purchaseHostTests }
+configurations { hostTestDeps }
 dependencies {
-    purchaseHostTests 'org.smali:dexlib2:2.5.2'
-    purchaseHostTests "com.google.guava:guava:${purchaseGuavaVersion}"
-    purchaseHostTests 'org.json:json:20240303'
+    hostTestDeps 'org.smali:dexlib2:2.5.2'
+    hostTestDeps "com.google.guava:guava:${hostGuavaVersion}"
+    hostTestDeps 'org.json:json:20240303'
 }
-def purchaseTestClasses = layout.buildDirectory.dir('purchase-tests/classes')
-def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCompile) {
+def hostTestClasses = layout.buildDirectory.dir('host-tests/classes')
+def compileHostTests = tasks.register('compileHostTests', JavaCompile) {
     source files('src/main/java/com/hcode91/pocketmicro/GameCompatibilityPatcher.java',
             'src/main/java/com/hcode91/pocketmicro/GameMakerPadPatcher.java',
             'src/main/java/com/hcode91/pocketmicro/ModernApkDoctor.java',
@@ -247,7 +247,7 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'src/main/java/com/hcode91/pocketmicro/ConversionRecord.java',
             'src/main/java/com/hcode91/pocketmicro/ManifestPatcher.java',
             'src/main/java/com/hcode91/pocketmicro/TombstoneText.java')
-    source rootProject.fileTree('purchase-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/CheatMenu.java'; exclude '**/AndroidPadSink.java'; exclude '**/AirPadSink.java'; exclude '**/VirtualDeviceSink.java' }
+    source rootProject.fileTree('game-bridge/src') { include '**/*.java'; exclude '**/TouchControls.java'; exclude '**/CheatMenu.java'; exclude '**/AndroidPadSink.java'; exclude '**/AirPadSink.java'; exclude '**/VirtualDeviceSink.java' }
     source rootProject.fileTree('tests/bridge-stubs') { include '**/*.java' }
     source rootProject.files(
             'tests/PlatformCrashRulesTest.java',
@@ -277,40 +277,40 @@ def compilePurchaseTests = tasks.register('compilePurchaseProfileTests', JavaCom
             'tests/GameMakerPadTest.java',
             'tests/PrivateLibraryStubsTest.java',
             'tests/UnityEmbeddedRuntimePromotionTest.java',
-            'tests/GeneralCompatibilityTest.java', 'tests/LegacyOuyaInputTest.java', 'tests/AirLoaderDiagnosticsTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/PurchaseProfileTests.java')
-    classpath = configurations.purchaseHostTests
-    destinationDirectory = purchaseTestClasses
+            'tests/GeneralCompatibilityTest.java', 'tests/LegacyOuyaInputTest.java', 'tests/AirLoaderDiagnosticsTest.java', 'tests/SharedCompatibilityRulesTest.java', 'tests/ModernApkDoctorTest.java', 'tests/NativeRuntimeRepairTest.java', 'tests/MarmaladeRuntimeRepairTest.java', 'tests/ArmLiteralPicRepairTest.java', 'tests/EngineInputTest.java', 'tests/VirtualPadTest.java', 'tests/OuyaPadSinkTest.java', 'tests/MarmaladePadSinkTest.java', 'tests/HostTests.java')
+    classpath = configurations.hostTestDeps
+    destinationDirectory = hostTestClasses
     sourceCompatibility = '17'
     targetCompatibility = '17'
 }
-tasks.register('testPurchaseProfile', JavaExec) {
-    dependsOn compilePurchaseTests
-    classpath = files(purchaseTestClasses) + configurations.purchaseHostTests
-    mainClass = 'PurchaseProfileTests'
+tasks.register('testHost', JavaExec) {
+    dependsOn compileHostTests
+    classpath = files(hostTestClasses) + configurations.hostTestDeps
+    mainClass = 'HostTests'
 }
 
 
 // Read-only prototype: intentionally NOT called by any production repair path.
 def structuralClasses = layout.buildDirectory.dir('structural-tests/classes')
 def compileStructuralTests = tasks.register('compileStructuralDetectorTests', JavaCompile) {
-    dependsOn compilePurchaseTests
+    dependsOn compileHostTests
     source files('src/main/java/com/hcode91/pocketmicro/CompatibilityEvidence.java',
                  'src/main/java/com/hcode91/pocketmicro/ArmFinalizerDetector.java')
     source rootProject.fileTree('tests/structural') { include '**/*.java' }
-    classpath = files(purchaseTestClasses) + configurations.purchaseHostTests
+    classpath = files(hostTestClasses) + configurations.hostTestDeps
     destinationDirectory = structuralClasses
     sourceCompatibility = '17'
     targetCompatibility = '17'
 }
 tasks.register('testStructuralDetector', JavaExec) {
     dependsOn compileStructuralTests
-    classpath = files(structuralClasses, purchaseTestClasses) + configurations.purchaseHostTests
+    classpath = files(structuralClasses, hostTestClasses) + configurations.hostTestDeps
     mainClass = 'com.hcode91.pocketmicro.ArmFinalizerDetectorTest'
     doFirst { def out=layout.buildDirectory.file('reports/structural/generated.json').get().asFile; out.parentFile.mkdirs(); args out.path }
 }
 tasks.register('auditNativeProfileMatrix', JavaExec) {
     dependsOn compileStructuralTests
-    classpath = files(structuralClasses, purchaseTestClasses) + configurations.purchaseHostTests
+    classpath = files(structuralClasses, hostTestClasses) + configurations.hostTestDeps
     mainClass = 'com.hcode91.pocketmicro.NativeProfileMatrixAudit'
     doFirst {
         if (!project.hasProperty('nativeFixtureIndex')) throw new GradleException('Supply -PnativeFixtureIndex=/private/fixture-index.json; missing fixtures never count as passes')
@@ -344,7 +344,7 @@ tasks.register('testApkSigning', JavaExec) {
     }
 }
 
-// Windows Phone edition: PocketOuya's library plus every runtime dependency (.aar/.jar), in one
+// Windows Phone edition: PocketMicro's library plus every runtime dependency (.aar/.jar), in one
 // folder for winphone/prepare-wpr.py to hand to the .NET build.
 if (asLibrary) {
     tasks.register('collectWinPhoneLibraries', Copy) {

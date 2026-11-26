@@ -1,4 +1,4 @@
-// PocketOuya engine – loads 32-bit ARM Android shared libraries (.so) into
+// PocketMicro engine – loads 32-bit ARM Android shared libraries (.so) into
 // guest memory: maps segments, applies relocations and resolves imports.
 #pragma once
 #include "guest_memory.h"

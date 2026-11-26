@@ -14,7 +14,7 @@ repository. The archive omits the assets, and no device crash log was supplied.
   the effective target in this case. Current conversion raises that value to 23.
 - Three ARM32 `armeabi` libraries: `lib__57d5__.so`, `libjniproxy.so`, `libff3.so`.
   No arm64 runtime or GameMaker runner/data was supplied. Ordinary installed-app
-  launch is the applicable path; PocketOuya's GameMaker Engine test cannot run it.
+  launch is the applicable path; PocketMicro's GameMaker Engine test cannot run it.
 - OUYA Java interfaces are present.
 
 SHA-256 evidence:
@@ -83,7 +83,7 @@ A filtered device crash log is needed to identify the first failure on the
 owner's exact installation. Static evidence establishes incompatibilities but
 does not identify the precise exception or signal shown by Samsung's dialog.
 
-## PocketOuya changes
+## PocketMicro changes
 
 - Native inspection now detects `DT_TEXTREL` and `DF_TEXTREL` through ELF program
   headers without executing libraries or relying on section headers. It reports

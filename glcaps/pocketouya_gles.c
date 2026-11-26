@@ -1,5 +1,5 @@
 /*
- * PocketOuya OUYA GPU-limit shim (libpogles.so), used by ouya.gles-vertex-attribs.
+ * PocketMicro OUYA GPU-limit shim (libpogles.so), used by ouya.gles-vertex-attribs.
  *
  * Scaleform's Unity plugin (libgfxunity3d.so) saves one "attribute enabled" byte per vertex
  * attribute into a 16-byte array in its manager (SFManagerImpl::SaveStateBlock). The OUYA's

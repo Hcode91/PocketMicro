@@ -105,7 +105,7 @@ public final class ApkRebuilder {
                 wideLine=wide.status+" "+WideScreenRule.ID+": "+wide.reason;
             }
             if(touch){
-                // PocketOuya's virtual controller connects while the game runs; see InputConfigRule.
+                // PocketMicro's virtual controller connects while the game runs; see InputConfigRule.
                 TvLandscapeRule.Result input=InputConfigRule.repair(result.manifest);
                 if(input.manifest!=null)result.manifest=input.manifest;
                 if(input.status!=CompatibilityEvidence.Status.SKIPPED)wideLine=(wideLine==null?"":wideLine+"\n")+input.status+" "+InputConfigRule.ID+": "+input.reason;

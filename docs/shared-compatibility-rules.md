@@ -3,7 +3,7 @@
 These rules run when the user chooses **Engine startup repairs** during import,
 or **Prepare fixes** in the APK compatibility doctor. Normal conversion leaves
 them off. The doctor first reports read-only applicability results. Reconvert
-the original complete APK to try a rule; changing PocketOuya does not change
+the original complete APK to try a rule; changing PocketMicro does not change
 already installed games.
 
 This work is on `feature/shared-compatibility-rules`, based on `1d85252`.
@@ -102,7 +102,7 @@ Reproduce with the normal Android/Gradle setup:
 
 ```sh
 bash scripts/test-compatibility.sh
-gradle :app:testPurchaseProfile :app:testStructuralDetector
+gradle :app:testHost :app:testStructuralDetector
 gradle :app:compileDebugJavaWithJavac
 gradle :app:auditNativeProfileMatrix -PnativeFixtureIndex=/private/fixtures.json
 ```
@@ -153,7 +153,7 @@ purchase implementation, native transformer or finalizer detector changes.
   re-checking every instruction byte. The detector also accepts Thumb mode proven by direct
   call sites (Thumb `BL` / ARM `BLX` to the thunk, and no ARM-mode `BL`). Target: Unity /
   Marmalade / Frima libraries such as Wrecking Balls Arena's `libmain.so`.
-- **Conversion record.** Converted APKs carry `assets/pocketouya-conversion.txt` (PocketOuya
+- **Conversion record.** Converted APKs carry `assets/pocketouya-conversion.txt` (PocketMicro
   version, options, rule results); launch log entries show it.
 
 ## Old engines: removed private libraries and original-version install (2026-11-03)
@@ -168,7 +168,7 @@ purchase implementation, native transformer or finalizer detector changes.
   A Zombie Stole My Toaster (Adobe AIR 2013): 35/35 libCore android symbols resolve through the
   placeholders' hash tables and an ARM lld link succeeds.
 - **Keep original Android version (Shizuku install).** Conversion option that leaves the game's
-  target SDK unchanged and installs through PocketOuya's Shizuku service with
+  target SDK unchanged and installs through PocketMicro's Shizuku service with
   `pm install --bypass-low-target-sdk-block` (Android 14+). Apps built for pre-Android 6 may
   load libraries with text relocations (AIR libCore, old Unity/Marmalade), so no native code
   patching is needed for those. Shizuku is needed only during install.
@@ -248,12 +248,12 @@ purchase implementation, native transformer or finalizer detector changes.
 
 - **`ouya.controller-player-numbers`.** The OUYA SDK's `OuyaController` asks the OUYA system's
   `tv.ouya.controllerdata` provider which player each input device is. On a phone that provider
-  is missing, so every controller (Bluetooth pads and PocketOuya's touch pad, device id -1) is
+  is missing, so every controller (Bluetooth pads and PocketMicro's touch pad, device id -1) is
   player -1: `getControllerByPlayer()` stays null, games ignore input (Zombies and Trains! "controller
   state for player -1") or crash on the missing controller (Zombie Driver HD `OnPadButtonEvent`).
   When the provider is unreachable, `getPlayerNumFromDeviceId`/`getDeviceIdFromPlayerNum` answer
   from an added `PocketouyaPlayers` table: the first gamepad/joystick devices (by InputDevice
-  source) or PocketOuya's virtual pad to send input become players 1-4; keyboards, touchscreens
+  source) or PocketMicro's virtual pad to send input become players 1-4; keyboards, touchscreens
   and phone buttons never take a slot. With the provider present the SDK runs unchanged; the
   SDK's own button/axis mapping is used. Applies to 11 of the 14 uploaded test APKs (Worm
   Copter's older SDK layout and two games without the OUYA controller API are unchanged).
@@ -285,7 +285,7 @@ purchase implementation, native transformer or finalizer detector changes.
   portrait with the phone layout and crashed the same way (log: first `Config` `land`, second
   `port`). After every game-code `iget Configuration.screenLayout` the size bits are set to LARGE
   (`and-int/lit8 -16`, `or-int/lit8 3`), which is what the OUYA reported, so the game's own size
-  checks agree with the TV resources it now gets. Other screenLayout bits and PocketOuya's own
+  checks agree with the TV resources it now gets. Other screenLayout bits and PocketMicro's own
   classes are unchanged; already-forced reads are recognised, so a second pass changes nothing.
   The converter run on the Word Shaker APK applies all three parts (2 resource groups,
   10 activities, 2 screenLayout reads); gameplay on a phone is not yet confirmed.
@@ -303,7 +303,7 @@ purchase implementation, native transformer or finalizer detector changes.
   maps the free gaps above 2 GB as `PROT_NONE`, `MAP_NORESERVE`, `MAP_FIXED_NOREPLACE` (never
   over an existing mapping), leaving 64 MB under the main stack. If less than 768 MB would stay
   free below 2 GB it uses 3 GB instead, and below that it reserves nothing. It logs the result
-  and test allocation addresses under `PocketOuyaLowAddr`. Refused for APKs with arm64/x86
+  and test allocation addresses under `PocketMicroLowAddr`. Refused for APKs with arm64/x86
   libraries (they may not run as 32-bit ARM), Java-only APKs, and already converted APKs. Game
   code and libraries are otherwise unchanged. Host tests cover the planner (`tests/lowaddr`) and
   the DEX hook/packaging (`LowAddressRuleTest`, including Soul Fjord's real launcher locally);
@@ -323,7 +323,7 @@ purchase implementation, native transformer or finalizer detector changes.
   is not app-accessible. Instead each launch activity first calls the helper DEX's
   `SurfaceDrawGuard.install()`, which runs the main looper inside one posted task and ignores only
   a `NullPointerException` whose top frame is `android.view.SurfaceView.performDrawFinished`
-  (logged as `PocketOuyaSurfaceGuard`); any other failure is rethrown unchanged. Applied only when
+  (logged as `PocketMicroSurfaceGuard`); any other failure is rethrown unchanged. Applied only when
   such a view class is found. Tests cover detection, the untouched override, reconversion and
   the guard's filter; phone behaviour after the video starts is untested.
 
@@ -396,7 +396,7 @@ Samsung's per-app "Full screen apps" switch is the manual equivalent.
 
 ## android.input-config-changes
 
-On an OUYA the controllers were connected before a game started. On a phone, PocketOuya's
+On an OUYA the controllers were connected before a game started. On a phone, PocketMicro's
 virtual controller (or a Bluetooth pad) appears while the game is running; Android reports a
 keyboard/navigation configuration change and destroys and recreates every activity that doesn't
 declare it handles one. Whack'em was relaunched 24 ms after the virtual controller appeared and
@@ -405,4 +405,4 @@ crashed in its own onStop (ResourceManager.unloadMenuTextures on menu textures n
 Every `<activity>` gets `keyboard|keyboardHidden|navigation` (0x70) in `android:configChanges`:
 OR-ed into an existing integer value, or added with the shared activity-attribute writer.
 Rotation and other configuration changes are unchanged. Applied to every conversion with touch
-controls (all of them), not only with Startup repairs, because the controller is PocketOuya's own.
+controls (all of them), not only with Startup repairs, because the controller is PocketMicro's own.

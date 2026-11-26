@@ -114,7 +114,7 @@ public final class GameCompatibilityPatcher {
             for(Map.Entry<String,byte[]> entry:input.entrySet()){
                 DexBackedDexFile dex=new DexBackedDexFile(null,entry.getValue());files.put(entry.getKey(),dex);
                 for(ClassDef cls:dex.getClasses()) {
-                    if(cls.getType().startsWith(BRIDGE))throw new IOException("This APK already contains PocketOuya compatibility code. Reimport the original APK.");
+                    if(cls.getType().startsWith(BRIDGE))throw new IOException("This APK already contains PocketMicro compatibility code. Reimport the original APK.");
                     if(classes.put(cls.getType(),cls)!=null)throw new IOException("Duplicate DEX class: "+cls.getType());
                 }
             }

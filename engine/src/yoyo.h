@@ -1,4 +1,4 @@
-// PocketOuya engine – runs a GameMaker: Studio 1.x Android game (libyoyo.so).
+// PocketMicro engine – runs a GameMaker: Studio 1.x Android game (libyoyo.so).
 #pragma once
 #include "apk.h"
 #include "cpu.h"

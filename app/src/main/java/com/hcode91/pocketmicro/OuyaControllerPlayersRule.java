@@ -14,13 +14,13 @@ import org.jf.dexlib2.writer.pool.DexPool;
 /**
  * ouya.controller-player-numbers: the OUYA SDK's OuyaController asks the OUYA system's
  * "tv.ouya.controllerdata" provider which player (0-3) each input device is. A phone has no such
- * provider, so every controller, Bluetooth pads and PocketOuya's touch pad alike, is player -1:
+ * provider, so every controller, Bluetooth pads and PocketMicro's touch pad alike, is player -1:
  * getControllerByPlayer() stays null, games ignore input ("controller state for player -1",
  * Zombies and Trains!) or crash using the missing controller (Zombie Driver HD OnPadButtonEvent).
  *
  * When that provider is missing, OuyaController.getPlayerNumFromDeviceId and
  * getDeviceIdFromPlayerNum answer from a small added table instead: the first gamepad/joystick
- * device (or PocketOuya's virtual pad, device id -1) to send input becomes player 0, the next
+ * device (or PocketMicro's virtual pad, device id -1) to send input becomes player 0, the next
  * player 1, up to 4. Keyboards, touchscreens and phone buttons never take a slot. With the OUYA
  * provider present the SDK code runs unchanged. Button/axis mapping is the SDK's own.
  */
@@ -123,7 +123,7 @@ public final class OuyaControllerPlayersRule {
         lo.addInstruction(new BuilderInstruction21c(Opcode.SPUT, 1, f("state", "I")));
         lo.addInstruction(new BuilderInstruction11x(Opcode.RETURN, 1));
 
-        // static boolean eligible(int id): PocketOuya virtual pad (-1) or a gamepad/joystick InputDevice. v0..v2, p0 = v3.
+        // static boolean eligible(int id): PocketMicro virtual pad (-1) or a gamepad/joystick InputDevice. v0..v2, p0 = v3.
         String dev = "Landroid/view/InputDevice;";
         MethodImplementationBuilder el = new MethodImplementationBuilder(4);
         el.addInstruction(new BuilderInstruction11n(Opcode.CONST_4, 0, -1));
@@ -235,7 +235,7 @@ public final class OuyaControllerPlayersRule {
                 }
                 r.status = apply ? CompatibilityEvidence.Status.VERIFIED : CompatibilityEvidence.Status.SUPPORTED;
                 r.reason = "OuyaController player numbers: without the OUYA controller provider (" + AUTHORITY + "), the first gamepads/joysticks "
-                        + "and PocketOuya's touch pad to send input become players 1-4 (keyboards and phone buttons excluded) instead of every controller being player -1.";
+                        + "and PocketMicro's touch pad to send input become players 1-4 (keyboards and phone buttons excluded) instead of every controller being player -1.";
                 return r;
             }
         } catch (Exception e) {

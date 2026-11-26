@@ -22,7 +22,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.util.Locale;
 
-/** Store game page: details from the community server, download, then PocketOuya's normal conversion/install. */
+/** Store game page: details from the community server, download, then PocketMicro's normal conversion/install. */
 public class StoreGameActivity extends Activity {
     static final String EXTRA_PKG = "pkg";
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -97,7 +97,7 @@ public class StoreGameActivity extends Activity {
             strip.addView(shots); content.addView(strip);
         }
         content.addView(text(g.description, 15, Color.WHITE, false));
-        content.addView(text("From the community server " + client.server() + ". Downloaded games are converted by PocketOuya before installing, like an APK you add yourself.", 12, Color.GRAY, false));
+        content.addView(text("From the community server " + client.server() + ". Downloaded games are converted by PocketMicro before installing, like an APK you add yourself.", 12, Color.GRAY, false));
     }
 
     private boolean installed() {
@@ -135,7 +135,7 @@ public class StoreGameActivity extends Activity {
         }, "store-download").start();
     }
 
-    /** Hands the APK to PocketOuya's main screen, which assesses, converts and installs it. */
+    /** Hands the APK to PocketMicro's main screen, which assesses, converts and installs it. */
     private void convert(File apk) {
         startActivity(new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_IMPORT_STORE).putExtra("apk", apk.getPath())
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));

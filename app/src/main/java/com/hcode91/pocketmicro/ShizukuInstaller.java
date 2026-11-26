@@ -8,7 +8,7 @@ import java.io.File;
 import rikka.shizuku.Shizuku;
 
 /**
- * Installs a converted game through PocketOuya's Shizuku user service so the game can keep its
+ * Installs a converted game through PocketMicro's Shizuku user service so the game can keep its
  * original (pre-Android 6) target version. Android 14 refuses to install such APKs normally;
  * `pm install --bypass-low-target-sdk-block` is the official way round that. Keeping the old
  * target lets engines with text relocations (Adobe AIR, old Unity/Marmalade) load as they did.
@@ -25,7 +25,7 @@ final class ShizukuInstaller {
         try {
             if (!Shizuku.pingBinder()) return "Shizuku is not running. Start Shizuku (wireless debugging), then try again.";
             if (Shizuku.getVersion() < 13) return "Update Shizuku to version 13 or later.";
-            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) { Shizuku.requestPermission(PERMISSION_REQUEST); return "Allow PocketOuya in the Shizuku prompt, then try again."; }
+            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) { Shizuku.requestPermission(PERMISSION_REQUEST); return "Allow PocketMicro in the Shizuku prompt, then try again."; }
             return null;
         } catch (RuntimeException e) { return "Shizuku unavailable: " + e.getMessage(); }
     }

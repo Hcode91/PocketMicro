@@ -1,7 +1,7 @@
 package com.hcode91.pocketmicro;
 
 /**
- * android.wide-screen: Android letterboxes apps built for Android 7.1 or older (PocketOuya's
+ * android.wide-screen: Android letterboxes apps built for Android 7.1 or older (PocketMicro's
  * converted games target 6.0) to an aspect ratio of at most 1.86:1 unless they say otherwise. On
  * a 19.5:9 phone that leaves bars at the sides, and games that read raw screen touch positions
  * then register taps offset by the bar's width (N.O.V.A. 3: the window sat at x = 134..2143 of
