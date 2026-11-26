@@ -77,6 +77,60 @@ More detail: [Windows Phone edition](winphone/README.md).
 *The screenshots were rendered from the app's own code off-device; every game in them is a
 made-up placeholder, not a real title.*
 
+## Games confirmed working
+
+Tested on a Galaxy S23 (Snapdragon 8 Gen 2). "Working" means the game installs, starts and plays;
+it doesn't promise every feature or online service works. Games not listed may work too; they
+just haven't been tested yet.
+
+<details>
+<summary>OUYA and GameStick games (31)</summary>
+
+- A Ride into the Mountains
+- A Space Shooter For 2 Bucks
+- Abbaye des Morts
+- Abbigale and the Monster
+- Knightmare Tower: OUYA Edition
+- Maldita Castilla
+- Monocle Man
+- Muffin Knight
+- Vector
+- Vertex Blaster
+- Vertical Void DX
+- Video Poker Duel
+- Void Pyramid
+- VolChaos
+- VVVVVV
+- Walthros
+- War Daddy: War Harder
+- Wild Season
+- Wind-up Knight
+- Word Shaker
+- Wraithborne
+- YOU DON'T KNOW JACK
+- YuletideRush
+- ZeptoRacer
+- ZeptoRacer 3D
+- Zipangu
+- ZombTack
+- Zombie Hearts Chicken
+- Zombie Trek Driver Survival
+
+Also from the GameStick: unwind, Zombie Kill of the Week.
+
+</details>
+
+<details>
+<summary>Other old Android games</summary>
+
+- BattleSea
+- Blackjack
+- N.O.V.A. 3
+- Sudoku Challenge
+- UNCHARTED: Fortune Hunter
+
+</details>
+
 ## Requirements and limits
 
 - OUYA games are 32-bit ARM. Your phone must still run 32-bit apps (for example the Snapdragon
