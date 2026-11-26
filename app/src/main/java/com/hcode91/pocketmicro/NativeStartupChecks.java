@@ -32,7 +32,7 @@ public final class NativeStartupChecks {
         if(textRelocations.isEmpty())return ""; // Absence is not an all-clear.
         StringBuilder out=new StringBuilder("Native startup warning\n\nLibraries declaring text relocations:\n");
         for(String name:textRelocations)out.append("  ").append(name).append('\n');
-        out.append("\nAndroid rejects text relocations when a library is loaded by an app targeting API 23 or later. PocketOuya conversion raises old targets to at least API 23. If the game loads one of these libraries, conversion alone cannot make it launch. Touch controls and offline receipts do not fix native loading.\n\nThis is a static compatibility check, not a crash log or a full security scan; libraries for unused ABIs may never be loaded.");
+        out.append("\nAndroid rejects text relocations when a library is loaded by an app targeting API 23 or later. PocketMicro conversion raises old targets to at least API 23. If the game loads one of these libraries, conversion alone cannot make it launch. Touch controls and offline receipts do not fix native loading.\n\nThis is a static compatibility check, not a crash log or a full security scan; libraries for unused ABIs may never be loaded.");
         if(partial)out.append(" Some libraries were not inspected because of size/count limits.");
         return out.toString();
     }

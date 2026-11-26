@@ -17,7 +17,7 @@ Install the branch Actions APK, add the **original complete Vector APK**, and
 select **Startup repairs — Unity / Marmalade / AIR / Frima**, or **Native runtime
 repair + touch controls** to embed the pad as well. The report should list
 four repaired files for this inspected build. Install the update over the
-PocketOuya-signed copy and use normal **Play**, not Engine test. Capture a fresh
+PocketMicro-signed copy and use normal **Play**, not Engine test. Capture a fresh
 crash trace if another error follows. The inspection ZIP lacks game assets and
 is not a playable APK.
 

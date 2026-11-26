@@ -2,7 +2,7 @@ package com.hcode91.pocketmicro;
 
 /**
  * Where a game's OBB data file goes: /storage/emulated/0/Android/obb/&lt;package&gt;/&lt;file&gt;.obb.
- * Android 13+ stops ordinary apps writing there, so PocketOuya copies it through its Shizuku
+ * Android 13+ stops ordinary apps writing there, so PocketMicro copies it through its Shizuku
  * service. This class only checks names, so nothing can be written outside a game's obb folder.
  */
 public final class ObbImport {

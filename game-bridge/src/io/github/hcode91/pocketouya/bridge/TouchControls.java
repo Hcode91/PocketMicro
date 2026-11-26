@@ -20,7 +20,7 @@ public final class TouchControls extends FrameLayout {
     public static void installLegacy(Activity activity){legacy.add(activity);install(activity);}
     private static final Set<Activity> resumed=Collections.newSetFromMap(new WeakHashMap<Activity,Boolean>());
     public static void watch(Activity activity){
-        try{watchApplication(activity);}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to watch game activities",error);}
+        try{watchApplication(activity);}catch(RuntimeException error){Log.e("PocketMicroControls","Unable to watch game activities",error);}
     }
     private static void watchApplication(Activity activity){
         final String pkg=activity.getPackageName();android.app.Application app=activity.getApplication();
@@ -35,7 +35,7 @@ public final class TouchControls extends FrameLayout {
                 if(!eligible)return;
                 final WeakReference<Activity> ref=new WeakReference<>(current);
                 try{current.getWindow().getDecorView().post(()->{Activity next=ref.get();if(next!=null&&resumed.contains(next)&&!next.isFinishing()&&!next.isDestroyed())install(next);});}
-                catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to attach controls to this screen",error);}
+                catch(RuntimeException error){Log.e("PocketMicroControls","Unable to attach controls to this screen",error);}
             }
             public void onActivityPaused(Activity current){resumed.remove(current);release(current);}
             public void onActivityStopped(Activity current){release(current);}
@@ -61,8 +61,8 @@ public final class TouchControls extends FrameLayout {
             TouchControls controls=new TouchControls(activity);
             activity.addContentView(controls,new ViewGroup.LayoutParams(-1,-1));
             installed.put(activity,new WeakReference<>(controls));
-        }catch(Exception|LinkageError error){Log.e("PocketOuyaControls","Touch controller unavailable",error);
-            Toast.makeText(activity,"Touch controller could not start. See PocketOuyaControls log.",Toast.LENGTH_LONG).show();}
+        }catch(Exception|LinkageError error){Log.e("PocketMicroControls","Touch controller unavailable",error);
+            Toast.makeText(activity,"Touch controller could not start. See PocketMicroControls log.",Toast.LENGTH_LONG).show();}
     }
     public static void release(Activity activity){
         WeakReference<TouchControls> entry=installed.get(activity);
@@ -84,7 +84,7 @@ public final class TouchControls extends FrameLayout {
         android.content.SharedPreferences settings=activity.getSharedPreferences("pocketouya_touch_settings_v1",Activity.MODE_PRIVATE);
         int mode=settings.getInt("mode",0);
         if(nativeSink instanceof LegacyOuyaPadSink&&!settings.getBoolean("legacy_json_v1",false)){mode=0;settings.edit().putInt("mode",0).putBoolean("legacy_json_v1",true).apply();}
-        Log.i("PocketOuyaControls","Input route: "+(nativeSink instanceof LegacyOuyaPadSink?"legacy OUYA JSON controller":nativeSink instanceof OuyaPadSink?"OUYA native":nativeSink instanceof GameMakerPadSink?"GameMaker controller":nativeSink instanceof Ue3PadSink?"Unreal Engine 3 controller":nativeSink instanceof AirPadSink?"Adobe AIR GameInput controller":nativeSink instanceof MarmaladePadSink?"Marmalade":"Android fallback")+"; mode="+mode);
+        Log.i("PocketMicroControls","Input route: "+(nativeSink instanceof LegacyOuyaPadSink?"legacy OUYA JSON controller":nativeSink instanceof OuyaPadSink?"OUYA native":nativeSink instanceof GameMakerPadSink?"GameMaker controller":nativeSink instanceof Ue3PadSink?"Unreal Engine 3 controller":nativeSink instanceof AirPadSink?"Adobe AIR GameInput controller":nativeSink instanceof MarmaladePadSink?"Marmalade":"Android fallback")+"; mode="+mode);
         pad=createPad(activity,mode);
         // OUYA controller layout for every game: left stick above the d-pad on the left, O/U/Y/A above
         // the right stick on the right, L1/L2 and R1/R2 on the shoulders, Menu in the middle.
@@ -134,7 +134,7 @@ public final class TouchControls extends FrameLayout {
             String[] options=new String[]{nativeSink instanceof LegacyOuyaPadSink?"Auto (legacy OUYA JSON)":nativeSink instanceof GameMakerPadSink?"Auto (GameMaker controller)":nativeSink instanceof Ue3PadSink?"Auto (Unreal Engine 3 controller)":nativeSink instanceof AirPadSink?"Auto (Adobe AIR controller)":nativeSink instanceof MarmaladePadSink?"Auto (Marmalade keys)":nativeSink==null?"Auto (virtual controller via Shizuku)":"Auto (OUYA native)","Android gamepad","Keyboard","Virtual controller (Shizuku)"};
             new android.app.AlertDialog.Builder(activity).setTitle("Game input mode").setItems(options,(dialog,which)->{
                 releasePad();usable=true;
-                try{pad=createPad(activity,which);}catch(Exception error){usable=false;Log.e("PocketOuyaControls","Input mode unavailable",error);return;}
+                try{pad=createPad(activity,which);}catch(Exception error){usable=false;Log.e("PocketMicroControls","Input mode unavailable",error);return;}
                 activity.getSharedPreferences("pocketouya_touch_settings_v1",Activity.MODE_PRIVATE).edit().putInt("mode",which).apply();
                 Toast.makeText(activity,"Input: "+options[which],Toast.LENGTH_SHORT).show();
             }).show();
@@ -247,13 +247,13 @@ public final class TouchControls extends FrameLayout {
                 pad.hold(VirtualPad.LEFT,stickOwner,x<-0.5f);pad.hold(VirtualPad.RIGHT,stickOwner,x>0.5f);
                 pad.hold(VirtualPad.UP,stickOwner,y<-0.5f);pad.hold(VirtualPad.DOWN,stickOwner,y>0.5f);
             }else pad.leftStick(x,y);
-        }catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Stick input disabled after input error",error);}
+        }catch(RuntimeException error){usable=false;releasePad();Log.e("PocketMicroControls","Stick input disabled after input error",error);}
     }
     private void hold(int key,Object owner,boolean down){
         if(!usable)return;
-        try{pad.hold(key,owner,down);}catch(RuntimeException error){usable=false;releasePad();Log.e("PocketOuyaControls","Touch input disabled after native input error",error);}
+        try{pad.hold(key,owner,down);}catch(RuntimeException error){usable=false;releasePad();Log.e("PocketMicroControls","Touch input disabled after native input error",error);}
     }
-    private void releasePad(){handler.removeCallbacksAndMessages(null);if(leftStick!=null)leftStick.resetPointer();if(rightStick!=null)rightStick.resetPointer();try{pad.releaseAll();}catch(RuntimeException error){Log.e("PocketOuyaControls","Unable to release virtual controller",error);}}
+    private void releasePad(){handler.removeCallbacksAndMessages(null);if(leftStick!=null)leftStick.resetPointer();if(rightStick!=null)rightStick.resetPointer();try{pad.releaseAll();}catch(RuntimeException error){Log.e("PocketMicroControls","Unable to release virtual controller",error);}}
     @Override public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(!focused)releasePad();}
     @Override protected void onDetachedFromWindow(){releasePad();super.onDetachedFromWindow();}
 }

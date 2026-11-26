@@ -18,10 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Windows Phone games, run by the WPR runtime built into the Windows Phone edition of PocketOuya
+ * Windows Phone games, run by the WPR runtime built into the Windows Phone edition of PocketMicro
  * (see winphone/README.md). The C# side is WinPhoneBridge (winphone/Bridge/WinPhoneBridgeActivity.cs):
  * it installs .xap files, launches games in WPR's own game process, writes the game list read here,
- * and exports WPR's logs. In the plain PocketOuya build the bridge is absent and all of this hides.
+ * and exports WPR's logs. In the plain PocketMicro build the bridge is absent and all of this hides.
  */
 final class WinPhone {
     static final String BRIDGE = "com.hcode91.pocketmicro.winphone.WinPhoneBridge";
@@ -32,7 +32,7 @@ final class WinPhone {
     static final String ACTION_ACHIEVEMENTS = "com.hcode91.pocketmicro.winphone.ACHIEVEMENTS";
     static final String EXTRA_PRODUCT = "productId";
     static final String EXTRA_LOGGING = "logging";
-    /** Set by the bridge on its result: what happened, for PocketOuya's global log. */
+    /** Set by the bridge on its result: what happened, for PocketMicro's global log. */
     static final String EXTRA_OUTCOME = "outcome", EXTRA_DETAIL = "detail";
 
     static final class Game {
@@ -97,7 +97,7 @@ final class WinPhone {
                 out.add(g);
             }
         } catch (Exception | OutOfMemoryError error) {
-            android.util.Log.w("PocketOuyaWinPhone", "Game list unreadable", error);
+            android.util.Log.w("PocketMicroWinPhone", "Game list unreadable", error);
         }
         return out;
     }
@@ -129,7 +129,7 @@ final class WinPhone {
         host.startActivity(i);
     }
 
-    /** Records a launch result from the bridge in PocketOuya's global log. */
+    /** Records a launch result from the bridge in PocketMicro's global log. */
     static void logResult(Context context, Game game, int resultCode, Intent data) {
         String outcome = data == null ? null : data.getStringExtra(EXTRA_OUTCOME);
         String detail = data == null ? null : data.getStringExtra(EXTRA_DETAIL);

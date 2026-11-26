@@ -1,4 +1,4 @@
-public final class PurchaseProfileTests {
+public final class HostTests {
     public static void main(String[] args) throws Exception {
         com.hcode91.pocketmicro.GeneralCompatibilityTest.main(new String[0]);
         com.hcode91.pocketmicro.LegacyOuyaInputTest.main(new String[0]);

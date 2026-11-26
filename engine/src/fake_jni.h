@@ -1,4 +1,4 @@
-// PocketOuya engine – a fake Java environment (JNIEnv / JavaVM) for guest code.
+// PocketMicro engine – a fake Java environment (JNIEnv / JavaVM) for guest code.
 // Java strings are plain guest C strings; arrays are guest blocks with a small header.
 // Java methods the game calls are answered by host code registered with java().
 #pragma once

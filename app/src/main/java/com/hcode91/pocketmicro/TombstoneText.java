@@ -40,11 +40,11 @@ final class TombstoneText {
     static String logText(byte[] trace){
         if(trace==null||trace.length==0)return "Android attached no crash dump to this record.";
         String decoded=format(trace);
-        if(decoded!=null)return "Full crash dump (decoded by PocketOuya):\n"+decoded;
+        if(decoded!=null)return "Full crash dump (decoded by PocketMicro):\n"+decoded;
         boolean binary=false;for(int i=0;i<Math.min(4096,trace.length);i++){int c=trace[i]&0xff;if(c<9){binary=true;break;}}
         if(!binary)return new String(trace,StandardCharsets.UTF_8);
         int keep=Math.min(trace.length,4*1024*1024);
-        return "Crash dump in a format PocketOuya could not decode (base64, "+trace.length+" bytes"+(keep<trace.length?", first "+keep+" bytes":"")+"):\n"+Base64.getMimeEncoder().encodeToString(Arrays.copyOf(trace,keep));
+        return "Crash dump in a format PocketMicro could not decode (base64, "+trace.length+" bytes"+(keep<trace.length?", first "+keep+" bytes":"")+"):\n"+Base64.getMimeEncoder().encodeToString(Arrays.copyOf(trace,keep));
     }
 
     /** Returns readable text, or null if the bytes are not a tombstone record. */

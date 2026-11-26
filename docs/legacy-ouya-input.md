@@ -41,7 +41,7 @@ No purchase/developer identity, SDK initialization or receipt logic is changed.
 
 The first use of this newly matched route resets an old Android/Keyboard pad
 selection to **Auto (legacy OUYA JSON)** once. Later manual mode selections remain
-respected. The selected route is logged with `PocketOuyaControls`.
+respected. The selected route is logged with `PocketMicroControls`.
 
 ## Look control and cleanup
 
@@ -63,7 +63,7 @@ physical snapshots, virtual device/player numbering, nested button JSON, both
 sticks, disabled gates, ID collision and cleanup. They use a synthetic message
 consumer, not the game's managed runtime. Input-state tests cover diagonal
 clamping, dead zones, repeat suppression, independent movement/look and cleanup
-when a release fails. Modern native and Marmalade/input/purchase suites remain.
+when a release fails. Modern native and Marmalade/input/bridge suites remain.
 
 The actual supplied Monocle APK matches the new route. Full reconversion with the
 freshly D8-built bridge preserves the original APK, all 29 assets, the CPU getter
@@ -73,10 +73,10 @@ app compilation and host/generated suites pass. Phone touch response, View
 multitouch dispatch and gameplay remain unverified until the owner tests them.
 All 17 legacy native profiles/four frozen native algorithm sources are unchanged.
 
-Install the updated PocketOuya, then reconvert the **complete original Monocle
+Install the updated PocketMicro, then reconvert the **complete original Monocle
 APK** with **Experimental Unity embedded-runtime repair + touch**. Updating
-PocketOuya alone cannot replace code already embedded in an installed game. The
+PocketMicro alone cannot replace code already embedded in an installed game. The
 conversion report should say **1 use the legacy OUYA JSON controller route**.
 Use Auto, arrows for movement, O for jump and Look / RS for the camera. Existing
 native repairs and the CPU guard remain part of this conversion. If input still
-fails, capture the game's runtime/global log including `PocketOuyaControls`.
+fails, capture the game's runtime/global log including `PocketMicroControls`.

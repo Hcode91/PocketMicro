@@ -77,7 +77,7 @@ public final class SurfaceDetachRule {
             result.status = CompatibilityEvidence.Status.VERIFIED;
             result.reason = result.views.size() + " view class(es) " + result.views + " skip SurfaceView's detach (kept as is, so the engine's GL thread survives). "
                     + hook.hooked + " launch activit" + (hook.hooked == 1 ? "y installs" : "ies install") + " a main-thread guard that ignores only Android 7+'s "
-                    + "SurfaceView.performDrawFinished null-parent failure after such a view is removed; other failures still crash. Logged as PocketOuyaSurfaceGuard.";
+                    + "SurfaceView.performDrawFinished null-parent failure after such a view is removed; other failures still crash. Logged as PocketMicroSurfaceGuard.";
         } catch (Exception e) {
             result.replacements.clear(); result.needsBridge = false;
             result.status = CompatibilityEvidence.Status.UNKNOWN; result.reason = e.getMessage() + "; not applied";

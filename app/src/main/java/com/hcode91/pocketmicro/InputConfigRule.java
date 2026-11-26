@@ -5,7 +5,7 @@ import java.util.*;
 
 /**
  * android.input-config-changes: on an OUYA the controllers were connected before a game started.
- * On a phone, PocketOuya's virtual controller (or a Bluetooth pad) appears while the game is
+ * On a phone, PocketMicro's virtual controller (or a Bluetooth pad) appears while the game is
  * already running, which changes Android's keyboard/navigation configuration. An activity that
  * doesn't declare it handles that is destroyed and recreated, and games never written for that
  * crash in their own clean-up (Whack'em: MainActivity.onStop -> ResourceManager.unloadMenuTextures

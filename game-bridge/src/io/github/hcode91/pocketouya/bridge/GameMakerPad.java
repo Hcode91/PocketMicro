@@ -22,7 +22,7 @@ public final class GameMakerPad {
     // ---- called from the rewritten RunnerJNILib methods ----
     public static int count(int original) { return active ? Math.max(original, slot + 1) : original; }
     public static boolean owns(int index) { return active && index == slot; }
-    public static String description() { return "PocketOuya touch pad"; }
+    public static String description() { return "PocketMicro touch pad"; }
     public static float[] buttons() { synchronized (buttons) { return buttons.clone(); } }
     public static float[] axes() { synchronized (buttons) { return axes.clone(); } }
     public static int mapping(int gml) {

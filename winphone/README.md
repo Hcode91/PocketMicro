@@ -1,8 +1,8 @@
 # Windows Phone edition
 
-The Windows Phone edition of PocketOuya runs Windows Phone 7/8 games through
-[WPR (Windows Phone Runner)](https://github.com/Bubbleshum/WPR), built into PocketOuya. It is one
-app: PocketOuya's library and menus, with WPR's game runtime inside. WPR's own launcher screens
+The Windows Phone edition of PocketMicro runs Windows Phone 7/8 games through
+[WPR (Windows Phone Runner)](https://github.com/Bubbleshum/WPR), built into PocketMicro. It is one
+app: PocketMicro's library and menus, with WPR's game runtime inside. WPR's own launcher screens
 and its online Hub are not used.
 
 ## What works
@@ -26,7 +26,7 @@ not supported.
 - In a game, the **☰** button at the top left has **Back** (one Back press, for gesture
   navigation) and **Quit** (tap twice). Quit lets the game close properly, which is also what makes
   a WP8 C++ game write its summary of unanswered Windows calls to the log.
-- Every launch and how it ended goes into PocketOuya's global log.
+- Every launch and how it ended goes into PocketMicro's global log.
 
 ## Logs
 
@@ -41,23 +41,23 @@ not supported.
 
 `.github/workflows/android.yml`, job `winphone`:
 
-1. Gradle builds PocketOuya as an Android library (`-PpocketouyaLibrary`) and collects it with its
+1. Gradle builds PocketMicro as an Android library (`-PpocketouyaLibrary`) and collects it with its
    dependencies into `build/winphone-libs` (`:app:collectWinPhoneLibraries`). `winphone/dedupe-wp-libs.py` then
    removes any Java class WPR's NuGet packages already ship, so D8 never sees one twice.
-2. `winphone/wpr` is WPR-droid (https://github.com/Hcode91/WPR-droid), PocketOuya's fork of WPR
+2. `winphone/wpr` is WPR-droid (https://github.com/Hcode91/WPR-droid), PocketMicro's fork of WPR
    0.2.09, pinned as a submodule. Runtime fixes and the in-game controls live there. `prepare-wpr.py` adapts its Android
-   head: PocketOuya's package name, label and icon; PocketOuya's MainActivity as the launcher; WPR's
-   game process renamed `:wpgame` (PocketOuya has its own `:game`); the library and the bridge
+   head: PocketMicro's package name, label and icon; PocketMicro's MainActivity as the launcher; WPR's
+   game process renamed `:wpgame` (PocketMicro has its own `:game`); the library and the bridge
    (`Bridge/WinPhoneBridgeActivity.cs`) added to the build.
-3. .NET builds and signs the APK with PocketOuya's key and run number, so it installs over the
-   normal PocketOuya APK and the other way round.
+3. .NET builds and signs the APK with PocketMicro's key and run number, so it installs over the
+   normal PocketMicro APK and the other way round.
 
-The bridge is the only link between the two halves: PocketOuya's `WinPhone.java` starts it with an
+The bridge is the only link between the two halves: PocketMicro's `WinPhone.java` starts it with an
 action (install, launch, uninstall, export logs), and it writes `files/winphone/games.json` for the
 library.
 
 ## Licences
 
-PocketOuya is GPL-3.0. WPR is MIT-licensed (Copyright (c) 2026 MediaExplorer; see
+PocketMicro is GPL-3.0. WPR is MIT-licensed (Copyright (c) 2026 MediaExplorer; see
 `winphone/wpr/LICENSE`) and includes components under their own licences (FNA, SDL, FAudio,
 FFmpeg and others; see WPR's repository).

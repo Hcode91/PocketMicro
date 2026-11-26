@@ -11,7 +11,7 @@ import java.io.FileDescriptor;
  * Optional Shizuku user service (runs as the shell user) that owns one virtual gamepad created
  * through Linux /dev/uhid. Fixed operations only: create the pad, send one input state, remove
  * it, report status. Games then see a real Android input device named "OUYA Game Controller".
- * The pad is removed when PocketOuya asks, when the service is destroyed, or when this process
+ * The pad is removed when PocketMicro asks, when the service is destroyed, or when this process
  * exits (closing /dev/uhid destroys the device).
  */
 public final class VirtualPadService extends Binder {
@@ -19,7 +19,7 @@ public final class VirtualPadService extends Binder {
     static final int CREATE = 1, INPUT = 2, REMOVE = 3, STATUS = 4, ALLOW = 5, DESTROY = 16777115;
     private final int owner;
     private final Object lock = new Object();
-    /** The one game process PocketOuya has allowed to drive the pad, and its death token. */
+    /** The one game process PocketMicro has allowed to drive the pad, and its death token. */
     private int game = -1;
     private IBinder gameToken;
     private final IBinder.DeathRecipient gameDied = () -> { synchronized (lock) { game = -1; gameToken = null; } remove(); };
@@ -33,11 +33,11 @@ public final class VirtualPadService extends Binder {
         if (code == INTERFACE_TRANSACTION) { reply.writeString(DESCRIPTOR); return true; }
         if (code == PING_TRANSACTION) return true;
         int caller = Binder.getCallingUid();
-        if (code == DESTROY) { if (caller != owner && caller != android.os.Process.myUid()) throw new SecurityException("Virtual pad belongs to PocketOuya"); remove(); System.exit(0); return true; }
+        if (code == DESTROY) { if (caller != owner && caller != android.os.Process.myUid()) throw new SecurityException("Virtual pad belongs to PocketMicro"); remove(); System.exit(0); return true; }
         boolean fromGame; synchronized (lock) { fromGame = game != -1 && caller == game; }
-        if (caller != owner && !fromGame) throw new SecurityException("Virtual pad belongs to PocketOuya");
+        if (caller != owner && !fromGame) throw new SecurityException("Virtual pad belongs to PocketMicro");
         data.enforceInterface(DESCRIPTOR);
-        if (code == ALLOW && caller != owner) throw new SecurityException("Only PocketOuya can allow a game");
+        if (code == ALLOW && caller != owner) throw new SecurityException("Only PocketMicro can allow a game");
         switch (code) {
             case ALLOW: {
                 int uid = data.readInt(); IBinder token = data.readStrongBinder();

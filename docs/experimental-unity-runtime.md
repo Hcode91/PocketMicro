@@ -38,7 +38,7 @@ these limits. No successful phone launch has been observed for this experiment.
 
 ## Verification
 
-- Full host compatibility/input/purchase/doctor suites pass. Generated detector
+- Full host compatibility/input/bridge/doctor suites pass. Generated detector
   cases remain TP12/TN31/FP0/FN0; their detection logic is unchanged.
 - New fixtures vary function/data addresses, proxy/payload SONAMEs and include
   missing/malformed payloads and an independently typed Thumb near-match. They

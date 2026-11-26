@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Remove from PocketOuya's libraries every Java class the WPR build already ships.
+"""Remove from PocketMicro's libraries every Java class the WPR build already ships.
 
 Usage: dedupe-wp-libs.py <project.assets.json> <wpr dir> <libs dir>
 
-The Windows Phone edition puts PocketOuya's .aar/.jar files (libs dir) next to the Java
+The Windows Phone edition puts PocketMicro's .aar/.jar files (libs dir) next to the Java
 libraries WPR gets from NuGet packages and from its own projects. D8 rejects any class
 that appears twice ("Type X is defined multiple times") and only reports the first one,
 so this script finds them all up front. For every duplicate, the WPR copy is kept and
-PocketOuya's copy is removed; a library left with no classes is deleted. Run it after
+PocketMicro's copy is removed; a library left with no classes is deleted. Run it after
 `dotnet restore` (it needs project.assets.json) and before the build. Only the Windows
-Phone edition's copies are touched; the normal PocketOuya APK never sees this folder.
+Phone edition's copies are touched; the normal PocketMicro APK never sees this folder.
 
 It also warns about native libraries (.so) present on both sides, which do not fail the
 build but mean only one copy ends up in the APK.
@@ -132,7 +132,7 @@ def main():
                     dst.writestr(info, data)
             f.write_bytes(out.getvalue())
 
-    print(f"dedupe: done, {removed_total} duplicate classes removed from PocketOuya's libraries")
+    print(f"dedupe: done, {removed_total} duplicate classes removed from PocketMicro's libraries")
 
 
 if __name__ == "__main__":

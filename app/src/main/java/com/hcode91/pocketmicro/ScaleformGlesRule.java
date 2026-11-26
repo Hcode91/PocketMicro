@@ -12,7 +12,7 @@ import java.util.*;
  * Tegra 3 reported 16; modern GPUs report 32, so bytes 16-31 overwrite manager+0x20..0x2f
  * (render context and render-thread pointers) and the first frame crashes in
  * RTCommandQueue::PopCommand (Soul Fjord). The library's code is not changed: its
- * "libGLESv2.so" dependency is renamed to the same-length "libpogles.so", a small PocketOuya
+ * "libGLESv2.so" dependency is renamed to the same-length "libpogles.so", a small PocketMicro
  * shim that depends on libGLESv2.so (so every other GL function resolves as before) and only
  * caps the GL_MAX_VERTEX_ATTRIBS answer at the OUYA's 16.
  */
@@ -104,7 +104,7 @@ public final class ScaleformGlesRule {
                 byte[] fixed;
                 try { fixed = patch(e.getValue()); } catch (IllegalStateException bad) { notes.add(e.getKey() + ": " + bad.getMessage()); continue; }
                 if (fixed == null) { already++; continue; }
-                if (shim == null || shim.length == 0) throw new IllegalStateException("GPU-limit shim missing from this PocketOuya build");
+                if (shim == null || shim.length == 0) throw new IllegalStateException("GPU-limit shim missing from this PocketMicro build");
                 if (entries.contains(dir + TO)) throw new IllegalStateException("APK already contains " + dir + TO + "; reimport the original APK");
                 result.replacements.put(e.getKey(), fixed);
                 result.replacements.put(dir + TO, shim);

@@ -1,4 +1,4 @@
-// PocketOuya engine – the 32-bit guest address space.
+// PocketMicro engine – the 32-bit guest address space.
 //
 // 32-bit game code (run by dynarmic) sees addresses 0..4 GiB. We reserve one
 // 4 GiB block of host memory and map guest address A to host (base + A), so

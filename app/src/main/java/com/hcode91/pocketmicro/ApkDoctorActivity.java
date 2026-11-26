@@ -52,13 +52,13 @@ public final class ApkDoctorActivity extends Activity {
         writeText(file("report.txt"),report);
     });}
     private void prepare(){new AlertDialog.Builder(this).setTitle("Prepare a converted copy?")
-        .setMessage("This raises an old target where supported, applies exact native-library repairs, and signs a new APK with PocketOuya's key. It does not resolve every reported issue. The publisher's original signing identity cannot be retained. Existing updates or signature checks may fail. On-screen touch controls are attempted automatically using supported input routes; the report explains any unsupported layouts. No purchase hooks are added.")
+        .setMessage("This raises an old target where supported, applies exact native-library repairs, and signs a new APK with PocketMicro's key. It does not resolve every reported issue. The publisher's original signing identity cannot be retained. Existing updates or signature checks may fail. On-screen touch controls are attempted automatically using supported input routes; the report explains any unsupported layouts. No purchase hooks are added.")
         .setPositiveButton("Prepare",(d,w)->job("Preparing and verifying converted APK…",()->{
             String before=ModernApkDoctor.inspect(file("original.apk"),Build.VERSION.SDK_INT,Build.SUPPORTED_ABIS);
             file("ready").delete();file("signed.apk").delete();
             writeText(file("report.txt"),before);
             try{
-                byte[] bridge;try(InputStream input=getResources().openRawResource(R.raw.ouya_purchase_bridge)){bridge=ApkRebuilder.readAll(input);}
+                byte[] bridge;try(InputStream input=getResources().openRawResource(R.raw.game_bridge)){bridge=ApkRebuilder.readAll(input);}
                 byte[] glesShim;try(InputStream input=getResources().openRawResource(R.raw.pocketouya_gles)){glesShim=ApkRebuilder.readAll(input);}
                 ManifestPatcher.Result r=ApkRebuilder.prepareForInstall(file("original.apk"),file("patched.apk"),bridge,true,false,ModernApkDoctor.minimumTarget(Build.VERSION.SDK_INT),null,glesShim);
                 GameSigner.sign(this,file("patched.apk"),file("signed.apk"));

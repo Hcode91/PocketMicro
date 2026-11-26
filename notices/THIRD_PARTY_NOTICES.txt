@@ -1,14 +1,14 @@
-PocketOuya - third-party notices
+PocketMicro - third-party notices
 ========================================================================
 
-PocketOuya is free software under the GNU General Public License, version 3
-(full text at the end). Source: https://github.com/Hcode91/PocketOuya
+PocketMicro is free software under the GNU General Public License, version 3
+(full text at the end). Source: https://github.com/Hcode91/PocketMicro
 
 It includes the components below, each under its own licence. Where a
 licence's full text is not given with the component, it is at the end of
 this file.
 
-PocketOuya is an independent project. It is not affiliated with, endorsed
+PocketMicro is an independent project. It is not affiliated with, endorsed
 by or connected to Razer, OUYA, Microsoft or any game publisher. No games
 are included.
 

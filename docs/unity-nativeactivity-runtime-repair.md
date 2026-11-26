@@ -61,8 +61,8 @@ python3 scripts/test-ad2442-runtime-pic.py original.apk converted.apk
 ```
 
 These checks do not establish successful Android startup, controls, purchases
-or gameplay. Install the new PocketOuya build, reconvert the **original complete
+or gameplay. Install the new PocketMicro build, reconvert the **original complete
 APK** using **Startup repairs** (optionally with touch), and verify the report
 shows **three Unity 4.3.4f1 libraries repaired**. Install the converted
 update and use normal Play. A fresh global log is needed if another failure
-follows. No game/native binaries are bundled in PocketOuya or committed.
+follows. No game/native binaries are bundled in PocketMicro or committed.

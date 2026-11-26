@@ -56,7 +56,7 @@ public final class MemoryScanner {
     public static String unavailableReason(){
         if(NATIVE)return null;
         try{new RandomAccessFile("/proc/self/mem","r").close();return null;}
-        catch(IOException error){return "The cheat helper library isn't in this game. Convert it again with the newest PocketOuya and Cheat menu ticked.";}
+        catch(IOException error){return "The cheat helper library isn't in this game. Convert it again with the newest PocketMicro and Cheat menu ticked.";}
     }
 
     private Type type=Type.INT32;

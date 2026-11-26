@@ -16,16 +16,16 @@ import java.security.cert.X509Certificate;
 
 /**
  * Signs converted games. Each phone has its own signing key, made the first time a game is
- * converted and kept in PocketOuya's private files (files/signing/). Each signature also carries
+ * converted and kept in PocketMicro's private files (files/signing/). Each signature also carries
  * a handover from the old shared key (assets/games.p12, public in the source), so games converted
  * before this keep their saves when converted again. See {@link ApkSigning}.
  *
- * <p>The phone's key goes when PocketOuya is uninstalled (an update keeps it). A game converted
+ * <p>The phone's key goes when PocketMicro is uninstalled (an update keeps it). A game converted
  * with one key cannot be updated by a conversion signed with another, so after reinstalling
- * PocketOuya such a game must be removed before it is converted again.</p>
+ * PocketMicro such a game must be removed before it is converted again.</p>
  */
 final class GameSigner {
-    private static final String TAG = "PocketOuya";
+    private static final String TAG = "PocketMicro";
     private static final char[] SHARED_PASS = "pocketouya".toCharArray();
     private static final String DEVICE_ALIAS = "device";
 

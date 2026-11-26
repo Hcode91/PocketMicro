@@ -1,7 +1,7 @@
 # Crash repair pass: 2026-11-02
 
 The owner supplied a global journal and confirmed 21 games as running. This pass
-prioritizes startup/crash defects. Controls, purchase handling and the parked AI/
+prioritizes startup/crash defects. Controls, the game bridge and the parked AI/
 backend project are unchanged. Older crashes for owner-confirmed working games
 are not evidence that those games currently require another repair.
 

@@ -232,7 +232,7 @@ python3 scripts/test-abbigale-runtime-pic.py original.apk converted.apk
 
 The input must include the matching original payloads under `assets/libs/`.
 This candidate has **not** been validated by Android gameplay. To test, install
-the new PocketOuya build, reconvert the original complete Abbigale APK with
+the new PocketMicro build, reconvert the original complete Abbigale APK with
 **Startup repairs** (optionally with touch), and verify the report says two real
 Unity 4.1.1f4 runtimes were repaired/promoted, rather than loader-only repair.
 Install the converted update and use normal Play. Export a fresh global log if

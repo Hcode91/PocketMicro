@@ -6,7 +6,7 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/** Optional Shizuku user service. Fixed operations only (crash-buffer capture, install one APK streamed by PocketOuya, copy one OBB into a game's Android/obb folder), never arbitrary commands. */
+/** Optional Shizuku user service. Fixed operations only (crash-buffer capture, install one APK streamed by PocketMicro, copy one OBB into a game's Android/obb folder), never arbitrary commands. */
 public final class CrashLogService extends Binder {
     static final String DESCRIPTOR="com.hcode91.pocketmicro.CRASH_CAPTURE";
     static final int START=1,STOP=2,READ=3,INSTALL=4,OBB=5,DESTROY=16777115;
@@ -21,8 +21,8 @@ public final class CrashLogService extends Binder {
     @Override protected boolean onTransact(int code,Parcel data,Parcel reply,int flags)throws RemoteException {
         if(code==INTERFACE_TRANSACTION){reply.writeString(DESCRIPTOR);return true;}
         if(code==PING_TRANSACTION)return true;
-        if(code==DESTROY){if(Binder.getCallingUid()!=owner&&Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("Capture belongs to PocketOuya");stop();System.exit(0);return true;}
-        if(Binder.getCallingUid()!=owner)throw new SecurityException("Capture belongs to PocketOuya");
+        if(code==DESTROY){if(Binder.getCallingUid()!=owner&&Binder.getCallingUid()!=android.os.Process.myUid())throw new SecurityException("Capture belongs to PocketMicro");stop();System.exit(0);return true;}
+        if(Binder.getCallingUid()!=owner)throw new SecurityException("Capture belongs to PocketMicro");
         data.enforceInterface(DESCRIPTOR);
         if(code==START){start(data.readString());reply.writeNoException();return true;}
         if(code==STOP){stop();reply.writeNoException();return true;}
@@ -60,7 +60,7 @@ public final class CrashLogService extends Binder {
         },"game-crash-capture").start();
     }
     private void stop(){synchronized(lock){running=false;if(process!=null)process.destroy();}}
-    /** pm install of one APK streamed from PocketOuya. Keeps the game's original target SDK
+    /** pm install of one APK streamed from PocketMicro. Keeps the game's original target SDK
      *  (Android 14+ otherwise refuses very old targets), which lets old engines load. */
     static List<String> installCommand(long size,int sdk){
         List<String> cmd=new ArrayList<>(Arrays.asList("/system/bin/pm","install","-r"));

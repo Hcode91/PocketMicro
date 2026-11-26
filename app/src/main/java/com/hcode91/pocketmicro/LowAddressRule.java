@@ -22,7 +22,7 @@ public final class LowAddressRule {
         public CompatibilityEvidence.Status status = CompatibilityEvidence.Status.SKIPPED;
         public String reason = "not requested";
         public final Map<String, byte[]> replacements = new LinkedHashMap<>();
-        /** True when the converted APK needs the PocketOuya helper DEX appended. */
+        /** True when the converted APK needs the PocketMicro helper DEX appended. */
         public boolean needsBridge;
         String line() { return status + " " + ID + ": " + reason; }
     }
@@ -57,7 +57,7 @@ public final class LowAddressRule {
             StringBuilder why = new StringBuilder();
             String dir = libraryDir(entries, why);
             if (dir == null) { result.status = CompatibilityEvidence.Status.UNSUPPORTED; result.reason = why + "; not applied"; return result; }
-            if (library == null || library.length == 0) throw new IllegalStateException("helper library missing from this PocketOuya build");
+            if (library == null || library.length == 0) throw new IllegalStateException("helper library missing from this PocketMicro build");
             if (entries.contains(dir + LIBRARY_FILE)) throw new IllegalStateException("APK already contains " + LIBRARY_FILE + "; reimport the original APK");
             LaunchHook.Result hook = LaunchHook.prepend(dex, launchers, RESERVE);
             int hooked = hook.hooked, already = hook.already;
@@ -69,7 +69,7 @@ public final class LowAddressRule {
             result.status = CompatibilityEvidence.Status.VERIFIED;
             result.reason = "experimental: " + hooked + " launch activit" + (hooked == 1 ? "y loads" : "ies load") + " " + LIBRARY_FILE + " (added to " + dir
                     + ") before anything else, reserving free address space above 2 GB (3 GB if room below is short) so later allocations land low as on the OUYA. "
-                    + "Its result is logged under PocketOuyaLowAddr.";
+                    + "Its result is logged under PocketMicroLowAddr.";
         } catch (Exception e) {
             result.replacements.clear(); result.needsBridge = false;
             result.status = CompatibilityEvidence.Status.UNKNOWN; result.reason = e.getMessage() + "; not applied";

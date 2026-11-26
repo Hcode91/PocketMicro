@@ -7,8 +7,8 @@ import java.util.*;
 import java.util.zip.*;
 
 /**
- * Small text note written into every APK PocketOuya converts, so a launch log can say which
- * PocketOuya build converted the game and which fixes were applied. Plain text, no game data.
+ * Small text note written into every APK PocketMicro converts, so a launch log can say which
+ * PocketMicro build converted the game and which fixes were applied. Plain text, no game data.
  */
 final class ConversionRecord {
     static final String ENTRY = "assets/pocketouya-conversion.txt";
@@ -21,7 +21,7 @@ final class ConversionRecord {
 
     static byte[] build(boolean startupRepairs, boolean touch, boolean experimental, String report) {
         StringBuilder s = new StringBuilder();
-        s.append("PocketOuya ").append(converterVersion).append('\n');
+        s.append("PocketMicro ").append(converterVersion).append('\n');
         SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm 'UTC'", Locale.ROOT);
         date.setTimeZone(TimeZone.getTimeZone("UTC"));
         s.append("Converted: ").append(date.format(new Date())).append('\n');
@@ -40,7 +40,7 @@ final class ConversionRecord {
         if (apk == null || !apk.isFile()) return "Conversion record: game APK not readable";
         try (ZipFile zip = new ZipFile(apk)) {
             ZipEntry e = zip.getEntry(ENTRY);
-            if (e == null) return "Conversion record: none (not converted by this PocketOuya, or converted before records were added)";
+            if (e == null) return "Conversion record: none (not converted by this PocketMicro, or converted before records were added)";
             String text = new String(ApkRebuilder.readBounded(zip.getInputStream(e), 64 * 1024), StandardCharsets.UTF_8);
             return summarize(text);
         } catch (IOException | RuntimeException error) {
@@ -54,7 +54,7 @@ final class ConversionRecord {
         String[] lines = text.split("\n");
         int header = 0, rules = 0;
         for (String line : lines) {
-            if (header < 3 && (line.startsWith("PocketOuya ") || line.startsWith("Converted: ") || line.startsWith("Options: "))) {
+            if (header < 3 && (line.startsWith("PocketMicro ") || line.startsWith("Converted: ") || line.startsWith("Options: "))) {
                 out.append(header == 0 ? "Converted by " : "").append(line).append('\n'); header++; continue;
             }
             if (line.matches(STATUS) && rules < 30) {

@@ -79,7 +79,7 @@ final class ApkSigning {
                 .setV3SigningEnabled(true)
                 .setSigningCertificateLineage(lineage)
                 // apksig's default puts the handover only in the v3.1 block, read from Android 13;
-                // PocketOuya supports Android 10, so the v3.0 block carries it.
+                // PocketMicro supports Android 10, so the v3.0 block carries it.
                 .setMinSdkVersionForRotation(28)
                 .build()
                 .sign();
@@ -107,7 +107,7 @@ final class ApkSigning {
         generator.initialize(2048, new SecureRandom());
         KeyPair pair = generator.generateKeyPair();
         long now = System.currentTimeMillis();
-        X509Certificate cert = selfSigned(pair, "PocketOuya games on this device",
+        X509Certificate cert = selfSigned(pair, "PocketMicro games on this device",
                 new Date(now - 24L * 3600 * 1000), new Date(now + 50L * 365 * 24 * 3600 * 1000));
         return new Keys(pair.getPrivate(), cert);
     }

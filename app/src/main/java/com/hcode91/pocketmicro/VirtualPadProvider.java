@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit;
 import rikka.shizuku.Shizuku;
 
 /**
- * Hands the Shizuku virtual-controller service to a game PocketOuya imported, so the game's
+ * Hands the Shizuku virtual-controller service to a game PocketMicro imported, so the game's
  * touch pad can drive a real "OUYA Game Controller" input device. Only call("connect") exists:
- * the caller must be an imported game; PocketOuya then starts the service (if Shizuku is
+ * the caller must be an imported game; PocketMicro then starts the service (if Shizuku is
  * running and already allowed), lets that game's process send input, and returns the binder.
  * The service removes the pad when the game's process dies.
  */
@@ -36,7 +36,7 @@ public final class VirtualPadProvider extends ContentProvider {
         IBinder client = extras == null ? null : extras.getBinder("client");
         long identity = Binder.clearCallingIdentity();
         try {
-            if (!imported(uid)) { out.putString("status", "FAILED: not a game imported by PocketOuya"); return out; }
+            if (!imported(uid)) { out.putString("status", "FAILED: not a game imported by PocketMicro"); return out; }
             if (client == null) { out.putString("status", "FAILED: no client token"); return out; }
             String ready = shizukuReady();
             if (ready != null) { out.putString("status", "FAILED: " + ready); return out; }
@@ -74,7 +74,7 @@ public final class VirtualPadProvider extends ContentProvider {
             if (!Shizuku.pingBinder()) return "Shizuku is not running";
         }
         if (Shizuku.getVersion() < 13) return "Shizuku 13 or later is needed";
-        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return "allow PocketOuya in Shizuku (open PocketOuya's virtual controller test once)";
+        if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return "allow PocketMicro in Shizuku (open PocketMicro's virtual controller test once)";
         return null;
     }
 
@@ -85,7 +85,7 @@ public final class VirtualPadProvider extends ContentProvider {
             if (args == null) {
                 Context context = getContext();
                 int version = 1; try { version = (int) context.getPackageManager().getPackageInfo(context.getPackageName(), 0).getLongVersionCode(); } catch (PackageManager.NameNotFoundException ignored) {}
-                // Daemon: the pad keeps working if Android stops PocketOuya's own process while the game runs.
+                // Daemon: the pad keeps working if Android stops PocketMicro's own process while the game runs.
                 args = new Shizuku.UserServiceArgs(new ComponentName(context, VirtualPadService.class)).daemon(true).tag("virtual_pad_game").processNameSuffix("virtual_pad_game").version(version).debuggable(false);
             }
             new Handler(Looper.getMainLooper()).post(() -> { try { Shizuku.bindUserService(args, connection); } catch (RuntimeException ignored) {} });

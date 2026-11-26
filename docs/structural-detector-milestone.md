@@ -44,7 +44,7 @@ its generated-case pass does not mean it replayed the real libraries.
 - Generated structural cases, a private-fixture audit runner, machine-readable
   executed evidence and a dedicated CI workflow.
 
-The existing exact-build catalog, repair algorithms, purchase validation, input,
+The existing exact-build catalog, repair algorithms, game-bridge validation, input,
 GameMaker runtime, signing and UI flows are unchanged. No fingerprints were
 added or removed. The new detector is not called by the doctor, rebuilder or
 automatic repair path. It never returns modified ELF bytes; every result has
@@ -141,7 +141,7 @@ not Android loading, gameplay, purchases, or proof of a hypothesized crash cause
 - `execution-record.json`: executed and not-executed tests and detector source
   checksums. No private fixture paths or native binary bytes are included.
 
-Executed locally: fresh existing `PurchaseProfileTests` suites; the compatibility,
+Executed locally: fresh existing `HostTests` suites; the compatibility,
 native warning, crash filtering and journal script; standalone detector tests;
 all 17 private baseline replays; missing-fixture handling; full Android Java
 compile against Android's core jdkImage. New device launches and Unicorn scripts
@@ -150,7 +150,7 @@ were not executed in this milestone; historical checks are not counted as new.
 Commands after configuring the normal Android/Gradle environment:
 
 ```sh
-gradle :app:testPurchaseProfile :app:testStructuralDetector
+gradle :app:testHost :app:testStructuralDetector
 gradle :app:compileDebugJavaWithJavac
 gradle :app:auditNativeProfileMatrix -PnativeFixtureIndex=/private/fixtures.json
 ```
