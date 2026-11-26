@@ -44,7 +44,7 @@ its generated-case pass does not mean it replayed the real libraries.
 - Generated structural cases, a private-fixture audit runner, machine-readable
   executed evidence and a dedicated CI workflow.
 
-The existing exact-build catalog, repair algorithms, purchase validation, input,
+The existing exact-build catalog, repair algorithms, game-bridge validation, input,
 GameMaker runtime, signing and UI flows are unchanged. No fingerprints were
 added or removed. The new detector is not called by the doctor, rebuilder or
 automatic repair path. It never returns modified ELF bytes; every result has

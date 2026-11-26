@@ -18,4 +18,4 @@ Endpoints used: `GET /api/v1/discover/{page}` (front page `discover`),
 
 The public server serves plain HTTP and redirects HTTPS to HTTP, so PocketMicro allows cleartext
 traffic. The Store is a community service; games and data come from the server, not from
-PocketMicro. In-game purchases are a separate step (server purchases, planned).
+PocketMicro. PocketMicro does not handle in-game purchases.

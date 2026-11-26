@@ -89,7 +89,7 @@ native loading and gameplay remain unverified.
 - Coordinator and APK conversion: read-only inspection, asset/native isolation,
   same-DEX composition with the OUYA cleanup rule, diagnostic reporting and
   assessment that does not equate diagnostic support with native repair support.
-- Existing host/input/purchase/doctor/assessment/shared/experimental suites,
+- Existing host/input/bridge/doctor/assessment/shared/experimental suites,
   generated structural detector suite and Android source compilation.
 - Compatibility/log/export script; native replay results and missing-fixture
   counts are recorded in the development log. No missing fixture counts as passing.

@@ -63,7 +63,7 @@ physical snapshots, virtual device/player numbering, nested button JSON, both
 sticks, disabled gates, ID collision and cleanup. They use a synthetic message
 consumer, not the game's managed runtime. Input-state tests cover diagonal
 clamping, dead zones, repeat suppression, independent movement/look and cleanup
-when a release fails. Modern native and Marmalade/input/purchase suites remain.
+when a release fails. Modern native and Marmalade/input/bridge suites remain.
 
 The actual supplied Monocle APK matches the new route. Full reconversion with the
 freshly D8-built bridge preserves the original APK, all 29 assets, the CPU getter

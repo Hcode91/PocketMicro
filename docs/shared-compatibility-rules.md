@@ -60,9 +60,9 @@ remain unverified; no working-game claim is made.
 `SharedCompatibilityRepairs` keeps all existing exact native plans first, then
 attempts the independent stale-declaration rule on remaining native entries and
 the SDK cleanup rule on bounded application DEX. Subsequent touch and
-purchase conversion reads the resulting DEX; existing feature-isolation suites
+game-bridge conversion reads the resulting DEX; existing feature-isolation suites
 are retained. A combined shared-rule/touch path is checked in the APK fixture.
-Purchase validation and the four frozen native transformation/catalog sources
+Game-bridge validation and the four frozen native transformation/catalog sources
 are unchanged. No new fingerprint or build-specific offset was added.
 
 Reports show rule ID, inspected file where relevant, status and reason:
@@ -75,7 +75,7 @@ the read-only preview, before an eligible stale-declaration repair is applied.
 
 ## Executed checks
 
-- Fresh host compatibility/purchase/input/native/doctor suites pass.
+- Fresh host compatibility/bridge/input/native/doctor suites pass.
 - Shared-rule fixtures vary native layout, data addresses, registers, field
   names, unrelated game classes and native filename. Read-only inspection and
   original APK preservation, null/non-null cleanup execution, idempotence,
@@ -133,7 +133,7 @@ the earlier service exception, null listener and null-context shutdown sequence.
 It does not establish the precise cause of the current blank/loading screen.
 Startup service binding, missing native plugin resolution and gameplay remain
 unresolved; managed assemblies and a fresh runtime log are still needed. No
-purchase implementation, native transformer or finalizer detector changes.
+game-bridge, native transformer or finalizer detector changes.
 
 ## 2026-11-03 additions (general rules, no per-game fingerprints)
 
